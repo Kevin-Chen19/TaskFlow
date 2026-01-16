@@ -160,6 +160,7 @@ const changePage = (name) => {
   align-items: center;
   padding: 0 6%;
   font-weight: 500;
+  cursor: pointer;
   img {
     width: 1.5vw;
     margin-right: 0.5vw;
@@ -168,5 +169,15 @@ const changePage = (name) => {
 .leftItem:hover{
   background-color: #c9e9f3cc;
     color: #12a6b1;
+}
+.mainBox{
+  height: 93vh;
+  overflow: auto;
+    /* 隐藏标准滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
