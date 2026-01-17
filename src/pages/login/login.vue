@@ -120,6 +120,8 @@ import { reactive, ref, onMounted, onUnmounted  } from "vue";
 import { Iphone, Lock, ChatDotRound } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useLoginStore } from "../../stores/loginStore";
+import { useRouter } from "vue-router";
+const router = useRouter();
 const loginStore = useLoginStore();
 const ruleFormRef = ref<FormInstance>();
 //媒体查询
@@ -185,6 +187,9 @@ const submitForm = (formEl: FormInstance | undefined) => {
   formEl.validate((valid) => {
     if (valid) {
       console.log("submit!");
+      router.push({
+          path:'/dashboard',
+        })
     } else {
       console.log("error submit!");
     }
