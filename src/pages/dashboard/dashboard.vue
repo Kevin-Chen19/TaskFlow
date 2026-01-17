@@ -5,7 +5,7 @@
       <span class="smallText"
         >Welcome back,Kevin.Task Flow is on track for Q4 delivery.</span
       >
-      <div class="new_task" @click="centerDialogVisible = true; noteContent.value = '';">+ New Task</div>
+      <div class="new_task" @click="openNewTaskDialog">+ New Task</div>
     </div>
     <div class="cards">
       <div class="cardItem">
@@ -272,7 +272,7 @@ const users = [
 const deleteNote = (index: number) => {
   notes.splice(index, 1);
 };
-const taskCardRef = ref();
+const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
 const handleSubmit = () => {
   try {
     // 访问子组件暴露的数据
@@ -284,8 +284,13 @@ const handleSubmit = () => {
   }
   centerDialogVisible.value = false;
 };
-const addNote = () =>{
+const addNote = () => {
   noteDialogVisible.value = true;
+}
+
+const openNewTaskDialog = () => {
+  centerDialogVisible.value = true;
+  noteContent.value = '';
 }
 const submitNote = () => {
   console.log(noteContent);

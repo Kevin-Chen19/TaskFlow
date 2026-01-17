@@ -69,7 +69,7 @@ import { useRouter } from "vue-router";
 const which = ref("dashboard");
 const router = useRouter();
 const input2 = ref("");
-const changePage = (name) => {
+const changePage = (name: string) => {
   which.value = name;
   router.push({
     path:`/${name}`,

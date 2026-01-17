@@ -19,7 +19,11 @@
     <div style="width: 100%; display: flex; justify-content: space-between">
       <div>
         <div class="inputName">PRIORITY LEVEL</div>
-        <el-select v-model="formData.priority" placeholder="Select" style="width: 18rem">
+        <el-select
+          v-model="formData.priority"
+          placeholder="Select"
+          style="width: 18rem"
+        >
           <template #label="{ label, value }">
             <span
               :style="{
@@ -42,7 +46,6 @@
           v-model="formData.dateLine"
           type="date"
           placeholder="Pick a day"
-          :size="size"
           style="width: 18rem"
           class="dateLine-input"
         />
@@ -92,16 +95,32 @@
 import { reactive, ref, onMounted, onUnmounted } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
+
+interface UserItem {
+  name: string;
+  postion: string;
+  percentage: number;
+  pic: string;
+  userId: number;
+}
+
+interface FormData {
+  taskName: string;
+  description: string;
+  priority: string;
+  dateLine: string;
+}
+
 const userStore = useUserStore();
 const searchValue = ref("");
-const chooseUser = reactive([]);
-const showTable = reactive([]);
-const formData = reactive({
+const chooseUser = reactive<number[]>([]);
+const showTable = reactive<UserItem[]>([]);
+const formData = reactive<FormData>({
   taskName: "",
   description: "",
   priority: "",
   dateLine: "",
-})
+});
 //初始组价时将userStore.usersTable赋值给showTable
 onMounted(() => {
   showTable.push(...userStore.usersTable);
@@ -186,7 +205,6 @@ const toFind = () => {
 };
 </script>
 <style scoped lang="scss">
-
 .formBox {
   width: 90%;
   margin: 0 auto;
