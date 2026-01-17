@@ -5,7 +5,7 @@
         <div class="topLine">
           <div class="title">Task Flow</div>
           <div class="flex-1">
-            <div>存放导航</div>
+            <div class="ProjectData">当前项目</div>
             <div style="display: flex; align-items: center">
               <el-input
                 v-model="input2"
@@ -25,27 +25,27 @@
       </el-header>
       <el-container>
         <el-aside width="13vw">
-          <div class="leftItem" @click="changePage('dashboard')">
+          <div class="leftItem" @click="changePage('dashboard')" :class="which === 'dashboard' ? 'leftChoose' : ''">
             <img src="../../assets/icons/看板1.png" alt="看板1图标" />
             <div>Dashboard</div>
           </div>
-          <div class="leftItem" @click="changePage('projects')">
+          <div class="leftItem" @click="changePage('projects')" :class="which === 'projects' ? 'leftChoose' : ''">
             <img src="../../assets/icons/文件1.png" alt="文件1图标" />
             <div class="itemName">Projects</div>
           </div>
-          <div class="leftItem" @click="changePage('tasks')">
+          <div class="leftItem" @click="changePage('tasks')" :class="which === 'tasks' ? 'leftChoose' : ''">
             <img src="../../assets/icons/任务1.png" alt="任务1图标" />
             <div class="itemName">Tasks</div>
           </div>
-          <div class="leftItem" @click="changePage('team')">
+          <div class="leftItem" @click="changePage('team')" :class="which === 'team' ? 'leftChoose' : ''">
             <img src="../../assets/icons/团队1.png" alt="团队1图标" />
             <div class="itemName">Team</div>
           </div>
-          <div class="leftItem" @click="changePage('reports')">
+          <div class="leftItem" @click="changePage('reports')" :class="which === 'reports' ? 'leftChoose' : ''">
             <img src="../../assets/icons/报告1.png" alt="报告1图标" />
             <div class="itemName">Reports</div>
           </div>
-          <div class="leftItem" @click="changePage('settings')">
+          <div class="leftItem" @click="changePage('settings')" :class="which === 'settings' ? 'leftChoose' : ''">
             <img src="../../assets/icons/设置1.png" alt="设置1图标" />
             <div class="itemName">Settings</div>
           </div>
@@ -66,9 +66,11 @@
 import { ref } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
+const which = ref("dashboard");
 const router = useRouter();
 const input2 = ref("");
 const changePage = (name) => {
+  which.value = name;
   router.push({
     path:`/${name}`,
   })
@@ -92,6 +94,8 @@ const changePage = (name) => {
   height: 100%;
   display: flex;
   align-items: center;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 .topLine {
   height: 100%;
@@ -101,13 +105,20 @@ const changePage = (name) => {
   padding: 5px 10px;
   background-color: #c9e9f3cc;
 }
+.ProjectData{
+  margin-left: 8rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  padding-left: 1rem;
+  border-left: 2px solid black;
+}
 .flex-1 {
   flex: 1;
   display: flex;
   align-items: center;
   margin-left: 10px;
   padding: 0 10px;
-  border-left: 1px solid black;
   justify-content: space-between;
 }
 :deep().el-input__wrapper {
@@ -168,7 +179,11 @@ const changePage = (name) => {
 }
 .leftItem:hover{
   background-color: #c9e9f3cc;
-    color: #12a6b1;
+  color: #12a6b1;
+}
+.leftChoose{
+  background-color: #c9e9f3cc;
+  color: #12a6b1;
 }
 .mainBox{
   height: 93vh;

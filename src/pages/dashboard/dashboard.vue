@@ -5,7 +5,7 @@
       <span class="smallText"
         >Welcome back,Kevin.Task Flow is on track for Q4 delivery.</span
       >
-      <div class="new_task" @click="centerDialogVisible = true">+ New Task</div>
+      <div class="new_task" @click="centerDialogVisible = true; noteContent.value = '';">+ New Task</div>
     </div>
     <div class="cards">
       <div class="cardItem">
@@ -74,13 +74,13 @@
                   alt="通过图标"
                 />
               </div>
-              <div>{{ item.content }}</div>
+              <div class="item_content">{{ item.content }}</div>
               <div class="delete">
                 <el-icon @click="deleteNote(index)"><Delete /></el-icon>
               </div>
             </div>
           </div>
-          <div class="addBtn">+ Add Note</div>
+          <div class="addBtn" @click="addNote">+ Add Note</div>
         </div>
         <div class="NoteBox TeamBox">
           <span class="noteStyle">Team Avaliability</span>
@@ -114,18 +114,39 @@
     width="800"
     align-center
   >
-    <TaskCard></TaskCard>
+    <TaskCard v-if="centerDialogVisible" ref="taskCardRef"></TaskCard>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
           >Cancel</el-button
         >
-        <el-button
-          type="primary"
-          @click="centerDialogVisible = false"
-          class="confirmBtn"
-        >
+        <el-button type="primary" @click="handleSubmit" class="confirmBtn">
           Creat Task
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+  <el-dialog
+    v-model="noteDialogVisible"
+    title="Add New Note"
+    width="600"
+    align-center
+  >
+    <div class="line"></div>
+    <div class="inputName">CONTENT</div>
+    <el-input
+      v-model="noteContent"
+      placeholder="请输入内容"
+      class="content-input"
+      @change="submitNote"
+    ></el-input>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="centerDialogVisible = false" class="cancelBtn">
+          Cancel
+        </el-button>
+        <el-button type="primary" @click="submitNote" class="confirmBtn">
+          Add Note
         </el-button>
       </div>
     </template>
@@ -146,6 +167,8 @@ import user4 from "@/assets/pics/用户4.jpg";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import type { TimelineItemProps } from "element-plus";
 const centerDialogVisible = ref(false);
+const noteDialogVisible = ref(false);
+const noteContent = ref('');
 interface ActivityType extends Partial<TimelineItemProps> {
   content: string;
 }
@@ -249,6 +272,33 @@ const users = [
 const deleteNote = (index: number) => {
   notes.splice(index, 1);
 };
+const taskCardRef = ref();
+const handleSubmit = () => {
+  try {
+    // 访问子组件暴露的数据
+    const componentData = taskCardRef.value?.formData;
+    console.log("获取到的数据:", componentData);
+    console.log("选中的用户:", taskCardRef.value?.chooseUser);
+  } catch (error) {
+    console.error("获取数据失败:", error);
+  }
+  centerDialogVisible.value = false;
+};
+const addNote = () =>{
+  noteDialogVisible.value = true;
+}
+const submitNote = () => {
+  console.log(noteContent);
+  notes.push({
+    content: noteContent.value,
+    ifFinish: false,
+    //将id设置为时间戳
+    id: Date.now(),
+  });
+  console.log(notes);
+  noteContent.value = '';
+  noteDialogVisible.value = false;
+}
 </script>
 <style scoped lang="scss">
 .bigBox {
@@ -327,20 +377,20 @@ const deleteNote = (index: number) => {
   cursor: pointer;
   color: #036eba;
 }
-:deep().el-timeline-item__content {
+:deep(.el-timeline-item__content ){
   font-size: 1.1rem;
 }
-:deep().el-timeline-item__timestamp {
+:deep(.el-timeline-item__timestamp) {
   font-size: 1rem;
 }
-:deep().el-timeline-item__node--large {
+:deep(.el-timeline-item__node--large) {
   width: 1.5rem;
   height: 1.5rem;
 }
-:deep().el-timeline-item.is-start .el-timeline-item__wrapper {
+:deep(.el-timeline-item.is-start .el-timeline-item__wrapper) {
   padding-left: 3rem;
 }
-:deep().el-timeline-item.is-start .el-timeline-item__tail {
+:deep(.el-timeline-item.is-start .el-timeline-item__tail) {
   left: 0.6rem;
 }
 .Team_Note {
@@ -398,6 +448,13 @@ const deleteNote = (index: number) => {
   img {
     width: 100%;
   }
+}
+.item_content{
+  flex:1;
+  //设置文本不换行，超出范围省略号表示
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .delete {
   margin-left: 1rem;
@@ -478,4 +535,16 @@ const deleteNote = (index: number) => {
   border-radius: 0.5rem;
   padding: 0 1.5rem;
 }
+// 全局输入框样式
+:deep(.el-input__wrapper) {
+  border-radius: 0px !important;
+  background-color: #fff !important;
+  box-shadow: none !important;
+  border: 1px solid #ccc;
+}
+
+:deep(.el-input__wrapper:focus-within) {
+  border: 2px solid black;
+}
+
 </style>

@@ -2,13 +2,13 @@
   <div class="line"></div>
   <div class="formBox">
     <el-input
-      v-model="taskName"
+      v-model="formData.taskName"
       class="custom-input"
       placeholder="Task Name..."
     />
     <div class="inputName">DISCRIPTION</div>
     <el-input
-      v-model="description"
+      v-model="formData.description"
       style="width: 100%"
       :rows="5"
       type="textarea"
@@ -19,7 +19,7 @@
     <div style="width: 100%; display: flex; justify-content: space-between">
       <div>
         <div class="inputName">PRIORITY LEVEL</div>
-        <el-select v-model="priority" placeholder="Select" style="width: 18rem">
+        <el-select v-model="formData.priority" placeholder="Select" style="width: 18rem">
           <template #label="{ label, value }">
             <span
               :style="{
@@ -39,7 +39,7 @@
       <div>
         <div class="inputName">DATELINE</div>
         <el-date-picker
-          v-model="dateLine"
+          v-model="formData.dateLine"
           type="date"
           placeholder="Pick a day"
           :size="size"
@@ -58,13 +58,13 @@
       @change="toFind"
     />
     <div class="teamTable">
-      <div
-        class="team_item"
-        v-for="item in userStore.usersTable"
-        :key="item.name"
-      >
+      <div class="team_item" v-for="item in showTable" :key="item.name">
         <div class="noteSelect" @click="changeGot(item.userId)">
-          <img v-if="chooseUser.includes(item.userId)" src="@/assets/icons/通过.png" alt="通过图标" />
+          <img
+            v-if="chooseUser.includes(item.userId)"
+            src="@/assets/icons/通过.png"
+            alt="通过图标"
+          />
         </div>
         <div class="noteItem">
           <div class="userPic">
@@ -89,16 +89,38 @@
   </div>
 </template>
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, onMounted, onUnmounted } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 const userStore = useUserStore();
-const taskName = ref("");
-const description = ref("");
-const priority = ref("");
-const dateLine = ref("");
 const searchValue = ref("");
-const chooseUser = reactive([])
+const chooseUser = reactive([]);
+const showTable = reactive([]);
+const formData = reactive({
+  taskName: "",
+  description: "",
+  priority: "",
+  dateLine: "",
+})
+//初始组价时将userStore.usersTable赋值给showTable
+onMounted(() => {
+  showTable.push(...userStore.usersTable);
+});
+onUnmounted(() => {
+  //退出时清空表单全部数据
+  showTable.splice(0, showTable.length);
+  chooseUser.splice(0, chooseUser.length);
+  formData.taskName = "";
+  formData.description = "";
+  formData.priority = "";
+  formData.dateLine = "";
+  console.log("清空了");
+});
+// 暴露方法和数据给父组件
+defineExpose({
+  formData,
+  chooseUser,
+});
 const prioritys = [
   {
     value: "Critical",
@@ -137,24 +159,34 @@ const customColorMethod = (percentage: number) => {
   return "#67c23a";
 };
 const changeGot = (userId: number) => {
-  const index = chooseUser.indexOf(userId)
+  const index = chooseUser.indexOf(userId);
   if (index === -1) {
-    chooseUser.push(userId)
+    chooseUser.push(userId);
   } else {
-    chooseUser.splice(index, 1)
+    chooseUser.splice(index, 1);
   }
-}
+};
 const toFind = () => {
   console.log(searchValue.value);
+  if (searchValue.value === "") {
+    showTable.splice(0, showTable.length, ...userStore.usersTable);
+  } else {
+    let newTable = [];
+    for (let item of userStore.usersTable) {
+      if (
+        item.name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+        item.postion.toLowerCase().includes(searchValue.value.toLowerCase())
+      ) {
+        newTable.push(item);
+      }
+    }
+    // 将newTable赋值给showTable
+    showTable.splice(0, showTable.length, ...newTable);
+  }
 };
 </script>
 <style scoped lang="scss">
-.line {
-  width: 100%;
-  height: 1px;
-  background-color: #ebeef5;
-  margin-bottom: 1rem;
-}
+
 .formBox {
   width: 90%;
   margin: 0 auto;
@@ -181,12 +213,6 @@ const toFind = () => {
 }
 :deep(.custom-input .el-input__input:focus-within) {
   color: black;
-}
-.inputName {
-  margin: 1rem 0;
-  font-size: 1rem;
-  color: #5c5d5f;
-  font-weight: 500;
 }
 :deep(.description-input .el-textarea__inner) {
   font-size: medium;
