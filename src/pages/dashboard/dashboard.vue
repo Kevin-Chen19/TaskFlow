@@ -306,23 +306,7 @@ const submitNote = () => {
 }
 </script>
 <style scoped lang="scss">
-.bigBox {
-  width: 85%;
-  height: 80%;
-}
-.Line_two {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-}
-.bigTitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-.smallText {
-  font-size: 1rem;
-  color: #909cad;
-}
+
 .new_task {
   padding: 0.4rem 0.7rem;
   background-color: black;
@@ -341,14 +325,7 @@ const submitNote = () => {
   display: flex;
   justify-content: space-between;
 }
-.cardItem {
-  box-sizing: border-box;
-  width: 20%;
-  background-color: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
-  padding: 1rem;
-}
+
 .bottomBox {
   box-sizing: border-box;
   margin-top: 2rem;

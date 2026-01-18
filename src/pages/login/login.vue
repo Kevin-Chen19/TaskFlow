@@ -144,10 +144,6 @@ const validatePass = (rule: any, value: any, callback: any) => {
   if (value === "") {
     callback(new Error("Please input the phone number"));
   } else {
-    if (ruleForm.phoneNumber !== "") {
-      if (!ruleFormRef.value) return;
-      ruleFormRef.value.validateField("phoneNumber");
-    }
     callback();
   }
 };
@@ -155,10 +151,6 @@ const validatePass1 = (rule: any, value: any, callback: any) => {
   if (value === "") {
     callback(new Error("Please input the identifying number"));
   } else {
-    if (ruleForm.identifyingNumber !== "") {
-      if (!ruleFormRef.value) return;
-      ruleFormRef.value.validateField("identifyingNumber");
-    }
     callback();
   }
 };

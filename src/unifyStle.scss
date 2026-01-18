@@ -10,3 +10,31 @@
   background-color: #ebeef5;
   margin-bottom: 1rem;
 }
+.bigBox {
+  width: 85%;
+  height: 80%;
+}
+.Line_two {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+}
+.bigTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.smallText {
+  font-size: 1rem;
+  color: #909cad;
+}
+.cardItem {
+  box-sizing: border-box;
+  width: 20%;
+  min-width: 25vh;
+  margin-right: 1rem;
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+}
