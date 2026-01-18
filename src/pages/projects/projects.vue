@@ -40,7 +40,7 @@
         :key="index"
       >
         <CardTamp
-          ifFolder="true"
+          :ifFolder="true"
           :bodyContent="item.fileName"
           :footerContent="
             item.children ? item.children.length + 'files' : item.fileTime
@@ -109,7 +109,7 @@ let id = 1000;
 const treeRef2 = ref<TreeInstance>();
 const menuKind = ref(0);
 const showFloders = reactive<filesTree[]>([]);
-const folderPath = reactive<filesTree[]>([]); // 记录文件夹路径
+const folderPath = reactive<filesTree[][]>([]); // 记录文件夹路径（二维数组）
 
 onMounted(() => {
   showFloders.push(...AllFiles);
@@ -146,7 +146,7 @@ const recentFiles = [
     fileSize: "7.5MB",
   },
 ];
-const AllFiles = <filesTree>[
+const AllFiles: filesTree[] = [
   {
     fileName: "Product Mockups",
     children: [
@@ -272,7 +272,9 @@ const backToParent = () => {
     showFloders.splice(0, showFloders.length);
     // 返回上一级（取路径栈的最后一项）
     const parentFolder = folderPath[folderPath.length - 1];
-    showFloders.push(...parentFolder);
+    if (parentFolder) {
+      showFloders.push(...parentFolder);
+    }
     // 推出当前路径
     folderPath.pop();
   }
