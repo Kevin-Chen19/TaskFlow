@@ -1,4 +1,3 @@
-<!--文档回收站记得开发-->
 <template>
   <div class="bigBox">
     <div class="bigTitle">Project Team</div>

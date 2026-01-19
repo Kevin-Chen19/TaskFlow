@@ -4,6 +4,23 @@
     <div class="Line_two">
       <span class="smallText"> Welcome back,Kevin.Share team files here. </span>
       <div class="Line_two_right">
+        <el-tooltip
+          class="box-item"
+          effect="dark"
+          :content="ifBin ? 'Close File Recycle Bin' : 'Open File Recycle Bin'"
+          placement="bottom"
+        >
+          <div class="iconBox">
+            <div
+              class="smallIconBox"
+              :class="ifBin ? 'chooseIconBox' : ''"
+              @click="showBinFolders"
+            >
+              <img src="@/assets/icons/回收站.png" alt="回收站图标" />
+            </div>
+          </div>
+        </el-tooltip>
+        <div class="spaceLine"></div>
         <div class="iconBox">
           <div
             class="smallIconBox"
@@ -27,11 +44,26 @@
         </div>
       </div>
     </div>
-    <div class="inputName" style="margin-top: 2rem">
-      <span v-if="folderPath.length > 0" class="backBtn" @click="backToParent">
-        ← 返回上级
-      </span>
-      FLODERS
+    <div class="Line_two">
+      <div class="inputName" style="margin-top: 2rem">
+        <span
+          v-if="folderPath.length > 0"
+          class="backBtn"
+          @click="backToParent"
+        >
+          ← 返回上级
+        </span>
+        FLODERS
+      </div>
+      <div>
+        <el-input
+          v-model="searchFileValue"
+          class="responsive-input"
+          placeholder="Search by file name..."
+          :prefix-icon="Search"
+          @change="searchFiles"
+        />
+      </div>
     </div>
     <div v-if="menuKind == 0" class="folderScroll">
       <div
@@ -48,7 +80,7 @@
           @click="enterFolder(item)"
         ></CardTamp>
       </div>
-      <div class="createFolderBox">
+      <div class="createFolderBox" v-show="!ifBin">
         <img src="@/assets/icons/新建文件夹.png" alt="新建文件夹图标" />
         <div>New Folder</div>
       </div>
@@ -57,7 +89,7 @@
       <el-tree
         ref="treeRef2"
         style="max-width: 100%"
-        :data="AllFiles"
+        :data="ifBin ? binFloders : saveFloders"
         node-key="id"
         :expand-on-click-node="false"
       >
@@ -102,68 +134,108 @@ import type {
   RenderContentFunction,
   TreeInstance,
 } from "element-plus";
-import { ref, reactive, onMounted} from "vue";
+import { ref, reactive, onMounted } from "vue";
+import { Search } from "@element-plus/icons-vue";
 type Node = RenderContentContext["node"];
 type Data = RenderContentContext["data"];
 let id = 1000;
 const treeRef2 = ref<TreeInstance>();
 const menuKind = ref(0);
-const showFloders = reactive<filesTree[]>([]);
+const ifBin = ref(false);
+const searchFileValue = ref("");
+const showFloders = reactive<filesTree[]>([]); //展示的文件
+const saveFloders = reactive<filesTree[]>([]); //未删除的文件
+const binFloders = reactive<filesTree[]>([]); //回收站文件
 const folderPath = reactive<filesTree[][]>([]); // 记录文件夹路径（二维数组）
 
+// 递归筛选函数:根据 ifInBin 状态筛选文件树
+const filterFiles = (files: filesTree[], isBin: boolean): filesTree[] => {
+  return files
+    .filter((item) => {
+      // 如果在回收站模式下,只包含 ifInBin 为 true 的项
+      if (isBin) {
+        return item.ifInBin;
+      }
+      // 在正常模式下,只包含 ifInBin 为 false 的项
+      return !item.ifInBin;
+    })
+    .map((item) => {
+      // 递归处理子项
+      if (item.children && item.children.length > 0) {
+        const filteredChildren = filterFiles(item.children, isBin);
+        // 只有当子项不为空时才保留 children 属性
+        if (filteredChildren.length > 0) {
+          return { ...item, children: filteredChildren };
+        }
+        // 如果筛选后没有子项,则移除 children 属性
+        return { ...item, children: undefined };
+      }
+      return item;
+    });
+};
+const filterFilesByName = (files: filesTree[], name: string): filesTree[] =>{
+  return files
+    .filter((item) => {
+      // 按文件名搜索，匹配名称的文件
+      return item.fileName.toLowerCase().includes(name.toLowerCase());
+    })
+    .map((item) => {
+      // 递归处理子项
+      if (item.children && item.children.length > 0) {
+        const filteredChildren = filterFilesByName(item.children, name);
+        // 只有当子项不为空时才保留 children 属性
+        if (filteredChildren.length > 0) {
+          return { ...item, children: filteredChildren };
+        }
+        // 如果筛选后没有子项,则移除 children 属性
+        return { ...item, children: undefined };
+      }
+      return item;
+    });
+}
+const showBinFolders = () => {
+  ifBin.value = !ifBin.value;
+  //清空路径
+  folderPath.splice(0, folderPath.length);
+  if (ifBin.value) {
+    showFloders.splice(0, showFloders.length);
+    showFloders.push(...binFloders);
+  } else {
+    showFloders.splice(0, showFloders.length);
+    showFloders.push(...saveFloders);
+  }
+};
 onMounted(() => {
-  showFloders.push(...AllFiles);
+  // 筛选正常文件和回收站文件,递归处理所有层级
+  const filteredShowFiles = filterFiles(AllFiles, false);
+  const filteredBinFiles = filterFiles(AllFiles, true);
+
+  saveFloders.push(...filteredShowFiles);
+  binFloders.push(...filteredBinFiles);
+  showFloders.push(...saveFloders);
 });
-const recentFiles = [
-  {
-    fileName: "项目计划.docx",
-    fileTime: "2026-01-18 14:19",
-    fileMaker: "Kevin",
-    fileSize: "2.5MB",
-  },
-  {
-    fileName: "路演.ppt",
-    fileTime: "2026-01-19 15:39",
-    fileMaker: "Kevin",
-    fileSize: "21.5MB",
-  },
-  {
-    fileName: "财务报表.xlsx",
-    fileTime: "2026-01-20 16:39",
-    fileMaker: "Alice",
-    fileSize: "1.5MB",
-  },
-  {
-    fileName: "项目章程.pdf",
-    fileTime: "2026-01-21 17:39",
-    fileMaker: "Peter",
-    fileSize: "2.5MB",
-  },
-  {
-    fileName: "UI设计稿.png",
-    fileTime: "2026-01-18 14:19",
-    fileMaker: "Bob",
-    fileSize: "7.5MB",
-  },
-];
 const AllFiles: filesTree[] = [
   {
     fileName: "Product Mockups",
+    ifInBin: false,
     children: [
       {
         fileName: "Product Design",
+        ifInBin: false,
         children: [
           {
-            fileName: "项目章程.pdf",
+            fileName: "项目章程1.pdf",
             fileTime: "2026-01-21 17:39",
             fileMaker: "Peter",
             fileSize: "2.5MB",
+            ifInBin: false,
           },
           {
             fileName: "UI设计稿.png",
             fileTime: "2026-01-18 14:19",
             fileMaker: "Bob",
             fileSize: "7.5MB",
+            ifInBin: true,
           },
         ],
       },
@@ -172,52 +244,61 @@ const AllFiles: filesTree[] = [
         fileTime: "2026-01-18 14:19",
         fileMaker: "Kevin",
         fileSize: "2.5MB",
+        ifInBin: false,
       },
       {
         fileName: "路演.ppt",
         fileTime: "2026-01-19 15:39",
         fileMaker: "Kevin",
         fileSize: "21.5MB",
+        ifInBin: false,
       },
       {
         fileName: "财务报表.xlsx",
         fileTime: "2026-01-20 16:39",
         fileMaker: "Alice",
         fileSize: "1.5MB",
+        ifInBin: false,
       },
     ],
   },
   {
     fileName: "Product Design",
+    ifInBin: false,
     children: [
       {
-        fileName: "项目章程.pdf",
+        fileName: "项目章程2.pdf",
         fileTime: "2026-01-21 17:39",
         fileMaker: "Peter",
         fileSize: "2.5MB",
+        ifInBin: false,
       },
       {
         fileName: "UI设计稿.png",
         fileTime: "2026-01-18 14:19",
         fileMaker: "Bob",
         fileSize: "7.5MB",
+        ifInBin: false,
       },
     ],
   },
   {
     fileName: "项目客户",
+    ifInBin: true,
     children: [
       {
         fileName: "项目章程.pdf",
         fileTime: "2026-01-21 17:39",
         fileMaker: "Peter",
         fileSize: "2.5MB",
+        ifInBin: true,
       },
       {
         fileName: "UI设计稿.png",
         fileTime: "2026-01-18 14:19",
         fileMaker: "Bob",
         fileSize: "7.5MB",
+        ifInBin: true,
       },
     ],
   },
@@ -226,19 +307,22 @@ const AllFiles: filesTree[] = [
     fileTime: "2026-01-18 14:19",
     fileMaker: "Bob",
     fileSize: "7.5MB",
+    ifInBin: true,
   },
   {
     fileName: "项目章程.pdf",
     fileTime: "2026-01-21 17:39",
     fileMaker: "Peter",
     fileSize: "2.5MB",
+    ifInBin: false,
   },
   {
     fileName: "项目计划.docx",
     fileTime: "2026-01-18 14:19",
     fileMaker: "Kevin",
     fileSize: "2.5MB",
-  }
+    ifInBin: false,
+  },
 ];
 interface filesTree {
   fileName: string;
@@ -246,6 +330,7 @@ interface filesTree {
   fileMaker?: string;
   fileSize?: string;
   children?: filesTree[];
+  ifInBin: boolean;
 }
 const defaultProps = {
   children: "children",
@@ -279,6 +364,18 @@ const backToParent = () => {
     folderPath.pop();
   }
 };
+const searchFiles = () =>{
+  ifBin.value = false;
+  if(searchFileValue.value !== ''){
+    const filteredSearchFiles = filterFilesByName(AllFiles, searchFileValue.value);
+    showFloders.splice(0, showFloders.length);
+    showFloders.push(...filteredSearchFiles);
+  }else{
+    const filteredShowFiles = filterFiles(AllFiles, false);
+    showFloders.splice(0, showFloders.length);
+    showFloders.push(...filteredShowFiles);
+  }
+}
 </script>
 <style scoped lang="scss">
 .Line_two_right {
@@ -347,11 +444,11 @@ const backToParent = () => {
 .uploadBox:hover {
   background-color: #48b3bd;
 }
-.backBtn{
+.backBtn {
   margin-right: 1rem;
   cursor: pointer;
 }
-.backBtn:hover{
+.backBtn:hover {
   color: #1fa2ad;
 }
 .createFolderBox {
@@ -421,5 +518,17 @@ const backToParent = () => {
 }
 :deep(.el-tree-node:focus > .el-tree-node__content) {
   background-color: transparent;
+}
+:deep(.el-input__wrapper) {
+  box-sizing: border-box;
+  height: 2rem !important;
+  border-radius: 0 !important;
+  padding: 0.2rem 0.5rem !important;
+  background-color: #fff !important;
+  border: 1px solid #ccc;
+  box-shadow: none;
+}
+:deep(.el-input__wrapper:focus-within) {
+  border: 1px solid black;
 }
 </style>
