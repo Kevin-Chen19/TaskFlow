@@ -181,7 +181,7 @@ const collectMatchingItems = (
   files: filesTree[],
   name: string,
 ): filesTree[] => {
-  let result = [];
+  let result: filesTree[] = [];
   files.forEach((item) => {
     const isMatch = item.fileName.toLowerCase().includes(name.toLowerCase());
     if (!item.children) {
@@ -390,6 +390,7 @@ interface filesTree {
   fileSize?: string;
   children?: filesTree[];
   ifInBin: boolean;
+  id?: string;
 }
 const defaultProps = {
   children: "children",

@@ -94,7 +94,7 @@
       </div>
       <div class="drawer_title">SKILLS</div>
       <div class="tagsBox">
-        <div class="tagsItem" v-for="value in drawerUser.tags" :key="index">
+        <div class="tagsItem" v-for="(value, index) in drawerUser.tags" :key="index">
           {{ value }}
         </div>
       </div>
@@ -172,15 +172,21 @@
 </template>
 <script setup lang="ts">
 import { Search } from "@element-plus/icons-vue";
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore, type UserItem } from "@/stores/userStore";
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
+
 const userStore = useUserStore();
 const searchValue = ref("");
 const showDrawer = ref(false);
 const inviteDialogVisible = ref(false);
 const windowWidth = ref(window.innerWidth);
-const drawerUser = reactive({});
-const showUsers = reactive([]);
+const drawerUser = reactive<Partial<UserItem>>({});
+const showUsers = reactive<UserItem[]>([]);
+const direction = ref("rtl");
+
+const handleClose = () => {
+  showDrawer.value = false;
+};
 const inviteData = reactive({
   emailContent: "",
   roleContent:"",
@@ -198,10 +204,6 @@ const roles = [
    {
     label:"manager",
     value:"manager"
-  },
-   {
-    label:"admin",
-    value:"admin"
   }
 ]
 const positions = [
@@ -250,7 +252,7 @@ const roleOptions = [
     label: "viewer",
   },
 ];
-const chooseUser = (user) => {
+const chooseUser = (user: UserItem) => {
   drawerUser.name = user.name;
   drawerUser.pic = user.pic;
   drawerUser.postion = user.postion;
@@ -307,20 +309,6 @@ onUnmounted(() => {
 :deep(.search-input .el-input__wrapper:focus-within) {
   box-shadow: none;
   border: 2px solid black;
-}
-.teamBox {
-  margin-top: 2rem;
-  box-sizing: border-box;
-  width: 100%;
-  max-height: 90%;
-  overflow: auto;
-  /* 隐藏标准滚动条 */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem 2.5%;
-  padding: 1rem;
 }
 .teamItem {
   width: 23%;
@@ -506,16 +494,9 @@ onUnmounted(() => {
   border: 1px solid #ccc;
   box-shadow: none;
 }
-:deep(.el-input__wrapper:focus-within) {
-  border: 2px solid black;
-}
 :deep(.el-input__inner) {
   font-weight: 500;
   font-size: 1rem;
-}
-:deep(.el-select__wrapper:focus-within) {
-  border: 2px solid black;
-  box-shadow: none;
 }
 .cancelBtn {
   height: 2.5rem;

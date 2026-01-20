@@ -39,9 +39,9 @@
             <img src="../../assets/icons/报告1.png" alt="报告1图标" />
             <div class="itemName">Reports</div>
           </div>
-          <div class="leftItem" @click="changePage('settings')" :class="which === 'settings' ? 'leftChoose' : ''">
-            <img src="../../assets/icons/设置1.png" alt="设置1图标" />
-            <div class="itemName">Settings</div>
+          <div class="leftItem" @click="changePage('roles')" :class="which === 'roles' ? 'leftChoose' : ''">
+            <img src="../../assets/icons/权限设置.png" alt="权限设置图标" />
+            <div class="itemName">Roles</div>
           </div>
         </el-aside>
         <el-container>

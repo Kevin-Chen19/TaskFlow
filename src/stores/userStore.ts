@@ -4,9 +4,25 @@ import user1 from "@/assets/pics/用户头像.jpg";
 import user2 from "@/assets/pics/用户2.jpg";
 import user3 from "@/assets/pics/用户3.jpg";
 import user4 from "@/assets/pics/用户4.jpg";
+
+export interface UserItem {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+  postion: string;
+  percentage: number;
+  pic: string;
+  userId: number;
+  tags: string[];
+  signature: string;
+  role: string;
+}
+
 export const useUserStore = defineStore("users", () => {
-  const usersTable = [
+  const usersTable: UserItem[] = [
     {
+      id: 1,
       name: "Kevin",
       email: "Kevin@163.com",
       status: "online",
@@ -19,6 +35,7 @@ export const useUserStore = defineStore("users", () => {
       role: "admin",
     },
     {
+      id: 2,
       name: "Sarah Jenkins",
       email: "Sarah@163.com",
       status: "online",
@@ -31,6 +48,7 @@ export const useUserStore = defineStore("users", () => {
       role: "viewer",
     },
     {
+      id: 3,
       name: "David Kim",
       email: "David@163.com",
       status: "online",
@@ -43,6 +61,7 @@ export const useUserStore = defineStore("users", () => {
       role: "manager",
     },
     {
+      id: 4,
       name: "Mike Ross",
       email: "Mike@163.com",
       status: "offline",
