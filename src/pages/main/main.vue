@@ -7,12 +7,6 @@
           <div class="flex-1">
             <div class="ProjectData">当前项目</div>
             <div style="display: flex; align-items: center">
-              <el-input
-                v-model="input2"
-                class="responsive-input"
-                placeholder="Search tasks,doucments,or team members"
-                :prefix-icon="Search"
-              />
               <div class="notifyStyle">
                 <img src="../../assets/icons/通知.png" alt="通知图标" />
               </div>
@@ -64,11 +58,9 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { Search } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
 const which = ref("dashboard");
 const router = useRouter();
-const input2 = ref("");
 const changePage = (name: string) => {
   which.value = name;
   router.push({

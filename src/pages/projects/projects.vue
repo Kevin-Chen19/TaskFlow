@@ -80,7 +80,7 @@
           @click="enterFolder(item)"
         ></CardTamp>
       </div>
-      <div class="createFolderBox" v-show="!ifBin">
+      <div class="createFolderBox" v-show="ifShowCreateBox">
         <img src="@/assets/icons/新建文件夹.png" alt="新建文件夹图标" />
         <div>New Folder</div>
       </div>
@@ -89,7 +89,7 @@
       <el-tree
         ref="treeRef2"
         style="max-width: 100%"
-        :data="ifBin ? binFloders : saveFloders"
+        :data="showFloders"
         node-key="id"
         :expand-on-click-node="false"
       >
@@ -109,6 +109,7 @@
         </template>
       </el-tree>
     </div>
+    <div class="emptyBox" v-if="ifEmpty">未找到匹配项</div>
     <div class="dropBox">
       <el-upload
         class="upload-demo"
@@ -142,6 +143,8 @@ let id = 1000;
 const treeRef2 = ref<TreeInstance>();
 const menuKind = ref(0);
 const ifBin = ref(false);
+const ifShowCreateBox = ref(true);
+const ifEmpty = ref(false);
 const searchFileValue = ref("");
 const showFloders = reactive<filesTree[]>([]); //展示的文件
 const saveFloders = reactive<filesTree[]>([]); //未删除的文件
@@ -173,28 +176,68 @@ const filterFiles = (files: filesTree[], isBin: boolean): filesTree[] => {
       return item;
     });
 };
-const filterFilesByName = (files: filesTree[], name: string): filesTree[] =>{
-  return files
-    .filter((item) => {
-      // 按文件名搜索，匹配名称的文件
-      return item.fileName.toLowerCase().includes(name.toLowerCase());
-    })
-    .map((item) => {
-      // 递归处理子项
-      if (item.children && item.children.length > 0) {
-        const filteredChildren = filterFilesByName(item.children, name);
-        // 只有当子项不为空时才保留 children 属性
-        if (filteredChildren.length > 0) {
-          return { ...item, children: filteredChildren };
-        }
-        // 如果筛选后没有子项,则移除 children 属性
-        return { ...item, children: undefined };
+// 收集匹配的子项(用于扁平化显示在文件夹名称匹配时)
+const collectMatchingItems = (
+  files: filesTree[],
+  name: string,
+): filesTree[] => {
+  let result = [];
+  files.forEach((item) => {
+    const isMatch = item.fileName.toLowerCase().includes(name.toLowerCase());
+    if (!item.children) {
+      // 文件匹配则添加
+      if (isMatch) {
+        result.push(item);
       }
-      return item;
-    });
-}
+    } else {
+      // 文件夹匹配:收集所有匹配的子项
+      const children = collectMatchingItems(item.children, name);
+      result.push(...children);
+    }
+  });
+  return result;
+};
+const filterFilesByName = (
+  files: filesTree[],
+  name: string,
+  parentMatched = false,
+): filesTree[] => {
+  return files.flatMap((item) => {
+    const isMatch = item.fileName.toLowerCase().includes(name.toLowerCase());
+    let result = [];
+
+    if (!item.children) {
+      // 文件:匹配则返回,不匹配则不返回
+      if (isMatch) {
+        result.push(item);
+      }
+    } else {
+      // 文件夹
+      if (isMatch) {
+        // 文件夹名称匹配:返回该文件夹(保留所有子项)
+        result.push(item);
+        // 同时把内部匹配的子项单独提取出来
+        const matchingChildren = collectMatchingItems(item.children, name);
+        result.push(...matchingChildren);
+      } else {
+        // 文件夹不匹配:递归筛选匹配的子项
+        const children = filterFilesByName(item.children, name, false);
+        if (children.length > 0) {
+          result.push(...children);
+        }
+      }
+    }
+    return result;
+  });
+};
 const showBinFolders = () => {
   ifBin.value = !ifBin.value;
+  if(ifBin.value){
+    ifShowCreateBox.value = false;
+  }else{
+    ifShowCreateBox.value = true;
+  }
+
   //清空路径
   folderPath.splice(0, folderPath.length);
   if (ifBin.value) {
@@ -218,10 +261,12 @@ const AllFiles: filesTree[] = [
   {
     fileName: "Product Mockups",
     ifInBin: false,
+    id: "123",
     children: [
       {
         fileName: "Product Design",
         ifInBin: false,
+        id: "124",
         children: [
           {
             fileName: "项目章程1.pdf",
@@ -229,13 +274,15 @@ const AllFiles: filesTree[] = [
             fileMaker: "Peter",
             fileSize: "2.5MB",
             ifInBin: false,
+            id: "125",
           },
           {
-            fileName: "UI设计稿.png",
+            fileName: "UI设计稿1.png",
             fileTime: "2026-01-18 14:19",
             fileMaker: "Bob",
             fileSize: "7.5MB",
             ifInBin: true,
+            id: "126",
           },
         ],
       },
@@ -245,6 +292,7 @@ const AllFiles: filesTree[] = [
         fileMaker: "Kevin",
         fileSize: "2.5MB",
         ifInBin: false,
+        id: "127",
       },
       {
         fileName: "路演.ppt",
@@ -252,6 +300,7 @@ const AllFiles: filesTree[] = [
         fileMaker: "Kevin",
         fileSize: "21.5MB",
         ifInBin: false,
+        id: "128",
       },
       {
         fileName: "财务报表.xlsx",
@@ -259,12 +308,14 @@ const AllFiles: filesTree[] = [
         fileMaker: "Alice",
         fileSize: "1.5MB",
         ifInBin: false,
+        id: "129",
       },
     ],
   },
   {
     fileName: "Product Design",
     ifInBin: false,
+    id: "113",
     children: [
       {
         fileName: "项目章程2.pdf",
@@ -272,56 +323,64 @@ const AllFiles: filesTree[] = [
         fileMaker: "Peter",
         fileSize: "2.5MB",
         ifInBin: false,
+        id: "133",
       },
       {
-        fileName: "UI设计稿.png",
+        fileName: "UI设计稿2.png",
         fileTime: "2026-01-18 14:19",
         fileMaker: "Bob",
         fileSize: "7.5MB",
         ifInBin: false,
+        id: "143",
       },
     ],
   },
   {
     fileName: "项目客户",
     ifInBin: true,
+    id: "153",
     children: [
       {
-        fileName: "项目章程.pdf",
+        fileName: "项目章程3.pdf",
         fileTime: "2026-01-21 17:39",
         fileMaker: "Peter",
         fileSize: "2.5MB",
         ifInBin: true,
+        id: "163",
       },
       {
-        fileName: "UI设计稿.png",
+        fileName: "UI设计稿3.png",
         fileTime: "2026-01-18 14:19",
         fileMaker: "Bob",
         fileSize: "7.5MB",
         ifInBin: true,
+        id: "173",
       },
     ],
   },
   {
-    fileName: "UI设计稿.png",
+    fileName: "UI设计稿4.png",
     fileTime: "2026-01-18 14:19",
     fileMaker: "Bob",
     fileSize: "7.5MB",
     ifInBin: true,
+    id: "183",
   },
   {
-    fileName: "项目章程.pdf",
+    fileName: "项目章程4.pdf",
     fileTime: "2026-01-21 17:39",
     fileMaker: "Peter",
     fileSize: "2.5MB",
     ifInBin: false,
+    id: "193",
   },
   {
-    fileName: "项目计划.docx",
+    fileName: "项目计划2.docx",
     fileTime: "2026-01-18 14:19",
     fileMaker: "Kevin",
     fileSize: "2.5MB",
     ifInBin: false,
+    id: "023",
   },
 ];
 interface filesTree {
@@ -364,18 +423,30 @@ const backToParent = () => {
     folderPath.pop();
   }
 };
-const searchFiles = () =>{
+// 搜索文件
+const searchFiles = () => {
   ifBin.value = false;
-  if(searchFileValue.value !== ''){
-    const filteredSearchFiles = filterFilesByName(AllFiles, searchFileValue.value);
+  if (searchFileValue.value !== "") {
+    ifShowCreateBox.value = false;
+    const filteredSearchFiles = filterFilesByName(
+      AllFiles,
+      searchFileValue.value,
+    );
     showFloders.splice(0, showFloders.length);
     showFloders.push(...filteredSearchFiles);
-  }else{
+    if(showFloders.length === 0){
+      ifEmpty.value = true;
+    }else{
+      ifEmpty.value = false;
+    }
+  } else {
+    ifShowCreateBox.value = true;
     const filteredShowFiles = filterFiles(AllFiles, false);
     showFloders.splice(0, showFloders.length);
     showFloders.push(...filteredShowFiles);
+    ifEmpty.value = false;
   }
-}
+};
 </script>
 <style scoped lang="scss">
 .Line_two_right {
