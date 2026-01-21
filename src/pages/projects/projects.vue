@@ -96,6 +96,7 @@
         <template #default="{ node, data }">
           <div class="custom-tree-node">
             <FileCard
+              :ifFolder="true"
               :fileName="data.fileName"
               :fileTime="
                 data.children ? data.children.length + ' files' : data.fileTime

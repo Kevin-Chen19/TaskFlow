@@ -1,17 +1,17 @@
 <template>
-  <div class="fileBigBox">
+  <div class="fileBigBox" :style="{ height: computedHeight}">
     <div class="kindPic" :style="{ backgroundColor: topLeftBgColor }">
       <img :src="computedFileIcon"
           alt="左侧图标"/>
     </div>
     <div class="fileMess">
-      <div>
+      <div class="fileMessLeft">
         <div class="fileNameSty">{{ computedFileName }}</div>
         <div class="fileSmallSty">{{ computedFileTime }}</div>
       </div>
       <div class="fileMessRight">
         <div class="fileSmallSty">{{ computedFileMaker }}</div>
-        <div class="fileSmallSty">{{ computedFileSize }}</div>
+        <div class="fileSmallSty" :class="props.ifFolder ? '': 'positionStyle'">{{ computedFileSize }}</div>
       </div>
     </div>
   </div>
@@ -24,11 +24,18 @@ import PdfIcon from '@/assets/icons/pdf.png';
 import PptIcon from '@/assets/icons/ppt.png';
 import ImgIcon from '@/assets/icons/img.png';
 import XlsxIcon from '@/assets/icons/xlsx.png';
+//职位相关图标
+import FrontIcon from '@/assets/icons/前端.png';
+import BackendIcon from '@/assets/icons/数据库.png';
+import TestIcon from '@/assets/icons/Debug.png';
+import DesignIcon from '@/assets/icons/调色板.png';
+import OtherJobIcon from '@/assets/icons/职位.png';
 // 定义组件属性
 const props = defineProps({
-  topLeftImg: {
-    type: String,
-    default: "",
+  //定义组件类型
+  ifFolder: {
+    type: Boolean,
+    default: true,
   },
   topLeftBgc: {
     type: String,
@@ -52,26 +59,41 @@ const props = defineProps({
     default: "",
   }
 });
+const computedHeight = computed(() => props.ifFolder ? "4rem" : "5rem");
 const topLeftBgColor = computed(() => props.topLeftBgc || "#faf5ff");
-const computedTopLeftImg = computed(() => props.topLeftImg || DocIcon);
 const computedFileName = computed(() => props.fileName || "");
 const computedFileTime = computed(() => props.fileTime || "");
 const computedFileMaker = computed(() => props.fileMaker || "");
 const computedFileSize = computed(() => props.fileSize || "");
 const computedFileIcon = computed(() => {
-  if (props.fileName.endsWith(".docx")) {
-    return DocIcon;
-  } else if (props.fileName.endsWith(".ppt")) {
-    return PptIcon;
-  } else if (props.fileName.endsWith(".pdf")) {
-    return PdfIcon;
-  } else if (props.fileName.endsWith(".png") || props.fileName.endsWith(".jpg") || props.fileName.endsWith(".jpeg")) {
-    return ImgIcon;
-  } else if (props.fileName.endsWith(".xlsx")) {
-    return XlsxIcon;
-  }else{
-    return floderIcon;
+  if(props.ifFolder){
+    if (props.fileName.endsWith(".docx")) {
+      return DocIcon;
+    } else if (props.fileName.endsWith(".ppt")) {
+      return PptIcon;
+    } else if (props.fileName.endsWith(".pdf")) {
+      return PdfIcon;
+    } else if (props.fileName.endsWith(".png") || props.fileName.endsWith(".jpg") || props.fileName.endsWith(".jpeg")) {
+      return ImgIcon;
+    } else if (props.fileName.endsWith(".xlsx")) {
+      return XlsxIcon;
+    }else{
+      return floderIcon;
+    }
+  } else {
+    if (props.fileName.includes("Front-end")) {
+      return FrontIcon;
+    } else if (props.fileName.includes("Backend")) {
+      return BackendIcon;
+    } else if (props.fileName.includes("Tester")) {
+      return TestIcon;
+    } else if (props.fileName.includes("Designer")) {
+      return DesignIcon;
+    }else{
+      return OtherJobIcon;
+    }
   }
+  
 });
 </script>
 <style scoped lang="scss">
@@ -84,6 +106,7 @@ const computedFileIcon = computed(() => {
   background-color: #fff;
   padding: 0.5rem;
   border-radius: 0.5rem;
+  cursor: pointer;
 }
 .fileBigBox:hover{
   background-color: #b2e4e6b0;
@@ -91,7 +114,7 @@ const computedFileIcon = computed(() => {
 }
 .kindPic {
   width: 3rem;
-  height: 100%;
+  height: 3rem;
   background-color: #faf5ff;
   border-radius: 0.5rem;
   display: flex;
@@ -116,6 +139,11 @@ const computedFileIcon = computed(() => {
   justify-content: space-between;
   padding: 0 1rem;
 }
+.fileMessLeft{
+  width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .fileNameSty {
   font-size: 1.2rem;
   font-weight: 500;
@@ -129,5 +157,10 @@ const computedFileIcon = computed(() => {
   div {
     margin-left: 3rem;
   }
+}
+.positionStyle{
+  font-size: 1rem;
+  color:black;
+  font-weight: 500;
 }
 </style>
