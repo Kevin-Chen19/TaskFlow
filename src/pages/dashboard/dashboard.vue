@@ -277,6 +277,7 @@ const handleSubmit = () => {
   try {
     // 访问子组件暴露的数据
     const componentData = taskCardRef.value?.formData;
+    componentData.createLine = Date.now();
     console.log("获取到的数据:", componentData);
     console.log("选中的用户:", taskCardRef.value?.chooseUser);
   } catch (error) {
@@ -309,7 +310,7 @@ const submitNote = () => {
 
 .new_task {
   padding: 0.4rem 0.7rem;
-  background-color: black;
+  background-color: rgb(56, 55, 55);
   color: white;
   border-radius: 0.4rem;
   font-size: 1rem;
@@ -317,7 +318,7 @@ const submitNote = () => {
 }
 .new_task:hover {
   cursor: pointer;
-  background: rgb(70, 70, 70);
+  background: black;
 }
 .cards {
   width: 100%;

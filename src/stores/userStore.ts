@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 import { defineStore } from "pinia";
 import user1 from "@/assets/pics/用户头像.jpg";
 import user2 from "@/assets/pics/用户2.jpg";
@@ -6,7 +6,6 @@ import user3 from "@/assets/pics/用户3.jpg";
 import user4 from "@/assets/pics/用户4.jpg";
 
 export interface UserItem {
-  id: number;
   name: string;
   email: string;
   status: string;
@@ -20,9 +19,20 @@ export interface UserItem {
 }
 
 export const useUserStore = defineStore("users", () => {
+  const user = reactive<UserItem>({
+    name: "Kevin",
+    email: "Kevin@163.com",
+    status: "online",
+    postion: "Front-end Lead",
+    percentage: 60,
+    pic: user1,
+    userId: 1,
+    tags: ["Vue", "React", "node.js", "TypeScript", "Electron"],
+    signature: "前端技术专家，专注于前端技术，热爱开源，喜欢分享技术文章",
+    role: "admin"
+  });
   const usersTable: UserItem[] = [
     {
-      id: 1,
       name: "Kevin",
       email: "Kevin@163.com",
       status: "online",
@@ -35,7 +45,6 @@ export const useUserStore = defineStore("users", () => {
       role: "admin",
     },
     {
-      id: 2,
       name: "Sarah Jenkins",
       email: "Sarah@163.com",
       status: "online",
@@ -48,7 +57,6 @@ export const useUserStore = defineStore("users", () => {
       role: "viewer",
     },
     {
-      id: 3,
       name: "David Kim",
       email: "David@163.com",
       status: "online",
@@ -61,7 +69,6 @@ export const useUserStore = defineStore("users", () => {
       role: "manager",
     },
     {
-      id: 4,
       name: "Mike Ross",
       email: "Mike@163.com",
       status: "offline",
@@ -75,5 +82,5 @@ export const useUserStore = defineStore("users", () => {
     },
   ];
 
-  return { usersTable };
+  return { usersTable, user };
 });

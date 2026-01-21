@@ -41,9 +41,9 @@
         </el-select>
       </div>
       <div>
-        <div class="inputName">DATELINE</div>
+        <div class="inputName">DUELINE</div>
         <el-date-picker
-          v-model="formData.dateLine"
+          v-model="formData.dueLine"
           type="date"
           placeholder="Pick a day"
           style="width: 18rem"
@@ -61,7 +61,7 @@
       @change="toFind"
     />
     <div class="teamTable">
-      <div class="team_item" v-for="item in showTable" :key="item.name">
+      <div class="team_item" v-for="item in showTable" :key="item.userId">
         <div class="noteSelect" @click="changeGot(item.userId)">
           <img
             v-if="chooseUser.includes(item.userId)"
@@ -108,7 +108,10 @@ interface FormData {
   taskName: string;
   description: string;
   priority: string;
-  dateLine: string;
+  createLine: string;
+  dueLine: string;
+  createUser:string;
+  assignee:string[];
 }
 
 const userStore = useUserStore();
@@ -119,7 +122,10 @@ const formData = reactive<FormData>({
   taskName: "",
   description: "",
   priority: "",
-  dateLine: "",
+  createLine: "",
+  dueLine: "",
+  createUser: "",
+  assignee:[],
 });
 //初始组价时将userStore.usersTable赋值给showTable
 onMounted(() => {
@@ -132,7 +138,9 @@ onUnmounted(() => {
   formData.taskName = "";
   formData.description = "";
   formData.priority = "";
+  FormData.createLine = "";
   formData.dateLine = "";
+  formData.assignee = [];
   console.log("清空了");
 });
 // 暴露方法和数据给父组件
