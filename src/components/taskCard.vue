@@ -64,7 +64,7 @@
       <div class="team_item" v-for="item in showTable" :key="item.userId">
         <div class="noteSelect" @click="changeGot(item.userId)">
           <img
-            v-if="chooseUser.includes(item.userId)"
+            v-if="formData.assignee.includes(item.userId)"
             src="@/assets/icons/通过.png"
             alt="通过图标"
           />
@@ -101,7 +101,7 @@ interface UserItem {
   postion: string;
   percentage: number;
   pic: string;
-  userId: number;
+  userId: string;
 }
 
 interface FormData {
@@ -110,13 +110,13 @@ interface FormData {
   priority: string;
   createLine: string;
   dueLine: string;
-  createUser:string;
-  assignee:string[];
+  createUser: string;
+  assignee: string[];
+  percentage: number;
 }
 
 const userStore = useUserStore();
 const searchValue = ref("");
-const chooseUser = reactive<number[]>([]);
 const showTable = reactive<UserItem[]>([]);
 const formData = reactive<FormData>({
   taskName: "",
@@ -125,7 +125,8 @@ const formData = reactive<FormData>({
   createLine: "",
   dueLine: "",
   createUser: "",
-  assignee:[],
+  assignee: [],
+  percentage: 0,
 });
 //初始组价时将userStore.usersTable赋值给showTable
 onMounted(() => {
@@ -134,19 +135,17 @@ onMounted(() => {
 onUnmounted(() => {
   //退出时清空表单全部数据
   showTable.splice(0, showTable.length);
-  chooseUser.splice(0, chooseUser.length);
   formData.taskName = "";
   formData.description = "";
   formData.priority = "";
   FormData.createLine = "";
-  formData.dateLine = "";
+  formData.dueLine = "";
   formData.assignee = [];
   console.log("清空了");
 });
 // 暴露方法和数据给父组件
 defineExpose({
   formData,
-  chooseUser,
 });
 const prioritys = [
   {
@@ -185,12 +184,12 @@ const customColorMethod = (percentage: number) => {
   }
   return "#67c23a";
 };
-const changeGot = (userId: number) => {
-  const index = chooseUser.indexOf(userId);
+const changeGot = (userId: string) => {
+  const index = formData.assignee.indexOf(userId);
   if (index === -1) {
-    chooseUser.push(userId);
+    formData.assignee.push(userId);
   } else {
-    chooseUser.splice(index, 1);
+    formData.assignee.splice(index, 1);
   }
 };
 const toFind = () => {

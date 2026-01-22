@@ -12,7 +12,7 @@ export interface UserItem {
   postion: string;
   percentage: number;
   pic: string;
-  userId: number;
+  userId: string;
   tags: string[];
   signature: string;
   role: string;
@@ -26,7 +26,7 @@ export const useUserStore = defineStore("users", () => {
     postion: "Front-end Lead",
     percentage: 60,
     pic: user1,
-    userId: 1,
+    userId: "202601051",
     tags: ["Vue", "React", "node.js", "TypeScript", "Electron"],
     signature: "前端技术专家，专注于前端技术，热爱开源，喜欢分享技术文章",
     role: "admin"
@@ -39,7 +39,7 @@ export const useUserStore = defineStore("users", () => {
       postion: "Front-end Lead",
       percentage: 60,
       pic: user1,
-      userId: 1,
+      userId: "202601051",
       tags: ["Vue", "React", "node.js", "TypeScript", "Electron"],
       signature: "前端技术专家，专注于前端技术，热爱开源，喜欢分享技术文章",
       role: "admin",
@@ -51,7 +51,7 @@ export const useUserStore = defineStore("users", () => {
       postion: "Backend Lead",
       percentage: 30,
       pic: user2,
-      userId: 2,
+      userId: "202601053",
       tags: ["Java", "SpringBoot", "MySQL"],
       signature: "后端技术专家，专注于后端技术，热爱开源，喜欢分享技术文章",
       role: "viewer",
@@ -63,7 +63,7 @@ export const useUserStore = defineStore("users", () => {
       postion: "UI Designer",
       percentage: 90,
       pic: user3,
-      userId: 3,
+      userId: "202601054",
       tags: ["Figma"],
       signature: "UI设计师，专注于UI设计，热爱开源，喜欢分享技术文章",
       role: "manager",
@@ -75,7 +75,7 @@ export const useUserStore = defineStore("users", () => {
       postion: "DevOps",
       percentage: 50,
       pic: user4,
-      userId: 4,
+      userId: "202601055",
       tags: ["Vue", "React", "node.js", "TypeScript", "Electron"],
       signature: "DevOps工程师，专注于DevOps技术，热爱开源，喜欢分享技术文章",
       role: "contributor",
