@@ -96,6 +96,7 @@
         :data="showTasks"
         style="width: 100%"
         @sort-change="handleSortChange"
+        @row-click="showMessages"
       >
         <el-table-column label="TASK NAME" width="310">
           <template #default="scope">
@@ -189,6 +190,79 @@
       </div>
     </template>
   </el-dialog>
+    <el-dialog
+    v-model="MessageDialogVisible"
+    title="Add New Task"
+    width="800"
+    align-center
+  >
+  <template #header>
+    <div class="topTitle">Created on {{ MessageTask.createLine }}</div>
+    <div class="taskName">{{ MessageTask.taskName }}</div>
+    <div style="width: 100%; height: 1px; background: #f3f4f4;"></div>
+  </template>
+  <div class="contentBox">
+    <div class="contentBoxLeft">
+      <div class="tipTitle">Description</div>
+      <div class="descriptionBox">{{ MessageTask.description }}</div>
+        <div class="progressBox">
+    <div class="topLine">
+      <div>
+        <div style="color:black;">Task Progress</div>
+        <div>Drag to update completion status</div>
+      </div>
+      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.percentage}}%</div>
+    </div>
+    <el-progress
+      :color="customColorMethod"
+      :percentage="MessageTask.percentage"
+      :show-text="false"
+    />
+    <div class="bottomTip">
+      <div>Not Started</div>
+      <div>Completed</div>
+    </div>
+  </div>
+    </div>
+    <div class="contentBoxRight">
+      <div class="smallTip">CREATOR</div>
+      <div class="creatorBox">
+        <div class="picBox">
+          <img :src="findUserPic(MessageTask.createUser)" alt="用户头像">
+        </div>
+        <div class="nameStyle">{{ findUser(MessageTask.createUser) }}</div>
+      </div>
+      <div class="smallTip">ASSIGNEE</div>
+      <div class="assigneeBox">
+        <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee">
+          <div class="picBox">
+            <img :src="findUserPic(item)" alt="用户头像"></img>
+          </div>
+          <div class="nameStyle">{{ findUser(item) }}</div>
+        </div>
+      </div>
+      <div class="smallTip">PRIORITY</div>
+      <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ MessageTask.priority }}</div>
+      <div class="smallTip">TIMEFRAME</div>
+      <div class="timeBox">
+        <div class="timePicBox">
+          <img src="@/assets/icons/日历.png" alt="日历图标">
+        </div>
+        <div class="timeItem">
+          <div style="color: #898989; font-size: 0.8rem;">Due Date</div>
+          <div>{{ MessageTask.dueLine }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template #footer>
+    <div class="footerBox">
+      <div class="editBtn">Edit</div>
+      <div class="saveBtn">Save</div>
+    </div>
+  </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
@@ -198,6 +272,7 @@ import { useUserStore } from "@/stores/userStore";
 const userStore = useUserStore();
 const centerDialogVisible = ref(false);
 const ifAll = ref(true);
+const MessageDialogVisible = ref(false);
 const total = ref(1);
 const pageNumber = ref(1);
 const filterLabel = ref("");
@@ -206,6 +281,17 @@ const MembersValue = ref([]);
 const PriorityValue = ref([]);
 const ProgressValue = ref([50, 100]);
 const TimeLineValue = ref("");
+const MessageTask = reactive({
+  id: "",
+  taskName: "",
+  description: "",
+  priority: "",
+  createLine: "",
+  dueLine: "",
+  createUser: "",
+  assignee: [],
+  percentage: 0
+});
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
 const customColor = ref("#409eff");
 import type { CSSProperties } from "vue";
@@ -456,6 +542,9 @@ interface Task {
 const findUser = (userId: string) => {
   return userStore.usersTable.find((user) => user.userId === userId)?.name;
 };
+const findUserPic = (userId: string) => {
+    return userStore.usersTable.find((user) => user.userId === userId)?.pic;
+}
 
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
@@ -649,6 +738,12 @@ const handleSortChange = ({
   }
   pageNumber.value = 1;
 };
+const showMessages = (task: Task) => {
+  // 将数据赋值给 MessageTask 响应式对象
+  Object.assign(MessageTask, task);
+  // 打开对话框
+  MessageDialogVisible.value = true;
+}
 </script>
 <style scoped lang="scss">
 .new_task {
@@ -806,5 +901,175 @@ const handleSortChange = ({
 }
 .searchBtn:hover {
   background-color: #40a0ff;
+}
+.topTitle{
+  color: #898989;
+  font-size: 0.8rem;
+}
+.taskName{
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+.contentBox{
+  box-sizing: border-box;
+  width: 100%;
+  height: 27rem;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  display: flex;
+  padding: 1rem;
+  color:black;
+  border-bottom: 1px solid #f3f4f4;
+}
+.contentBoxLeft{
+  box-sizing: border-box;
+  width: 70%;
+}
+.tipTitle{
+  font-size: 1rem;
+}
+.descriptionBox{
+  margin-top: 1rem;
+  box-sizing: border-box;
+  padding: 1rem;
+  width: 100%;
+  height: 15rem;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  background-color: #ecededa0;
+  border-radius: 1rem;
+  color:#666;
+}
+.contentBoxRight{
+  box-sizing: border-box;
+  padding: 0 1rem;
+  flex: 1;
+  height: 25rem;
+}
+.smallTip{
+  font-size: 1rem;
+  color:#898989;
+  margin-bottom: 0.5rem;
+}
+.creatorBox{
+  display: flex;
+  width: 100%;
+  height: 3rem;
+  align-items: center;
+  .picBox{
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 1px solid #c2c2c4;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    img{
+      width: 100%;
+    }
+  }
+}
+.nameStyle{
+  margin-left: 1rem;
+}
+.assigneeBox{
+  width: 100%;
+  max-height: 7.5rem;
+  margin-bottom: 1rem;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  .assigneeItem{
+    box-sizing: border-box;
+    margin: 0.5rem 0;
+    background-color: #f6f8f8b8;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+}
+.priorityBox{
+  padding: 0.2rem 0.5rem;
+  width: fit-content;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+.timeBox{
+  display: flex;
+  align-items: center;
+  width: 100%;
+  .timePicBox{
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: #ecededa0;
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    img{
+      width: 50%;
+    }
+  }
+  .timeItem{
+    margin-left: 1rem;
+  }
+}
+.progressBox{
+  box-sizing: border-box;
+  margin-top: 1rem;
+  width: 100%;
+  color:#898989;
+}
+.topLine{
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.NumberStyle{
+  font-size: 1.8rem;
+}
+.bottomTip{
+  width: 100%;
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+.footerBox{
+  padding-top: 1rem;
+  box-sizing: border-box;
+  border-top: 1px solid #f3f4f4;
+  width: 100%;
+  height: 3rem;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  background-color: #f9fafb;
+}
+.editBtn{
+  padding: 0.5rem 1.5rem;
+  margin-right: 1rem;
+  border: 1px solid #1e3a8a;
+  background-color: #fff;
+  color: #1e3a8a;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.editBtn:hover{
+  background-color: #f3f4f4;
+}
+.saveBtn{
+  padding: 0.5rem 1.5rem;
+  margin-right: 1rem;
+  background-color: #1e3a8a;
+  color: #ffffff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.saveBtn:hover{
+  background-color: #5674c6;
 }
 </style>
