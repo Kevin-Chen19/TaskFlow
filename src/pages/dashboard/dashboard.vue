@@ -412,6 +412,7 @@ const submitNote = () => {
 }
 .teamBox {
   height: 22vh;
+  margin-top: 0;
 }
 .noteItem {
   width: 100%;

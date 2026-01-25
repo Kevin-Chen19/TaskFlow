@@ -18,14 +18,78 @@
         >
           All Tasks
         </div>
-        <el-popover placement="bottom" :width="400" trigger="click">
-          <template #reference>
-            <div class="new_task filterBtn">Filter</div>
-          </template>
-          <div>Filter Options</div>
-        </el-popover>
         <div class="new_task" @click="openNewTaskDialog">+ Add New Task</div>
       </div>
+    </div>
+    <div class="filterBox">
+      <span style="margin-right: 1rem">Filter by:</span>
+      <el-select
+        v-model="filterLabel"
+        placeholder="Select Filter"
+        style="width: 10rem"
+      >
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        />
+      </el-select>
+      <span style="margin: 0 1rem" v-if="filterLabel !== ''">Value:</span>
+      <el-select
+        v-if="filterLabel === 'Assignee' || filterLabel === 'Creator'"
+        v-model="MembersValue"
+        multiple
+        collapse-tags
+        placeholder="Select Member"
+        style="width: 10rem"
+      >
+        <el-option
+          v-for="item in userStore.usersTable"
+          :key="item.userId"
+          :label="item.name"
+          :value="item.userId"
+        />
+      </el-select>
+      <el-select
+        v-if="filterLabel === 'Priority'"
+        v-model="PriorityValue"
+        multiple
+        collapse-tags
+        placeholder="Select Priority"
+        style="width: 10rem"
+      >
+        <el-option
+          v-for="item in PriorityOptions"
+          :key="item"
+          :label="item"
+          :value="item"
+        />
+      </el-select>
+      <el-input
+        v-if="filterLabel === 'TaskName'"
+        v-model="TaskNameValue"
+        placeholder="Task Name"
+        style="width: 20rem"
+      ></el-input>
+      <el-slider
+        v-if="filterLabel === 'Progress'"
+        v-model="ProgressValue"
+        range
+        :marks="marks"
+        style="width: 20rem"
+      />
+      <div v-if="filterLabel === 'TimeLine'">
+        <el-date-picker
+          v-model="TimeLineValue"
+          type="daterange"
+          range-separator="To"
+          start-placeholder="Start date"
+          end-placeholder="End date"
+        />
+      </div>
+      <div class="searchBtn" v-if="filterLabel !== ''" @click="filterTasks('filterSelect','',true)">Search</div>
+      <div class="searchBtn" v-if="filterLabel !== ''" @click="resetTableData" style="background-color: #04ab04;">Reset</div>
     </div>
     <div class="tableBox">
       <el-table
@@ -136,8 +200,57 @@ const centerDialogVisible = ref(false);
 const ifAll = ref(true);
 const total = ref(1);
 const pageNumber = ref(1);
+const filterLabel = ref("");
+const TaskNameValue = ref("");
+const MembersValue = ref([]);
+const PriorityValue = ref([]);
+const ProgressValue = ref([50, 100]);
+const TimeLineValue = ref("");
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
 const customColor = ref("#409eff");
+import type { CSSProperties } from "vue";
+interface Mark {
+  style: CSSProperties;
+  label: string;
+}
+type Marks = Record<number, Mark | string>;
+const marks = reactive<Marks>({
+  0: "0",
+  50: {
+    style: {
+      color: "#1989FA",
+    },
+    label: "50%",
+  },
+  100: "100%",
+});
+const PriorityOptions = ["Critical", "High", "Medium", "Low", "Negligible"];
+const options = [
+  {
+    value: "Creator",
+    label: "Creator",
+  },
+  {
+    value: "TaskName",
+    label: "TaskName",
+  },
+  {
+    value: "Priority",
+    label: "Priority",
+  },
+  {
+    value: "Assignee",
+    label: "Assignee",
+  },
+  {
+    value: "TimeLine",
+    label: "TimeLine",
+  },
+  {
+    value: "Progress",
+    label: "Progress",
+  },
+];
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
     return "#909399";
@@ -408,10 +521,79 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
       showTasks.splice(0, showTasks.length);
       showTasks.push(...tasks.slice(0, 9));
     }
+  }else if (label === "filterSelect"){
+    //按创建人筛选
+    if(filterLabel.value === "Creator"){
+      if(MembersValue.value.length === 0){
+        resetTableData();
+      }else{
+        tasks.splice(0, tasks.length);
+        tasks.push(...allTasks.filter((task) => MembersValue.value.includes(task.createUser)));
+        reshowTableData();
+      }
+    }else if (filterLabel.value === "Assignee"){  //按指派人筛选
+      if(MembersValue.value.length === 0){
+        resetTableData();
+      }else{
+        tasks.splice(0, tasks.length);
+        tasks.push(...allTasks.filter((task) => 
+          task.assignee.some(assignee => MembersValue.value.includes(assignee))
+        ));
+        reshowTableData();
+      }
+    } else if (filterLabel.value === "TaskName"){ //按任务名称筛选
+      if(TaskNameValue.value === ""){
+        resetTableData();
+      }else{
+        tasks.splice(0, tasks.length);
+        tasks.push(...allTasks.filter((task) => task.taskName.includes(TaskNameValue.value)));
+        reshowTableData();
+      }
+    } else if (filterLabel.value === "Priority"){ //按任务优先级筛选
+      if(PriorityValue.value.length === 0){
+        resetTableData();
+      }else{
+        tasks.splice(0, tasks.length);
+        tasks.push(...allTasks.filter((task) => 
+          PriorityValue.value.includes(task.priority)
+        ));
+        reshowTableData();
+      }
+    } else if (filterLabel.value === "TimeLine"){
+      if(TimeLineValue.value.length <= 1) {
+        resetTableData();
+      }else{
+        tasks.splice(0, tasks.length);
+        tasks.push(...allTasks.filter((task) => 
+          task.dueLine >= formatDate(new Date(TimeLineValue.value[0])) && task.dueLine <= formatDate(new Date(TimeLineValue.value[1]))
+        ));
+        reshowTableData();
+      } 
+    } else if (filterLabel.value === "Progress"){
+      tasks.splice(0, tasks.length);
+      tasks.push(...allTasks.filter((task) => 
+        task.percentage >= ProgressValue.value[0] && task.percentage <= ProgressValue.value[1]
+      ));
+      reshowTableData();
+    }
   }
   total.value = Math.ceil(tasks.length / 9);
   pageNumber.value = 1;
 };
+//重置表格数据
+const resetTableData = () => {
+  tasks.splice(0, tasks.length);
+  tasks.push(...allTasks);
+  showTasks.splice(0, showTasks.length);
+  showTasks.push(...tasks.slice(0, 9));
+  total.value = Math.ceil(tasks.length / 9);
+  pageNumber.value = 1;
+}
+//重新显示表格数据
+const reshowTableData = () =>{
+  showTasks.splice(0, showTasks.length);
+  showTasks.push(...tasks.slice(0, 9));
+}
 // 删除任务
 const handleDelete = (id: string) => {
   const index = allTasks.findIndex((task) => task.id === id);
@@ -438,7 +620,9 @@ const handleSortChange = ({
     if (!ifAll.value) {
       filterTasks("AssigneeName", userStore.user.userId, true);
     } else {
-      filterTasks("AssigneeName", "all", true);
+      if(filterLabel.value === ""){
+        filterTasks("AssigneeName", "all", true);
+      }
     }
   } else {
     if (prop === "priority") {
@@ -523,7 +707,7 @@ const handleSortChange = ({
 .tableBox {
   box-sizing: border-box;
   overflow: hidden;
-  margin-top: 3rem;
+  margin-top: 1rem;
   width: 100%;
   height: fit-content;
   max-height: 50rem;
@@ -542,6 +726,13 @@ const handleSortChange = ({
 }
 :deep(.el-table__cell) {
   padding: 1rem 0;
+}
+:deep(.el-input__wrapper) {
+  border-radius: 0px !important;
+  background-color: #fff !important;
+  box-shadow: none !important;
+  border: 1px solid #ccc;
+  height: 2rem !important;
 }
 .tableBottom {
   box-sizing: border-box;
@@ -562,8 +753,8 @@ const handleSortChange = ({
   width: fit-content;
   padding: 0.2rem 0.5rem;
   border-radius: 0.5rem;
-  background-color: rgba(255, 42, 0, 0.923);
-  color: #fff;
+  background-color: #f6babac6;
+  color: red;
   cursor: pointer;
 }
 .rowPriority {
@@ -575,18 +766,45 @@ const handleSortChange = ({
   color: white;
 }
 .CriticalStyle {
-  background-color: #d40303;
+  background-color: #e40606b4;
 }
 .HighStyle {
-  background-color: rgb(250, 76, 53);
+  background-color: #f7b8b8;
+  color: red;
 }
 .MediumStyle {
-  background-color: #e6a23c;
+  background-color: #ede25f;
+  color: #666;
 }
 .LowStyle {
-  background-color: #67c23a;
+  background-color: rgba(161, 217, 133, 0.782);
+  color: green;
 }
 .NegligibleStyle {
-  background-color: #909399;
+  background-color: #d7d8da;
+  color: #666;
+}
+.filterBox {
+  box-sizing: border-box;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 5rem;
+  background-color: #fff;
+  border-radius: 1rem;
+  padding: 1rem;
+  color: gray;
+}
+.searchBtn {
+  margin-left: 1rem;
+  padding: 0.3rem 0.5rem;
+  background-color: #40a0ffcc;
+  color: #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.searchBtn:hover {
+  background-color: #40a0ff;
 }
 </style>
