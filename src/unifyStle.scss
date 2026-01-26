@@ -13,6 +13,9 @@
 .bigBox {
   width: 85%;
   height: 90%;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
 }
 .Line_two {
   width: 100%;

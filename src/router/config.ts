@@ -5,6 +5,7 @@ import team from "../pages/team/team.vue";
 import reports from "../pages/reports/reports.vue";
 import roles from "@/pages/roles/roles.vue";
 import settings from "@/pages/settings/settings.vue";
+import me from "@/pages/me/me.vue";
 const routesConfig = [
   {
     path: "/dashboard",
@@ -34,5 +35,9 @@ const routesConfig = [
     path: "/settings",
     component: settings,
   },
+  {
+    path: "/me",
+    component: me,
+  }
 ];
 export default routesConfig;

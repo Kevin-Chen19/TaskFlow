@@ -43,6 +43,10 @@
             <img src="../../assets/icons/权限设置.png" alt="权限设置图标" />
             <div class="itemName">Roles</div>
           </div>
+          <div class="leftItem" @click="changePage('me')" :class="which === 'me' ? 'leftChoose' : ''">
+            <img src="../../assets/icons/我的.png" alt="我的图标" />
+            <div class="itemName">Me</div>
+          </div>
         </el-aside>
         <el-container>
           <el-main>
