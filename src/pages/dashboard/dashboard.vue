@@ -273,13 +273,23 @@ const deleteNote = (index: number) => {
   notes.splice(index, 1);
 };
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
+
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const handleSubmit = () => {
   try {
     // 访问子组件暴露的数据
     const componentData = taskCardRef.value?.formData;
-    componentData.createLine = Date.now();
-    console.log("获取到的数据:", componentData);
-    console.log("选中的用户:", taskCardRef.value?.chooseUser);
+    if (componentData) {
+      componentData.createLine = formatDate(new Date());
+      console.log("获取到的数据:", componentData);
+      console.log("选中的用户:", taskCardRef.value?.formData);
+    }
   } catch (error) {
     console.error("获取数据失败:", error);
   }

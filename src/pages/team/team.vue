@@ -26,7 +26,7 @@
       <div
         class="teamItem"
         v-for="item in showUsers"
-        :key="item.id"
+        :key="item.userId"
         @click="chooseUser(item)"
       >
         <div class="picBox">

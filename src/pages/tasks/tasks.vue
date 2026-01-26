@@ -174,18 +174,21 @@
   </div>
   <el-dialog
     v-model="centerDialogVisible"
-    title="Add New Task"
+    :title="otherStore.ifEditTask ? 'Edit Task' : 'Add New Task'"
     width="800"
     align-center
   >
-    <TaskCard v-if="centerDialogVisible" ref="taskCardRef"></TaskCard>
+    <TaskCard v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></TaskCard>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
           >Cancel</el-button
         >
-        <el-button type="primary" @click="handleSubmit" class="confirmBtn">
+        <el-button v-if="!otherStore.ifEditTask" type="primary" @click="handleSubmit" class="confirmBtn">
           Creat Task
+        </el-button>
+        <el-button v-if="otherStore.ifEditTask" type="primary" @click="submitEdit" class="confirmBtn">
+          Save Changes
         </el-button>
       </div>
     </template>
@@ -209,15 +212,17 @@
     <div class="topLine">
       <div>
         <div style="color:black;">Task Progress</div>
-        <div>Drag to update completion status</div>
+        <div v-if="ifCreator">Drag to update completion status</div>
       </div>
       <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.percentage}}%</div>
     </div>
     <el-progress
+      v-if="!ifAssignee && !ifCreator"
       :color="customColorMethod"
       :percentage="MessageTask.percentage"
       :show-text="false"
     />
+    <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.percentage" />
     <div class="bottomTip">
       <div>Not Started</div>
       <div>Completed</div>
@@ -258,18 +263,21 @@
 
   <template #footer>
     <div class="footerBox">
-      <div class="editBtn">Edit</div>
-      <div class="saveBtn">Save</div>
+      <div v-if="ifCreator" class="editBtn" @click="EditMessage">Edit</div>
+      <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">Save</div>
+      <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">Close</div>
     </div>
   </template>
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
+import { useOtherStore } from "@/stores/otherStore";
 const userStore = useUserStore();
+const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
 const ifAll = ref(true);
 const MessageDialogVisible = ref(false);
@@ -277,10 +285,10 @@ const total = ref(1);
 const pageNumber = ref(1);
 const filterLabel = ref("");
 const TaskNameValue = ref("");
-const MembersValue = ref([]);
-const PriorityValue = ref([]);
-const ProgressValue = ref([50, 100]);
-const TimeLineValue = ref("");
+const MembersValue = ref<string[]>([]);
+const PriorityValue = ref<string[]>([]);
+const ProgressValue = ref<[number, number]>([50, 100]);
+const TimeLineValue = ref<Date[] | "">("");
 const MessageTask = reactive({
   id: "",
   taskName: "",
@@ -289,7 +297,7 @@ const MessageTask = reactive({
   createLine: "",
   dueLine: "",
   createUser: "",
-  assignee: [],
+  assignee: [] as string[],
   percentage: 0
 });
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
@@ -337,6 +345,14 @@ const options = [
     label: "Progress",
   },
 ];
+//判断是否是任务创建者
+const ifCreator = computed(() => {
+  return MessageTask.createUser === userStore.user.userId;
+})
+//判断是否是任务负责人
+const ifAssignee = computed(() => {
+  return MessageTask.assignee.includes(userStore.user.userId);
+})
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
     return "#909399";
@@ -359,7 +375,7 @@ const tagStyles = (tag: string) => {
     return "NegligibleStyle";
   }
 };
-const allTasks = reactive<Task>([
+const allTasks = reactive<Task[]>([
   {
     id: "2026010316121",
     taskName: "登录页前端开发1",
@@ -367,7 +383,7 @@ const allTasks = reactive<Task>([
     priority: "High",
     createLine: "2026-01-03",
     dueLine: "2026-01-04",
-    createUser: "202601051",
+    createUser: "202601053",
     assignee: ["202601051"],
     percentage: 70,
   },
@@ -378,7 +394,7 @@ const allTasks = reactive<Task>([
     priority: "Critical",
     createLine: "2026-01-01",
     dueLine: "2026-01-02",
-    createUser: "202601051",
+    createUser: "202601053",
     assignee: ["202601054", "202601055"],
     percentage: 50,
   },
@@ -526,8 +542,8 @@ const allTasks = reactive<Task>([
     percentage: 100,
   },
 ]);
-const showTasks = reactive([]);
-const tasks = reactive([]);
+const showTasks = reactive<Task[]>([]);
+const tasks = reactive<Task[]>([]);
 interface Task {
   id: string;
   taskName: string;
@@ -553,8 +569,9 @@ const formatDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 const openNewTaskDialog = () => {
+  // 使用 $patch 安全更新
+  otherStore.$patch({ ifEditTask: false });
   centerDialogVisible.value = true;
-  noteContent.value = "";
 };
 const handleSubmit = () => {
   try {
@@ -582,6 +599,33 @@ const handleSubmit = () => {
   }
   centerDialogVisible.value = false;
 };
+const submitEdit = () => {
+    try {
+    // 访问子组件暴露的数据
+    const componentData = JSON.parse(
+      JSON.stringify(taskCardRef.value?.formData),
+    ); // 深拷贝
+    componentData.createLine = formatDate(new Date());
+    componentData.dueLine = formatDate(new Date(componentData.dueLine));
+    componentData.createUser = userStore.user.userId;
+     const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+    //使用深拷贝的方式修改
+    allTasks[index] = { ...componentData };
+    //刷新数据
+    resetTableData();
+      ElMessage({
+        message: "Edit Task Success",
+        type: "success",
+      });
+  } catch (error) {
+    console.error("获取数据失败:", error);
+    ElMessage({
+      message: "Edit Task Failed",
+      type: "error",
+    });
+  }
+  centerDialogVisible.value = false;
+}
 onMounted(() => {
   showTasks.push(...allTasks.slice(0, 9));
   tasks.push(...allTasks);
@@ -649,15 +693,15 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
         reshowTableData();
       }
     } else if (filterLabel.value === "TimeLine"){
-      if(TimeLineValue.value.length <= 1) {
-        resetTableData();
-      }else{
+      if(Array.isArray(TimeLineValue.value) && TimeLineValue.value.length >= 2) {
         tasks.splice(0, tasks.length);
-        tasks.push(...allTasks.filter((task) => 
-          task.dueLine >= formatDate(new Date(TimeLineValue.value[0])) && task.dueLine <= formatDate(new Date(TimeLineValue.value[1]))
+        tasks.push(...allTasks.filter((task) =>
+          task.dueLine >= formatDate(new Date(TimeLineValue.value[0]!)) && task.dueLine <= formatDate(new Date(TimeLineValue.value[1]!))
         ));
         reshowTableData();
-      } 
+      } else {
+        resetTableData();
+      }
     } else if (filterLabel.value === "Progress"){
       tasks.splice(0, tasks.length);
       tasks.push(...allTasks.filter((task) => 
@@ -743,6 +787,21 @@ const showMessages = (task: Task) => {
   Object.assign(MessageTask, task);
   // 打开对话框
   MessageDialogVisible.value = true;
+}
+const EditMessage = () => {
+  // 使用 $patch 安全更新
+  otherStore.$patch({ ifEditTask: true });
+  MessageDialogVisible.value = false;
+  centerDialogVisible.value = true;
+}
+const SaveMessage = () => {
+  //修改AllTasks中的数据
+  const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+  //使用深拷贝的方式修改
+  allTasks[index] = { ...MessageTask };
+  //刷新数据
+  resetTableData();
+  MessageDialogVisible.value = false;
 }
 </script>
 <style scoped lang="scss">
@@ -914,7 +973,7 @@ const showMessages = (task: Task) => {
 .contentBox{
   box-sizing: border-box;
   width: 100%;
-  height: 27rem;
+  height: 28rem;
   overflow: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */
@@ -1072,4 +1131,5 @@ const showMessages = (task: Task) => {
 .saveBtn:hover{
   background-color: #5674c6;
 }
+
 </style>

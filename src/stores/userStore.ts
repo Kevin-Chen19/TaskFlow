@@ -1,4 +1,4 @@
-import { ref, computed, reactive } from "vue";
+import { reactive } from "vue";
 import { defineStore } from "pinia";
 import user1 from "@/assets/pics/用户头像.jpg";
 import user2 from "@/assets/pics/用户2.jpg";

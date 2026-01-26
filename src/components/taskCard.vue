@@ -92,10 +92,26 @@
   </div>
 </template>
 <script setup lang="ts">
-import { reactive, ref, onMounted, onUnmounted } from "vue";
+import { reactive, ref, onMounted, onUnmounted, watch } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
+import { useOtherStore } from "@/stores/otherStore";
 
+interface Task {
+  id: string;
+  taskName: string;
+  description: string;
+  priority: string;
+  createLine: string;
+  dueLine: string;
+  createUser: string;
+  assignee: string[];
+  percentage: number;
+}
+
+const props = defineProps<{
+  task?: Task;
+}>();
 interface UserItem {
   name: string;
   postion: string;
@@ -116,6 +132,7 @@ interface FormData {
 }
 
 const userStore = useUserStore();
+const otherStore = useOtherStore();
 const searchValue = ref("");
 const showTable = reactive<UserItem[]>([]);
 const formData = reactive<FormData>({
@@ -128,6 +145,13 @@ const formData = reactive<FormData>({
   assignee: [],
   percentage: 0,
 });
+//监听 props.task 变化,同步到 formData
+watch(() => props.task, (newTask) => {
+  if (newTask && otherStore.$state.ifEditTask) {
+    Object.assign(formData, newTask);
+  }
+}, { immediate: true });
+
 //初始组价时将userStore.usersTable赋值给showTable
 onMounted(() => {
   showTable.push(...userStore.usersTable);
@@ -138,7 +162,7 @@ onUnmounted(() => {
   formData.taskName = "";
   formData.description = "";
   formData.priority = "";
-  FormData.createLine = "";
+  formData.createLine = "";
   formData.dueLine = "";
   formData.assignee = [];
   console.log("清空了");
