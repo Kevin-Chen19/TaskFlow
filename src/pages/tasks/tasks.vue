@@ -107,7 +107,7 @@
           prop="priority"
           label="PRIORITY"
           sortable="custom"
-          width="180"
+          width="200"
         >
           <template #default="scope">
             <div class="rowPriority" :class="tagStyles(scope.row.priority)">
@@ -115,12 +115,12 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="CREATOR" width="200">
+        <el-table-column label="CREATOR" width="220">
           <template #default="scope">
             <div>{{ findUser(scope.row.createUser) }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="ASSIGNEE" width="200">
+        <el-table-column label="ASSIGNEE" width="220">
           <template #default="scope">
             <div v-for="item in scope.row.assignee.slice(0, 2)">
               {{ findUser(item) }}
@@ -128,7 +128,7 @@
             <div v-if="scope.row.assignee.length > 2">...</div>
           </template>
         </el-table-column>
-        <el-table-column label="TIMELINE" width="230">
+        <el-table-column label="TIMELINE" width="250">
           <template #default="scope">
             <div>{{ scope.row.createLine }}——{{ scope.row.dueLine }}</div>
           </template>
@@ -137,18 +137,13 @@
           label="PROGRESS"
           prop="progress"
           sortable="custom"
-          width="230"
+          width="311"
         >
           <template #default="scope">
             <el-progress
               :color="customColorMethod"
               :percentage="scope.row.percentage"
             />
-          </template>
-        </el-table-column>
-        <el-table-column label="Operations">
-          <template #default="scope">
-            <div class="delBtn" @click="handleDelete(scope.row.id)">Delete</div>
           </template>
         </el-table-column>
       </el-table>
@@ -265,6 +260,7 @@
     <div class="footerBox">
       <div v-if="ifCreator" class="editBtn" @click="EditMessage">Edit</div>
       <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">Save</div>
+      <div v-if="ifCreator" class="closeBtn" @click="handleDelete">Delete</div>
       <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">Close</div>
     </div>
   </template>
@@ -272,7 +268,7 @@
 </template>
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
@@ -605,11 +601,9 @@ const submitEdit = () => {
     const componentData = JSON.parse(
       JSON.stringify(taskCardRef.value?.formData),
     ); // 深拷贝
-    componentData.createLine = formatDate(new Date());
     componentData.dueLine = formatDate(new Date(componentData.dueLine));
     componentData.createUser = userStore.user.userId;
      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
-    //使用深拷贝的方式修改
     allTasks[index] = { ...componentData };
     //刷新数据
     resetTableData();
@@ -728,18 +722,39 @@ const reshowTableData = () =>{
   showTasks.push(...tasks.slice(0, 9));
 }
 // 删除任务
-const handleDelete = (id: string) => {
-  const index = allTasks.findIndex((task) => task.id === id);
-  if (index !== -1) {
-    allTasks.splice(index, 1);
-  }
-  const taskIndex = tasks.findIndex((task) => task.id === id);
-  if (taskIndex !== -1) {
-    tasks.splice(taskIndex, 1);
-  }
-  total.value = Math.ceil(tasks.length / 9);
-  showTasks.splice(0, showTasks.length);
-  showTasks.push(...tasks.slice(0, 9));
+const handleDelete = () => {
+    ElMessageBox.confirm(
+    'Are you sure to delete this task?',
+    'Warning',
+    {
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Cancel',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+      if (index !== -1) {
+        allTasks.splice(index, 1);
+      }
+      const taskIndex = tasks.findIndex((task) => task.id === MessageTask.id);
+      if (taskIndex !== -1) {
+        tasks.splice(taskIndex, 1);
+      }
+      total.value = Math.ceil(tasks.length / 9);
+      reshowTableData();
+      MessageDialogVisible.value = false;
+      ElMessage({
+        type: 'success',
+        message: 'Delete completed',
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: 'Delete canceled',
+      })
+    })
 };
 // 排序变化事件
 const handleSortChange = ({
@@ -1131,5 +1146,15 @@ const SaveMessage = () => {
 .saveBtn:hover{
   background-color: #5674c6;
 }
-
+.closeBtn{
+   padding: 0.5rem 1.5rem;
+  margin-right: 1rem;
+  background-color: rgb(231, 43, 43);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.closeBtn:hover{
+  background-color: red;
+}
 </style>
