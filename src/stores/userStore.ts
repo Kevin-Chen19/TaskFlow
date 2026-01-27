@@ -81,6 +81,8 @@ export const useUserStore = defineStore("users", () => {
       role: "contributor",
     },
   ];
-
-  return { usersTable, user };
+  const getUserById = (id: string) => {
+    return usersTable.find(user => user.userId === id)
+  }
+  return { usersTable, user, getUserById };
 });

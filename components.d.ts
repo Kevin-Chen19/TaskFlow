@@ -13,6 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     CardTamp: typeof import('./src/components/cardTamp.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
+    ElAvatar: typeof import('element-plus/es')['ElAvatar']
+    ElAvatarGroup: typeof import('element-plus/es')['ElAvatarGroup']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElContainer: typeof import('element-plus/es')['ElContainer']
     ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
@@ -38,8 +40,10 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     FileCard: typeof import('./src/components/fileCard.vue')['default']
+    ProjectCard: typeof import('./src/components/projectCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TaskCard: typeof import('./src/components/taskCard.vue')['default']
+    Velocity: typeof import('./src/components/velocity.vue')['default']
   }
 }
