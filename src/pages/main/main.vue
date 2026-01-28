@@ -3,9 +3,18 @@
     <el-container>
       <el-header>
         <div class="topLine">
-          <div class="title">Task Flow</div>
+          <div class="title">
+            <div class="logo">
+              <img src="@/assets/icons/项目管理.png" alt="Logo">
+            </div>
+            Task Flow
+          </div>
           <div class="flex-1">
-            <div class="ProjectData">当前项目</div>
+            <div class="ProjectData">
+              <span style="color:gray; margin-right: 1rem;">Current Project</span>
+              <span style="color:gray; margin-right: 1rem;">/</span>
+              <span style="font-weight: 500;">项目管理平台PC端</span>
+            </div>
             <div style="display: flex; align-items: center">
               <div class="notifyStyle">
                 <img src="../../assets/icons/通知.png" alt="通知图标" />
@@ -86,6 +95,19 @@ const changePage = (name: string) => {
   height: 93vh;
   background-color: #fff;
 }
+.logo{
+  width: 3rem;
+  height: 3rem;
+  background-color: #1193d4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.5rem;
+  margin-right: 1rem;
+  img{
+    width: 70%;
+  }
+}
 .title {
   height: 100%;
   display: flex;
@@ -102,19 +124,18 @@ const changePage = (name: string) => {
   background-color: #c9e9f3cc;
 }
 .ProjectData{
-  margin-left: 8rem;
-  height: 2rem;
+  margin-left:4.6rem;
+  height: 5rem;
   display: flex;
   align-items: center;
   padding-left: 1rem;
-  border-left: 2px solid black;
+  font-size: 1.2rem;
+  border-left: 2px solid #fff;
 }
 .flex-1 {
   flex: 1;
   display: flex;
   align-items: center;
-  margin-left: 10px;
-  padding: 0 10px;
   justify-content: space-between;
 }
 :deep().el-input__wrapper {

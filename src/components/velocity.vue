@@ -4,12 +4,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import * as echarts from 'echarts/core';
-import { GridComponent } from 'echarts/components';
+import { GridComponent, TooltipComponent } from 'echarts/components';
 import { LineChart } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 
-echarts.use([GridComponent, LineChart, CanvasRenderer, UniversalTransition]);
+echarts.use([GridComponent, TooltipComponent, LineChart, CanvasRenderer, UniversalTransition]);
 
 const chartRef = ref<HTMLDivElement>();
 let myChart: echarts.ECharts | null = null;
@@ -18,19 +18,28 @@ onMounted(() => {
   if (chartRef.value) {
     myChart = echarts.init(chartRef.value);
     const option = {
+      tooltip: {
+        trigger: 'item',
+        formatter: '{c} Tasks'
+      },
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        data: ['Week1', 'Week2', 'Week3', 'Week4']
       },
       yAxis: {
         type: 'value'
       },
       series: [
         {
-          data: [820, 932, 901, 934, 1290, 1330, 1320],
+          data: [10, 12, 23, 19],
           type: 'line',
-          areaStyle: {}
+          areaStyle: {},
+          symbol: 'circle',
+          symbolSize: 8,
+          emphasis: {
+            focus: 'series'
+          }
         }
       ]
     };

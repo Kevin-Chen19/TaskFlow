@@ -1,5 +1,5 @@
 <template>
-  <div class="contentBox">
+  <div class="contentBox1">
     <div class="iconBox">{{ project.projectName.slice(0,1) }}</div>
     <div class="name">{{ project.projectName }}</div>
     <div class="description">{{ project.description }}</div>
@@ -48,7 +48,7 @@ const findPicUrl = (userId: string) => {
 }
 </script>
 <style scoped lang="scss">
-.contentBox{
+.contentBox1{
   box-sizing: border-box;
   width: 100%;
   height: 100%;
