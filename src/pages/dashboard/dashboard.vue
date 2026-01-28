@@ -5,7 +5,7 @@
       <span class="smallText"
         >Welcome back,Kevin.Task Flow is on track for Q4 delivery.</span
       >
-      <div class="new_task" @click="openNewTaskDialog">+ New Task</div>
+      <div class="new_task" @click="openNewProjectDialog">+ New Project</div>
     </div>
     <div class="cards">
       <div class="cardItem">
@@ -110,18 +110,18 @@
   </div>
   <el-dialog
     v-model="centerDialogVisible"
-    title="Create New Task"
+    title="Create New Project"
     width="800"
     align-center
   >
-    <TaskCard v-if="centerDialogVisible" ref="taskCardRef"></TaskCard>
+    <NewProjectCard v-if="centerDialogVisible" ref="newProjectCardRef"></NewProjectCard>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
           >Cancel</el-button
         >
         <el-button type="primary" @click="handleSubmit" class="confirmBtn">
-          Creat Task
+          Creat Project
         </el-button>
       </div>
     </template>
@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import CardTamp from "../../components/cardTamp.vue";
-import TaskCard from "../../components/taskCard.vue";
+import NewProjectCard from "../../components/newProjectCard.vue";
 import TimeIcon from "@/assets/icons/时间.png";
 import taskIcon from "@/assets/icons/任务.png";
 import ExpiredIcon from "@/assets/icons/逾期.png";
@@ -165,9 +165,11 @@ import user2 from "@/assets/pics/用户2.jpg";
 import user3 from "@/assets/pics/用户3.jpg";
 import user4 from "@/assets/pics/用户4.jpg";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
+import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
+const userStore = useUserStore();
 const noteContent = ref('');
 interface ActivityType extends Partial<TimelineItemProps> {
   content: string;
@@ -272,7 +274,7 @@ const users = [
 const deleteNote = (index: number) => {
   notes.splice(index, 1);
 };
-const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
+const newProjectCardRef = ref<InstanceType<typeof NewProjectCard> | null>(null);
 
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
@@ -280,18 +282,26 @@ const formatDate = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
-
 const handleSubmit = () => {
   try {
     // 访问子组件暴露的数据
-    const componentData = taskCardRef.value?.formData;
-    if (componentData) {
-      componentData.createLine = formatDate(new Date());
-      console.log("获取到的数据:", componentData);
-      console.log("选中的用户:", taskCardRef.value?.formData);
-    }
+    const componentData = JSON.parse(
+      JSON.stringify(newProjectCardRef.value?.projectData),
+    ); // 深拷贝
+    componentData.createLine = formatDate(new Date());
+    componentData.createUser = userStore.user.userId;
+    //设置id为时间戳加随机数
+    componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    ElMessage({
+      message: "Create Project Success",
+      type: "success",
+    });
   } catch (error) {
     console.error("获取数据失败:", error);
+    ElMessage({
+      message: "Create Project Failed",
+      type: "error",
+    });
   }
   centerDialogVisible.value = false;
 };
@@ -299,7 +309,7 @@ const addNote = () => {
   noteDialogVisible.value = true;
 }
 
-const openNewTaskDialog = () => {
+const openNewProjectDialog = () => {
   centerDialogVisible.value = true;
   noteContent.value = '';
 }
@@ -324,7 +334,7 @@ const submitNote = () => {
   color: white;
   border-radius: 0.4rem;
   font-size: 1rem;
-  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 .new_task:hover {
   cursor: pointer;
@@ -356,7 +366,7 @@ const submitNote = () => {
   background-color: #fff;
   border-radius: 1rem;
   font-size: large;
-  box-shadow: -10px 10px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.2);
 }
 .MiddleTitle {
   font-size: 1.5rem;
@@ -402,7 +412,7 @@ const submitNote = () => {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */
   border-radius: 1rem;
-  box-shadow: -10px 10px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.2);
 }
 .TeamBox {
   margin-top: 2vh;
