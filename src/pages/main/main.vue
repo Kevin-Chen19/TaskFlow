@@ -16,7 +16,7 @@
               <span style="font-weight: 500;">项目管理平台PC端</span>
             </div>
             <div style="display: flex; align-items: center">
-              <div class="notifyStyle">
+              <div class="notifyStyle" @click="showNotifications = true;">
                 <img src="../../assets/icons/通知.png" alt="通知图标" />
               </div>
               <div class="notifyStyle userPic">
@@ -67,12 +67,45 @@
       </el-container>
     </el-container>
   </div>
+  <el-drawer
+    v-model="showNotifications"
+    :modal="true"
+    :close-on-click-modal="true"
+    :direction="direction"
+    :before-close="handleClose"
+    :size="drawerWidth"
+  >
+    <template #header=>
+      <div class="NotificationsTop">
+        <div class="Icon_Name">
+          <img src="@/assets/icons/通知提醒.png" alt="通知提醒图标">
+          <span class="NotiTitle">Notifications</span>
+        </div>
+        <div class="Mark">Mark all read</div>
+      </div>
+    </template>
+    <div class="kindsBox">
+      <div class="kindItem">All</div>
+      <div class="kindItem">@Mentions</div>
+      <div class="kindItem">Tasks</div>
+      <div class="kindItem">Chat</div>
+    </div>
+    <div class="MessageBox">
+      <div class="TimeTile">
+        <div>TODAY</div>
+        <div class="longLine"></div>
+      </div>
+    </div>
+  </el-drawer>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 const which = ref("dashboard");
+const showNotifications = ref(true);
+const windowWidth = ref(window.innerWidth);
+const direction = ref('rtl');
 const router = useRouter();
 const changePage = (name: string) => {
   which.value = name;
@@ -80,6 +113,16 @@ const changePage = (name: string) => {
     path:`/${name}`,
   })
 };
+const handleClose = () => {
+  showNotifications.value = false;
+};
+const drawerWidth = computed(() => {
+ if (windowWidth.value < 1500) {
+    return "25rem"; // 平板
+  } else {
+    return "23%"; // 桌面
+  }
+});
 </script>
 <style scoped lang="scss">
 .el-header,
@@ -211,5 +254,72 @@ const changePage = (name: string) => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+.NotificationsTop{
+  box-sizing: border-box;
+  width: 90%;
+  height: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .Icon_Name{
+    height: 100%;
+    display: flex;
+    align-items: center;
+    img{
+      height: 80%;
+    }
+    .NotiTitle{
+      margin-left: 1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+  }
+  .Mark{
+    font-size: 1rem;
+    font-weight: 600;
+    color:#4d77ea;
+    margin-right: 1rem;
+    cursor: pointer;
+  }
+}
+.kindsBox{
+  box-sizing: border-box;
+  padding-left: 1rem;
+  width: 100%;
+  height: 4rem;
+  border: 1px solid rgb(218, 211, 211);
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0px 0px 4px #00000026;
+  gap: 1rem;
+}
+.kindItem{
+  padding: 0.3rem 1rem;
+  border-radius: 1rem;
+  background-color: #135bec;
+  color: #ffffff;
+  cursor: pointer;
+}
+.MessageBox{
+  width: 100%;
+  height:80rem;
+}
+.TimeTile{
+  width: 100%;
+  height: 2rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #7c8d9d;
+  .longLine{
+    margin-left: 0.5rem;
+    margin-top: 0.5rem;
+    width: 80%;
+    height: 2px;
+    background-color: rgb(218, 211, 211); 
+  }
 }
 </style>
