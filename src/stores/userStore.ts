@@ -29,7 +29,7 @@ export const useUserStore = defineStore("users", () => {
     userId: "202601051",
     tags: ["Vue", "React", "node.js", "TypeScript", "Electron"],
     signature: "前端技术专家，专注于前端技术，热爱开源，喜欢分享技术文章",
-    role: "admin"
+    role: "Project Manager"
   });
   const usersTable: UserItem[] = [
     {
@@ -42,7 +42,7 @@ export const useUserStore = defineStore("users", () => {
       userId: "202601051",
       tags: ["Vue", "React", "node.js", "TypeScript", "Electron"],
       signature: "前端技术专家，专注于前端技术，热爱开源，喜欢分享技术文章",
-      role: "admin",
+      role: "Project Manager",
     },
     {
       name: "Sarah Jenkins",
@@ -66,7 +66,7 @@ export const useUserStore = defineStore("users", () => {
       userId: "202601054",
       tags: ["Figma"],
       signature: "UI设计师，专注于UI设计，热爱开源，喜欢分享技术文章",
-      role: "manager",
+      role: "Contributor",
     },
     {
       name: "Mike Ross",

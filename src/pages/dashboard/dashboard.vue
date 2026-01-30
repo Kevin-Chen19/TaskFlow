@@ -45,7 +45,7 @@
         <span class="MiddleTitle">Project Timeline</span>
         <div class="Line_two" style="margin-bottom: 1.5rem">
           <span style="color: #909cad">Phases and key milestones</span>
-          <span class="GanttSty">View Gantt</span>
+          <span class="GanttSty" @click="addMilestone">Add Milestone event</span>
         </div>
         <el-timeline>
           <el-timeline-item
@@ -58,7 +58,7 @@
             :hollow="activity.hollow"
             :timestamp="activity.timestamp"
           >
-            <span style="font-size: larger">{{ activity.content }}</span>
+            <span style="font-size: larger">Phase{{index + 1}}: {{ activity.content }}</span>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -177,37 +177,37 @@ interface ActivityType extends Partial<TimelineItemProps> {
 
 const activities: ActivityType[] = [
   {
-    content: "Phase 1: Discovery & Startegy",
-    timestamp: "Completed on Oct 10,2025",
+    content: "Discovery & Startegy",
+    timestamp: "Completed on 2026-01-15",
     size: "large",
     color: "#0bbd87",
     icon: Check,
   },
   {
-    content: "Phase 2: UI/UX Design",
-    timestamp: "Due on Feb 10,2026",
+    content: "UI/UX Design",
+    timestamp: "Due on 2026-01-19",
     size: "large",
     color: "#24a4af",
     icon: Refresh,
   },
   {
-    content: "Phase 3: Development",
-    timestamp: "Scheduled on Apr 10,2026",
+    content: "Development",
+    timestamp: "Scheduled on 2026-02-10",
     size: "large",
   },
   {
-    content: "Phase 4: Testing",
-    timestamp: "Scheduled on Jun 10,2026",
+    content: "Testing",
+    timestamp: "Scheduled on 2026-02-26",
     size: "large",
   },
   {
-    content: "Phase 5: Deployment",
-    timestamp: "Scheduled on Aug 10,2026",
+    content: "Deployment",
+    timestamp: "Scheduled on 2026-02-29",
     size: "large",
   },
   {
-    content: "Phase 6: Maintenance",
-    timestamp: "Scheduled on Oct 10,2026",
+    content: "Maintenance",
+    timestamp: "Scheduled on 2026-03-10",
     size: "large",
   },
 ];
@@ -324,6 +324,9 @@ const submitNote = () => {
   console.log(notes);
   noteContent.value = '';
   noteDialogVisible.value = false;
+}
+const addMilestone = () => {
+
 }
 </script>
 <style scoped lang="scss">

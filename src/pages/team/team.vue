@@ -81,10 +81,10 @@
           class="drawer_select"
         >
           <el-option
-            v-for="item in roleOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+            v-for="item in roleStore.allRoles"
+            :key="item.roleName"
+            :label="item.roleName"
+            :value="item.roleName"
           />
         </el-select>
       </div>
@@ -174,7 +174,8 @@
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore, type UserItem } from "@/stores/userStore";
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
-
+import { useRoleStore } from "@/stores/roleStore";
+const roleStore = useRoleStore();
 const userStore = useUserStore();
 const searchValue = ref("");
 const showDrawer = ref(false);
