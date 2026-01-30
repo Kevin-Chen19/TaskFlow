@@ -9,9 +9,14 @@
         <div class="fileNameSty">{{ computedFileName }}</div>
         <div class="fileSmallSty">{{ computedFileTime }}</div>
       </div>
-      <div class="fileMessRight">
-        <div class="fileSmallSty">{{ computedFileMaker }}</div>
-        <div class="fileSmallSty" :class="props.ifFolder ? '': 'positionStyle'">{{ computedFileSize }}</div>
+      <div class="rightBox">
+        <div class="rightPic">
+          <img src="@/assets/icons/菜单.png" alt="菜单图标">
+        </div>
+        <div class="fileMessRight">
+          <div class="fileSmallSty">{{ computedFileMaker }}</div>
+          <div class="fileSmallSty" :class="props.ifFolder ? '': 'positionStyle'">{{ computedFileSize }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -162,5 +167,19 @@ const computedFileIcon = computed(() => {
   font-size: 1rem;
   color:black;
   font-weight: 500;
+}
+.rightBox{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: end;
+  .rightPic{
+    width: 1.5rem;
+    height: 1.5rem;
+    img{
+      width: 100%;
+    }
+  }
 }
 </style>

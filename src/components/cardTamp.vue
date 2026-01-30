@@ -9,6 +9,9 @@
             alt="左侧图标"
           />
         </div>
+        <div class="cardTop_right">
+          <img src="@/assets/icons/菜单.png" alt="菜单图标">
+        </div>
       </div>
     </slot>
 
@@ -132,6 +135,7 @@ const computedTopLeftImg = computed(() => {
   img {
     width: 100%;
   }
+  cursor: pointer;
 }
 .cardBody{
   margin-top: 1rem;

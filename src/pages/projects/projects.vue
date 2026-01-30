@@ -233,9 +233,9 @@ const filterFilesByName = (
 };
 const showBinFolders = () => {
   ifBin.value = !ifBin.value;
-  if(ifBin.value){
+  if (ifBin.value) {
     ifShowCreateBox.value = false;
-  }else{
+  } else {
     ifShowCreateBox.value = true;
   }
 
@@ -436,9 +436,9 @@ const searchFiles = () => {
     );
     showFloders.splice(0, showFloders.length);
     showFloders.push(...filteredSearchFiles);
-    if(showFloders.length === 0){
+    if (showFloders.length === 0) {
       ifEmpty.value = true;
-    }else{
+    } else {
       ifEmpty.value = false;
     }
   } else {
@@ -497,7 +497,6 @@ const searchFiles = () => {
 .floderItem {
   box-sizing: border-box;
   margin: 2rem 3.5rem 2rem 0;
-  cursor: pointer;
   flex-shrink: 0;
 }
 .floderItem:hover {
