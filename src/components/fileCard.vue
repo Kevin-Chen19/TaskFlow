@@ -11,7 +11,17 @@
       </div>
       <div class="rightBox">
         <div class="rightPic">
-          <img src="@/assets/icons/菜单.png" alt="菜单图标">
+           <el-dropdown trigger="click" @command="handleCommand">
+            <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="rename">重命名</el-dropdown-item>
+                <el-dropdown-item command="delete">删除</el-dropdown-item>
+                <el-dropdown-item command="download">下载</el-dropdown-item>
+                <el-dropdown-item command="notify">提醒成员</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
         <div class="fileMessRight">
           <div class="fileSmallSty">{{ computedFileMaker }}</div>
@@ -100,6 +110,13 @@ const computedFileIcon = computed(() => {
   }
   
 });
+// 定义组件事件
+const emit = defineEmits<{
+  command: [command: string];
+}>();
+const handleCommand = (command: string) => {
+  emit('command', command);
+}
 </script>
 <style scoped lang="scss">
 .fileBigBox {

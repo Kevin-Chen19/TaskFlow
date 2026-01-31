@@ -9,8 +9,18 @@
             alt="左侧图标"
           />
         </div>
-        <div class="cardTop_right">
-          <img src="@/assets/icons/菜单.png" alt="菜单图标">
+        <div class="cardTop_right" v-if="props.topRightImg">
+          <el-dropdown trigger="click" @command="handleCommand">
+            <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="rename">重命名</el-dropdown-item>
+                <el-dropdown-item command="delete">删除</el-dropdown-item>
+                <el-dropdown-item command="download">下载</el-dropdown-item>
+                <el-dropdown-item command="notify">提醒成员</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
     </slot>
@@ -77,6 +87,7 @@ const props = defineProps({
 // 定义组件事件
 const emit = defineEmits<{
   click: [];
+  command: [command: string];
 }>();
 
 // 处理点击事件
@@ -96,20 +107,25 @@ const computedTopLeftImg = computed(() => {
   if(props.topLeftImg ){
     return props.topLeftImg;
   }
-  if (props.bodyContent.endsWith(".docx")) {
+  const content = props.bodyContent;
+  if (content.endsWith(".docx")) {
     return DocIcon;
-  } else if (props.bodyContent.endsWith(".ppt")) {
+  } else if (content.endsWith(".ppt")) {
     return PptIcon;
-  } else if (props.bodyContent.endsWith(".pdf")) {
+  } else if (content.endsWith(".pdf")) {
     return PdfIcon;
-  } else if (props.bodyContent.endsWith(".png") || props.bodyContent.endsWith(".jpg") || props.bodyContent.endsWith(".jpeg")) {
+  } else if (content.endsWith(".png") || content.endsWith(".jpg") || content.endsWith(".jpeg")) {
     return ImgIcon;
-  } else if (props.bodyContent.endsWith(".xlsx")) {
+  } else if (content.endsWith(".xlsx")) {
     return XlsxIcon;
   }else{
     return floderIcon;
   }
 });
+const handleCommand = (command: string) => {
+  emit('command', command);
+}
+
 </script>
 
 <style scoped lang="scss">

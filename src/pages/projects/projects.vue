@@ -77,7 +77,9 @@
           :footerContent="
             item.children ? item.children.length + 'files' : item.fileTime
           "
+          :topRightImg="true"
           @click="enterFolder(item)"
+          @command="(command) => handleCommand(item, command)"
         ></CardTamp>
       </div>
       <div class="createFolderBox" v-show="ifShowCreateBox">
@@ -103,7 +105,7 @@
               "
               :fileMaker="data.fileMaker"
               :fileSize="data.fileSize"
-              @click="data.children ? (data.children = null) : null"
+              @command="(command) => handleCommand(data, command)"
             >
             </FileCard>
           </div>
@@ -125,6 +127,30 @@
       </el-upload>
     </div>
   </div>
+  <el-dialog
+    v-model="renameDialogVisible"
+    title="Rename"
+    width="600"
+    align-center
+  >
+    <div class="line"></div>
+    <div class="inputName">New Name</div>
+    <el-input
+      v-model="newName"
+      placeholder="请输入新名称"
+      class="content-input"
+    ></el-input>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="renameDialogVisible = false" class="cancelBtn">
+          Cancel
+        </el-button>
+        <el-button type="primary" @click="submitName" class="confirmBtn">
+          Save
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import CardTamp from "@/components/cardTamp.vue";
@@ -141,9 +167,13 @@ import { Search } from "@element-plus/icons-vue";
 type Node = RenderContentContext["node"];
 type Data = RenderContentContext["data"];
 let id = 1000;
+const renameDialogVisible = ref(false);
 const treeRef2 = ref<TreeInstance>();
 const menuKind = ref(0);
 const ifBin = ref(false);
+const newName = ref("");
+const houzhui = ref("");
+const currentFileId = ref("");
 const ifShowCreateBox = ref(true);
 const ifEmpty = ref(false);
 const searchFileValue = ref("");
@@ -448,6 +478,58 @@ const searchFiles = () => {
     showFloders.push(...filteredShowFiles);
     ifEmpty.value = false;
   }
+};
+//处理菜单文件命令
+const handleCommand = (file: filesTree, command: string) => {
+  console.log("Received command:", command, file);
+  // 处理不同命令
+  if (command === "rename") {
+    newName.value = file.fileName;
+    houzhui.value = newName.value.split('.')[1];
+    currentFileId.value = file.id;
+    renameDialogVisible.value = true;
+  }
+};
+// 递归查找文件/文件夹
+const findFileById = (files: filesTree[], id: string): filesTree | null => {
+  for (const file of files) {
+    if (file.id === id) {
+      return file;
+    }
+    if (file.children) {
+      const found = findFileById(file.children, id);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+};
+
+const submitName = () => {
+  //实现对文件或文件夹的重命名
+  const file = findFileById(showFloders, currentFileId.value);
+  if (!file) {
+    console.error('File not found:', currentFileId.value);
+    renameDialogVisible.value = false;
+    return;
+  }
+  if (file.children) {
+    // 文件夹：不需要后缀名
+    file.fileName = newName.value.split('.')[0];
+  } else {
+    // 文件：处理后缀名
+    const parts = newName.value.split('.');
+    const fileName = parts[0];
+    const fileType = parts[1];
+
+    if (fileType && fileType === houzhui.value) {
+      file.fileName = newName.value;
+    } else {
+      file.fileName = fileName + '.' + houzhui.value;
+    }
+  }
+  renameDialogVisible.value = false;
 };
 </script>
 <style scoped lang="scss">
