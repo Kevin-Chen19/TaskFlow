@@ -82,7 +82,7 @@
           @command="(command) => handleCommand(item, command)"
         ></CardTamp>
       </div>
-      <div class="createFolderBox" v-show="ifShowCreateBox">
+      <div class="createFolderBox" v-show="ifShowCreateBox" @click="createFolder">
         <img src="@/assets/icons/新建文件夹.png" alt="新建文件夹图标" />
         <div>New Folder</div>
       </div>
@@ -631,6 +631,77 @@ const submitName = () => {
   }
   renameDialogVisible.value = false;
 };
+//新建文件夹
+const createFolder = () => {
+  // 确定父级文件夹ID
+  let parentId: string | undefined;
+
+  if (folderPath.length === 0) {
+    // 在根目录下创建，parentId 为 undefined
+    parentId = undefined;
+  } else {
+    // 在子文件夹中创建，获取当前文件夹ID
+    parentId = folderPath[folderPath.length - 1];
+  }
+
+  // 查找父级文件夹
+  let parentFolder: filesTree | null = null;
+  if (parentId) {
+    parentFolder = findFileById(AllFiles, parentId);
+  }
+
+  // 确定要添加到的目标数组
+  const targetArray = parentFolder ? parentFolder.children : AllFiles;
+  if (!targetArray) return;
+
+  // 生成唯一的文件夹名称（检查同名文件夹，即有children的项）
+  let folderName = "新建文件夹";
+  let counter = 1;
+  let isNameExist = targetArray.some(
+    (item) => item.fileName === folderName && !!item.children
+  );
+
+  while (isNameExist) {
+    folderName = `新建文件夹${counter}`;
+    counter++;
+    isNameExist = targetArray.some(
+      (item) => item.fileName === folderName && !!item.children
+    );
+  }
+
+  // 创建新文件夹
+  const newFolder: filesTree = {
+    fileName: folderName,
+    ifInBin: false,
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    children: [],
+  };
+
+  // 添加到目标数组
+  targetArray.push(newFolder);
+
+  // 更新显示列表
+  const filteredShowFiles = filterFiles(AllFiles, false);
+
+  if (folderPath.length === 0) {
+    // 根目录：直接刷新
+    saveFloders.splice(0, saveFloders.length);
+    saveFloders.push(...filteredShowFiles);
+    showFloders.splice(0, showFloders.length);
+    showFloders.push(...saveFloders);
+  } else {
+    // 子文件夹：更新根目录数据，确保父级文件夹的子文件数量正确
+    saveFloders.splice(0, saveFloders.length);
+    saveFloders.push(...filteredShowFiles);
+
+    // 更新当前文件夹显示
+    if (parentFolder && parentFolder.children) {
+      const filteredChildren = filterFiles(parentFolder.children, ifBin.value);
+      showFloders.splice(0, showFloders.length);
+      showFloders.push(...filteredChildren);
+    }
+  }
+}
 </script>
 <style scoped lang="scss">
 .Line_two_right {
