@@ -180,7 +180,7 @@ const searchFileValue = ref("");
 const showFloders = reactive<filesTree[]>([]); //展示的文件
 const saveFloders = reactive<filesTree[]>([]); //未删除的文件
 const binFloders = reactive<filesTree[]>([]); //回收站文件
-const folderPath = reactive<filesTree[][]>([]); // 记录文件夹路径（二维数组）
+const folderPath = reactive<string[]>([]); // 记录文件夹路径（ID数组）
 
 // 递归筛选函数:根据 ifInBin 状态筛选文件树
 const filterFiles = (files: filesTree[], isBin: boolean): filesTree[] => {
@@ -206,6 +206,24 @@ const filterFiles = (files: filesTree[], isBin: boolean): filesTree[] => {
       }
       return item;
     });
+};
+
+// 扁平化收集回收站中的所有文件
+const collectBinFiles = (files: filesTree[]): filesTree[] => {
+  let result: filesTree[] = [];
+  files.forEach((item) => {
+    if (item.ifInBin) {
+      // 文件或文件夹本身在回收站中，直接添加（保持树形结构）
+      result.push({ ...item });
+    } else {
+      // 父文件夹不在回收站，但子文件可能在回收站中
+      if (item.children) {
+        const childrenInBin = collectBinFiles(item.children);
+        result.push(...childrenInBin);
+      }
+    }
+  });
+  return result;
 };
 // 收集匹配的子项(用于扁平化显示在文件夹名称匹配时)
 const collectMatchingItems = (
@@ -272,6 +290,10 @@ const showBinFolders = () => {
   //清空路径
   folderPath.splice(0, folderPath.length);
   if (ifBin.value) {
+    // 重新收集回收站文件
+    const filteredBinFiles = collectBinFiles(AllFiles);
+    binFloders.splice(0, binFloders.length);
+    binFloders.push(...filteredBinFiles);
     showFloders.splice(0, showFloders.length);
     showFloders.push(...binFloders);
   } else {
@@ -282,7 +304,8 @@ const showBinFolders = () => {
 onMounted(() => {
   // 筛选正常文件和回收站文件,递归处理所有层级
   const filteredShowFiles = filterFiles(AllFiles, false);
-  const filteredBinFiles = filterFiles(AllFiles, true);
+  // 回收站使用扁平化收集，确保子文件夹中的被删除文件也能显示
+  const filteredBinFiles = collectBinFiles(AllFiles);
 
   saveFloders.push(...filteredShowFiles);
   binFloders.push(...filteredBinFiles);
@@ -432,27 +455,40 @@ const handleNodeClick = (data: filesTree) => {
 };
 // 进入文件夹
 const enterFolder = (item: filesTree) => {
-  if (item.children) {
-    folderPath.push([...showFloders]);
+  if (item.children && item.id) {
+    // 保存当前文件夹ID到路径栈
+    folderPath.push(item.id);
     // 清空当前显示
     showFloders.splice(0, showFloders.length);
-    // 显示子文件夹内容
-    showFloders.push(...item.children);
+    // 从 AllFiles 中重新获取并显示子文件夹内容
+    const folderInAllFiles = findFileById(AllFiles, item.id);
+    if (folderInAllFiles && folderInAllFiles.children) {
+      const filteredChildren = filterFiles(folderInAllFiles.children, ifBin.value);
+      showFloders.push(...filteredChildren);
+    }
   }
 };
 
 // 返回上级文件夹
 const backToParent = () => {
   if (folderPath.length > 0) {
-    // 清空当前显示
-    showFloders.splice(0, showFloders.length);
-    // 返回上一级（取路径栈的最后一项）
-    const parentFolder = folderPath[folderPath.length - 1];
-    if (parentFolder) {
-      showFloders.push(...parentFolder);
-    }
-    // 推出当前路径
+    // 移除当前文件夹ID
     folderPath.pop();
+
+    if (folderPath.length === 0) {
+      // 返回根目录
+      showFloders.splice(0, showFloders.length);
+      showFloders.push(...ifBin.value ? binFloders : saveFloders);
+    } else {
+      // 返回到上一级文件夹
+      const parentId = folderPath[folderPath.length - 1];
+      const parentFolder = findFileById(AllFiles, parentId);
+      if (parentFolder && parentFolder.children) {
+        const filteredChildren = filterFiles(parentFolder.children, ifBin.value);
+        showFloders.splice(0, showFloders.length);
+        showFloders.push(...filteredChildren);
+      }
+    }
   }
 };
 // 搜索文件
@@ -488,6 +524,40 @@ const handleCommand = (file: filesTree, command: string) => {
     houzhui.value = newName.value.split('.')[1];
     currentFileId.value = file.id;
     renameDialogVisible.value = true;
+  } else if (command === "delete"){
+    // 在原始数据源中查找并递归删除
+    const targetFile = findFileById(AllFiles, file.id);
+    if (targetFile) {
+      // 递归删除文件夹及其所有子文件
+      deleteFileRecursively(targetFile, true);
+
+      // 统一更新所有数据源
+      const filteredShowFiles = filterFiles(AllFiles, false);
+      // 回收站使用扁平化收集，确保子文件夹中的被删除文件也能显示
+      const filteredBinFiles = collectBinFiles(AllFiles);
+
+      // 更新 saveFloders 和 binFloders
+      saveFloders.splice(0, saveFloders.length);
+      binFloders.splice(0, binFloders.length);
+      saveFloders.push(...filteredShowFiles);
+      binFloders.push(...filteredBinFiles);
+
+      // 根据当前状态更新显示
+      if (folderPath.length > 0) {
+        // 在子文件夹中：从路径栈获取当前文件夹ID，重新构建显示
+        const currentFolderId = folderPath[folderPath.length - 1];
+        const currentFolder = findFileById(AllFiles, currentFolderId);
+        if (currentFolder && currentFolder.children) {
+          const filteredCurrentFolder = filterFiles(currentFolder.children, ifBin.value);
+          showFloders.splice(0, showFloders.length);
+          showFloders.push(...filteredCurrentFolder);
+        }
+      } else {
+        // 在根目录：根据当前视图模式显示
+        showFloders.splice(0, showFloders.length);
+        showFloders.push(...ifBin.value ? binFloders : saveFloders);
+      }
+    }
   }
 };
 // 递归查找文件/文件夹
@@ -500,6 +570,36 @@ const findFileById = (files: filesTree[], id: string): filesTree | null => {
       const found = findFileById(file.children, id);
       if (found) {
         return found;
+      }
+    }
+  }
+  return null;
+};
+
+// 递归删除文件夹及其子文件
+const deleteFileRecursively = (file: filesTree, inBin: boolean) => {
+  file.ifInBin = inBin;
+  if (file.children) {
+    file.children.forEach((child) => {
+      deleteFileRecursively(child, inBin);
+    });
+  }
+};
+
+// 查找父文件夹
+const findParentFolder = (files: filesTree[], childId: string | undefined): filesTree | null => {
+  for (const file of files) {
+    if (file.children) {
+      for (const child of file.children) {
+        if (child.id === childId) {
+          return file;
+        }
+        if (child.children) {
+          const found = findParentFolder([child], childId);
+          if (found) {
+            return found;
+          }
+        }
       }
     }
   }
