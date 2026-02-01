@@ -151,12 +151,36 @@
       </div>
     </template>
   </el-dialog>
+  <el-dialog
+    v-model="notificationDialogVisible"
+    title="Member Notification"
+    width="800"
+    align-center
+  >
+    <div class="line"></div>
+    <MentionsCard :mentionsDate="mentionsDate"></MentionsCard>
+    <template #footer>
+      <div class="dialog-footer">
+        <div @click="notificationDialogVisible = false" class="cancelBtn">
+          Cancel
+        </div>
+        <div type="primary" class="sendBtn" @click="sendNotification">
+          Send Notifications
+        </div>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import CardTamp from "@/components/cardTamp.vue";
 import FileCard from "@/components/fileCard.vue";
+import MentionsCard from "@/components/mentionsCard.vue";
 import floderIcon from "@/assets/icons/文件夹.png";
 import { UploadFilled } from "@element-plus/icons-vue";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { useUserStore } from "@/stores/userStore";
+const userStore = useUserStore();
+const notificationStore = useNotificationStore();
 import type {
   RenderContentContext,
   RenderContentFunction,
@@ -168,6 +192,7 @@ type Node = RenderContentContext["node"];
 type Data = RenderContentContext["data"];
 let id = 1000;
 const renameDialogVisible = ref(false);
+const notificationDialogVisible = ref(false);
 const treeRef2 = ref<TreeInstance>();
 const menuKind = ref(0);
 const ifBin = ref(false);
@@ -181,6 +206,11 @@ const showFloders = reactive<filesTree[]>([]); //展示的文件
 const saveFloders = reactive<filesTree[]>([]); //未删除的文件
 const binFloders = reactive<filesTree[]>([]); //回收站文件
 const folderPath = reactive<string[]>([]); // 记录文件夹路径（ID数组）
+const mentionsDate = reactive({
+  members: [],
+  note: "",
+  fileName: "",
+});
 
 // 递归筛选函数:根据 ifInBin 状态筛选文件树
 const filterFiles = (files: filesTree[], isBin: boolean): filesTree[] => {
@@ -558,6 +588,9 @@ const handleCommand = (file: filesTree, command: string) => {
         showFloders.push(...ifBin.value ? binFloders : saveFloders);
       }
     }
+  } else if (command === "notify"){
+    mentionsDate.fileName = file.fileName;
+    notificationDialogVisible.value = true;
   }
 };
 // 递归查找文件/文件夹
@@ -701,6 +734,39 @@ const createFolder = () => {
       showFloders.push(...filteredChildren);
     }
   }
+}
+const sendNotification = () => {
+  console.log(mentionsDate);
+  notificationStore.notifications.unshift({
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: mentionsDate.fileName + "提醒",
+    time: formatDate(new Date()),
+    status: "未读",
+    creator: userStore.user.name,
+    receiver: [...mentionsDate.members],
+    kind: "文件提醒",
+    content: mentionsDate.note
+  });
+  console.log(notificationStore.notifications)
+  notificationDialogVisible.value = false;
+  clearmentionsDate()
+}
+const clearmentionsDate = () => {
+  mentionsDate.note = "";  
+  mentionsDate.members.splice(0,mentionsDate.members.length);
+  mentionsDate.fileName = "";
+  console.log(mentionsDate)
+}
+
+// 格式化日期为 yyyy-MM-dd HH:mm:ss
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 </script>
 <style scoped lang="scss">
@@ -855,5 +921,30 @@ const createFolder = () => {
 }
 :deep(.el-input__wrapper:focus-within) {
   border: 1px solid black;
+}
+.dialog-footer{
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  gap:1rem;
+}
+.cancelBtn{
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.cancelBtn:hover{
+  background-color: #ebe9e9;
+}
+.sendBtn{
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+.sendBtn:hover{
+  background-color: #1d4ed8;
 }
 </style>

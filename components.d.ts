@@ -44,6 +44,7 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     FileCard: typeof import('./src/components/fileCard.vue')['default']
+    MentionsCard: typeof import('./src/components/mentionsCard.vue')['default']
     NewProjectCard: typeof import('./src/components/newProjectCard.vue')['default']
     NotificationsCard: typeof import('./src/components/notificationsCard.vue')['default']
     ProjectCard: typeof import('./src/components/projectCard.vue')['default']

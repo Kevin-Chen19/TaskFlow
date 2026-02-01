@@ -18,7 +18,7 @@
               <span style="font-weight: 500">项目管理平台PC端</span>
             </div>
             <div style="display: flex; align-items: center">
-              <div class="notifyStyle" @click="showNotifications = true">
+              <div class="notifyStyle" @click="getNotifications(); showNotifications = true">
                 <img src="../../assets/icons/通知.png" alt="通知图标" />
                 <div v-show="ifHasUnread" class="point"></div>
               </div>
@@ -62,14 +62,6 @@
           >
             <img src="../../assets/icons/团队1.png" alt="团队1图标" />
             <div class="itemName">Team</div>
-          </div>
-          <div
-            class="leftItem"
-            @click="changePage('reports')"
-            :class="which === 'reports' ? 'leftChoose' : ''"
-          >
-            <img src="../../assets/icons/报告1.png" alt="报告1图标" />
-            <div class="itemName">Reports</div>
           </div>
           <div
             class="leftItem"
@@ -183,7 +175,12 @@ const ifHasUnread = computed(() => {
   });
 });
 onMounted(() => {
-  const currentDateTime = getCurrentDateTime();
+  getNotifications();
+});
+//刷新通知的函数
+const getNotifications = () => {
+notificationsByDate.splice(0, notificationsByDate.length);//清空数据
+const currentDateTime = getCurrentDateTime();
   todayDate.value = currentDateTime.split(" ")[0];
   yesterdayDate.value = new Date(
     new Date(currentDateTime).getTime() - 24 * 60 * 60 * 1000,
@@ -216,7 +213,7 @@ onMounted(() => {
     }
     num++;
   }
-});
+}
 const getDateTip = (dateValue: string): string => {
   if (dateValue === todayDate.value) {
     return "TODAY";
