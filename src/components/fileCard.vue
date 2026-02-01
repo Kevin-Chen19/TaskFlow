@@ -16,7 +16,8 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="rename">重命名</el-dropdown-item>
-                <el-dropdown-item command="delete">删除</el-dropdown-item>
+                <el-dropdown-item v-if="!props.ifBin" command="delete">移入回收站</el-dropdown-item>
+                <el-dropdown-item v-if="props.ifBin" command="drop">删除</el-dropdown-item>
                 <el-dropdown-item command="download">下载</el-dropdown-item>
                 <el-dropdown-item command="notify">提醒成员</el-dropdown-item>
               </el-dropdown-menu>
@@ -51,6 +52,10 @@ const props = defineProps({
   ifFolder: {
     type: Boolean,
     default: true,
+  },
+  ifBin: {
+    type: Boolean,
+    default: false,
   },
   topLeftBgc: {
     type: String,

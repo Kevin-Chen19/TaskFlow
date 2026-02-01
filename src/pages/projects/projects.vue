@@ -78,6 +78,7 @@
             item.children ? item.children.length + 'files' : item.fileTime
           "
           :topRightImg="true"
+          :ifBin="item.ifInBin"
           @click="enterFolder(item)"
           @command="(command) => handleCommand(item, command)"
         ></CardTamp>
@@ -99,6 +100,7 @@
           <div class="custom-tree-node">
             <FileCard
               :ifFolder="true"
+              :ifBin="data.ifInBin"
               :fileName="data.fileName"
               :fileTime="
                 data.children ? data.children.length + ' files' : data.fileTime
@@ -591,6 +593,48 @@ const handleCommand = (file: filesTree, command: string) => {
   } else if (command === "notify"){
     mentionsDate.fileName = file.fileName;
     notificationDialogVisible.value = true;
+  } else if (command === "drop"){
+    //彻底删除文件
+    const targetFile = findFileById(AllFiles, file.id);
+    if (targetFile) {
+      // 从父文件夹中移除该文件
+      const parentFolder = findParentFolder(AllFiles, file.id);
+      if (parentFolder && parentFolder.children) {
+        parentFolder.children = parentFolder.children.filter(item => item.id !== file.id);
+      } else {
+        // 如果没有父文件夹，说明在根目录，直接从 AllFiles 中移除
+        const index = AllFiles.findIndex(item => item.id === file.id);
+        if (index !== -1) {
+          AllFiles.splice(index, 1);
+        }
+      }
+
+      // 统一更新所有数据源
+      const filteredShowFiles = filterFiles(AllFiles, false);
+      const filteredBinFiles = collectBinFiles(AllFiles);
+
+      // 更新 saveFloders 和 binFloders
+      saveFloders.splice(0, saveFloders.length);
+      binFloders.splice(0, binFloders.length);
+      saveFloders.push(...filteredShowFiles);
+      binFloders.push(...filteredBinFiles);
+
+      // 根据当前状态更新显示
+      if (folderPath.length > 0) {
+        // 在子文件夹中：从路径栈获取当前文件夹ID，重新构建显示
+        const currentFolderId = folderPath[folderPath.length - 1];
+        const currentFolder = findFileById(AllFiles, currentFolderId);
+        if (currentFolder && currentFolder.children) {
+          const filteredCurrentFolder = filterFiles(currentFolder.children, ifBin.value);
+          showFloders.splice(0, showFloders.length);
+          showFloders.push(...filteredCurrentFolder);
+        }
+      } else {
+        // 在根目录：根据当前视图模式显示
+        showFloders.splice(0, showFloders.length);
+        showFloders.push(...ifBin.value ? binFloders : saveFloders);
+      }
+    }
   }
 };
 // 递归查找文件/文件夹
