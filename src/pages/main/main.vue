@@ -57,6 +57,14 @@
           </div>
           <div
             class="leftItem"
+            @click="changePage('calendar')"
+            :class="which === 'calendar' ? 'leftChoose' : ''"
+          >
+            <img src="../../assets/icons/日历栏.png" alt="日历栏图标" />
+            <div class="itemName">Calendar</div>
+          </div>
+          <div
+            class="leftItem"
             @click="changePage('team')"
             :class="which === 'team' ? 'leftChoose' : ''"
           >

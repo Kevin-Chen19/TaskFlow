@@ -2,7 +2,7 @@ import dashboard from "../pages/dashboard/dashboard.vue";
 import projects from "../pages/projects/projects.vue";
 import tasks from "../pages/tasks/tasks.vue";
 import team from "../pages/team/team.vue";
-import reports from "../pages/reports/reports.vue";
+import calendar from "../pages/calendar/calendar.vue";
 import roles from "@/pages/roles/roles.vue";
 import settings from "@/pages/settings/settings.vue";
 import me from "@/pages/me/me.vue";
@@ -24,8 +24,8 @@ const routesConfig = [
     component: team,
   },
   {
-    path: "/reports",
-    component: reports,
+    path: "/calendar",
+    component: calendar,
   },
   {
     path: "/roles",

@@ -84,5 +84,8 @@ export const useUserStore = defineStore("users", () => {
   const getUserById = (id: string) => {
     return usersTable.find(user => user.userId === id)
   }
-  return { usersTable, user, getUserById };
+  const getUserNameById = (id: string) => {
+    return usersTable.find(user => user.userId === id)?.name
+  } 
+  return { usersTable, user, getUserById, getUserNameById};
 });

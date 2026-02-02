@@ -188,7 +188,7 @@
       </div>
     </template>
   </el-dialog>
-    <el-dialog
+  <el-dialog
     v-model="MessageDialogVisible"
     title="Add New Task"
     width="800"
