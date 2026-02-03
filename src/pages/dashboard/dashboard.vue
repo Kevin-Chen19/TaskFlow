@@ -59,6 +59,7 @@
             :timestamp="activity.timestamp"
           >
             <span style="font-size: larger; cursor: pointer;" @click="editMilestone(index)">Phase{{index + 1}}: {{ activity.content }}</span>
+            <el-icon @click="deleteMilestone(index)" class="delete-icon"><Delete /></el-icon>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -385,6 +386,18 @@ const editMilestone = (index: number) => {
   TimeLineDialogVisible.value = true;
 }
 
+// 删除里程碑
+const deleteMilestone = (index: number) => {
+  activities.splice(index, 1);
+  // 重新计算显示属性
+  getActivityDisplayProps();
+
+  ElMessage({
+    message: "Milestone deleted successfully",
+    type: "success",
+  });
+}
+
 // 取消里程碑对话框
 const cancelMilestoneDialog = () => {
   TimeLineDialogVisible.value = false;
@@ -587,6 +600,17 @@ onMounted(() => {
 :deep(.el-timeline-item__node--large) {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+.delete-icon {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+:deep(.el-timeline-item:hover .delete-icon) {
+  opacity: 1;
 }
 :deep(.el-timeline-item.is-start .el-timeline-item__wrapper) {
   padding-left: 3rem;
