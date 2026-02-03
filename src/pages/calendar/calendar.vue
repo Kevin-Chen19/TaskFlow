@@ -83,7 +83,7 @@
             </div>
 
             <div class="filter-actions">
-              <button class="clear-filters-btn" @click="clearFilters">清空筛选</button>
+              <button class="clear-filters-btn" @click="clearFilters">恢复默认</button>
               <button class="apply-filters-btn" @click="applyFilters">应用筛选</button>
             </div>
           </div>
@@ -763,13 +763,20 @@ const clearFilters = () => {
   filters.value = {
     assignee: [],
     creator: [],
-    status: [],
     priority: [],
+    status: ['InProgress', 'Completed', 'Overdue']
   };
+    //默认只展示本人的任务
+  filters.value.assignee.push(userStore.user.userId);
 };
 
 onMounted(() => {
-  console.log("Calendar mounted with tasks:", getFilteredTasks.value);
+  //默认展示全部任务
+  filters.value.status.push('InProgress');
+  filters.value.status.push('Completed');
+  filters.value.status.push('Overdue');
+  //默认只展示本人的任务
+  filters.value.assignee.push(userStore.user.userId);
 });
 </script>
 
