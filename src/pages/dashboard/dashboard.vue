@@ -58,7 +58,7 @@
             :hollow="activity.hollow"
             :timestamp="activity.timestamp"
           >
-            <span style="font-size: larger">Phase{{index + 1}}: {{ activity.content }}</span>
+            <span style="font-size: larger; cursor: pointer;" @click="editMilestone(index)">Phase{{index + 1}}: {{ activity.content }}</span>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -151,9 +151,43 @@
       </div>
     </template>
   </el-dialog>
+  <el-dialog
+    v-model="TimeLineDialogVisible"
+    :title="isEditingMilestone ? 'Edit Milestone Event' : 'Add Milestone Event'"
+    width="600"
+    align-center
+  >
+    <div class="line"></div>
+    <div class="inputName">CONTENT</div>
+    <el-input
+      v-model="milestoneData.content"
+      placeholder="请输入里程碑标题"
+      class="content-input"
+      @change="submitNote"
+    ></el-input>
+    <div class="inputName">DUELINE</div>
+    <div class="dateLine-input">
+      <el-date-picker
+        v-model="milestoneData.dueLine"
+        type="date"
+        placeholder="Pick a day"
+        style="width: 18rem"
+      />
+    </div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="cancelMilestoneDialog" class="cancelBtn">
+          Cancel
+        </el-button>
+        <el-button type="primary" @click="saveMilestone" class="confirmBtn">
+          Save
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import CardTamp from "../../components/cardTamp.vue";
 import NewProjectCard from "../../components/newProjectCard.vue";
 import TimeIcon from "@/assets/icons/时间.png";
@@ -167,50 +201,55 @@ import user4 from "@/assets/pics/用户4.jpg";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
+import { ElMessage } from "element-plus";
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
+const TimeLineDialogVisible = ref(false);
 const userStore = useUserStore();
 const noteContent = ref('');
+const isEditingMilestone = ref(false);
+const editingMilestoneIndex = ref(-1);
+const milestoneData = reactive({
+  content: '',
+  dueLine: '',
+})
+
 interface ActivityType extends Partial<TimelineItemProps> {
   content: string;
 }
 
-const activities: ActivityType[] = [
+const activities = reactive<ActivityType[]>([
   {
-    content: "Discovery & Startegy",
-    timestamp: "Completed on 2026-01-15",
+    content: "Discovery & Strategy",
+    date: "2026-01-15",
     size: "large",
-    color: "#0bbd87",
-    icon: Check,
   },
   {
     content: "UI/UX Design",
-    timestamp: "Due on 2026-01-19",
+    date: "2026-01-19",
     size: "large",
-    color: "#24a4af",
-    icon: Refresh,
   },
   {
     content: "Development",
-    timestamp: "Scheduled on 2026-02-10",
+    date: "2026-02-10",
     size: "large",
   },
   {
     content: "Testing",
-    timestamp: "Scheduled on 2026-02-26",
+    date: "2026-02-26",
     size: "large",
   },
   {
     content: "Deployment",
-    timestamp: "Scheduled on 2026-02-29",
+    date: "2026-02-29",
     size: "large",
   },
   {
     content: "Maintenance",
-    timestamp: "Scheduled on 2026-03-10",
+    date: "2026-03-10",
     size: "large",
   },
-];
+]);
 const notes = reactive([
   {
     content: "Finish the task1",
@@ -276,10 +315,11 @@ const deleteNote = (index: number) => {
 };
 const newProjectCardRef = ref<InstanceType<typeof NewProjectCard> | null>(null);
 
-const formatDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+const formatDate = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 const handleSubmit = () => {
@@ -325,9 +365,164 @@ const submitNote = () => {
   noteContent.value = '';
   noteDialogVisible.value = false;
 }
-const addMilestone = () => {
 
+const addMilestone = () => {
+  isEditingMilestone.value = false;
+  editingMilestoneIndex.value = -1;
+  TimeLineDialogVisible.value = true;
+  // 清空表单
+  milestoneData.content = '';
+  milestoneData.dueLine = '';
 }
+
+// 编辑里程碑
+const editMilestone = (index: number) => {
+  isEditingMilestone.value = true;
+  editingMilestoneIndex.value = index;
+  // 填充表单
+  milestoneData.content = activities[index].content;
+  milestoneData.dueLine = activities[index].date;
+  TimeLineDialogVisible.value = true;
+}
+
+// 取消里程碑对话框
+const cancelMilestoneDialog = () => {
+  TimeLineDialogVisible.value = false;
+  milestoneData.content = '';
+  milestoneData.dueLine = '';
+  isEditingMilestone.value = false;
+  editingMilestoneIndex.value = -1;
+}
+
+// 计算显示的 timestamp
+const getDisplayTimestamp = (date: string): string => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const activityDate = new Date(date);
+  activityDate.setHours(0, 0, 0, 0);
+
+  const diffTime = activityDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return `Completed on ${date}`;
+  } else if (diffDays === 0) {
+    return `Due today on ${date}`;
+  } else {
+    return `Scheduled on ${date}`;
+  }
+};
+
+// 计算活动的显示属性（color 和 icon）
+const getActivityDisplayProps = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let lastCompletedIndex = -1;
+
+  activities.forEach((activity, index) => {
+    const activityDate = new Date(activity.date);
+    activityDate.setHours(0, 0, 0, 0);
+
+    if (activityDate.getTime() < today.getTime()) {
+      lastCompletedIndex = index;
+    }
+
+    // 设置 timestamp
+    activity.timestamp = getDisplayTimestamp(activity.date);
+
+    // 重置 color 和 icon
+    activity.color = undefined;
+    activity.icon = undefined;
+  });
+
+  // 为已完成的项添加完成图标
+  for (let i = 0; i <= lastCompletedIndex; i++) {
+    activities[i].color = "#0bbd87";
+    activities[i].icon = Check;
+  }
+
+  // 为第一个未完成的项添加刷新图标
+  if (lastCompletedIndex + 1 < activities.length) {
+    activities[lastCompletedIndex + 1].color = "#24a4af";
+    activities[lastCompletedIndex + 1].icon = Refresh;
+  }
+};
+
+// 保存里程碑
+const saveMilestone = () => {
+  if (!milestoneData.content || !milestoneData.dueLine) {
+    ElMessage({
+      message: "Please fill in all fields",
+      type: "warning",
+    });
+    return;
+  }
+
+  const updatedMilestone = {
+    content: milestoneData.content,
+    date: formatDate(milestoneData.dueLine),
+    size: "large",
+  };
+
+  if (isEditingMilestone.value && editingMilestoneIndex.value !== -1) {
+    // 编辑模式：更新现有里程碑
+    const originalIndex = editingMilestoneIndex.value;
+
+    // 移除旧的里程碑
+    activities.splice(originalIndex, 1);
+
+    // 找到插入位置（按日期排序）
+    let insertIndex = activities.length;
+    for (let i = 0; i < activities.length; i++) {
+      if (new Date(updatedMilestone.date) < new Date(activities[i].date)) {
+        insertIndex = i;
+        break;
+      }
+    }
+
+    // 在合适的位置插入
+    activities.splice(insertIndex, 0, updatedMilestone);
+
+    ElMessage({
+      message: "Milestone updated successfully",
+      type: "success",
+    });
+  } else {
+    // 新增模式：添加新里程碑
+    // 找到插入位置（按日期排序）
+    let insertIndex = activities.length;
+    for (let i = 0; i < activities.length; i++) {
+      if (new Date(updatedMilestone.date) < new Date(activities[i].date)) {
+        insertIndex = i;
+        break;
+      }
+    }
+
+    // 在合适的位置插入
+    activities.splice(insertIndex, 0, updatedMilestone);
+
+    ElMessage({
+      message: "Milestone added successfully",
+      type: "success",
+    });
+  }
+
+  // 重新计算显示属性
+  getActivityDisplayProps();
+
+  // 清空表单并关闭对话框
+  milestoneData.content = '';
+  milestoneData.dueLine = '';
+  isEditingMilestone.value = false;
+  editingMilestoneIndex.value = -1;
+  TimeLineDialogVisible.value = false;
+};
+
+// 组件挂载时初始化显示属性
+onMounted(() => {
+  getActivityDisplayProps();
+});
 </script>
 <style scoped lang="scss">
 
@@ -544,14 +739,13 @@ const addMilestone = () => {
 }
 // 全局输入框样式
 :deep(.el-input__wrapper) {
-  border-radius: 0px !important;
+  border-radius: 0 !important;
   background-color: #fff !important;
   box-shadow: none !important;
-  border: 1px solid #ccc;
+  border: 1px solid #ccc !important;
 }
 
 :deep(.el-input__wrapper:focus-within) {
-  border: 2px solid black;
+  border: 2px solid black !important;
 }
-
 </style>

@@ -18,12 +18,50 @@
               <span style="font-weight: 500">项目管理平台PC端</span>
             </div>
             <div style="display: flex; align-items: center">
-              <div class="notifyStyle" @click="getNotifications(); showNotifications = true">
+              <div
+                class="notifyStyle"
+                @click="
+                  getNotifications();
+                  showNotifications = true;
+                "
+              >
                 <img src="../../assets/icons/通知.png" alt="通知图标" />
                 <div v-show="ifHasUnread" class="point"></div>
               </div>
-              <div class="notifyStyle userPic">
-                <img src="../../assets/pics/用户头像.jpg" alt="用户头像" />
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Open user navigation menu"
+                placement="bottom"
+              >
+                <div style="position: relative">
+                  <div class="notifyStyle userPic" @click="showMenu">
+                    <img :src="userStore.user.pic" alt="用户头像" />
+                  </div>
+                </div>
+              </el-tooltip>
+              <div class="userMenu" v-if="showMenuValue">
+                <div class="menuTop">
+                  <div
+                    class="notifyStyle userPic"
+                    style="width: 3vh; height: 3vh"
+                  >
+                    <img :src="userStore.user.pic" alt="用户头像" />
+                  </div>
+                  <div style="display: flex; flex-direction: column">
+                    <span>{{ userStore.user.name }}</span>
+                    <span style="color: gray; font-size: small">{{
+                      userStore.user.email
+                    }}</span>
+                  </div>
+                  <div class="closeBtn" @click="showMenuValue = false">
+                    <Close />
+                  </div>
+                </div>
+                <div class="signoutBox" @click="signOut">
+                  <img src="@/assets/icons/退出登录.png" alt="退出登录图标" />
+                  <span>Sign out</span>
+                </div>
               </div>
             </div>
           </div>
@@ -139,9 +177,13 @@ import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import NotificationsCard from "@/components/NotificationsCard.vue";
 import { useNotificationStore } from "@/stores/notificationStore";
+import { useUserStore } from "@/stores/userStore";
+import { Close } from "@element-plus/icons-vue";
 const notificationStore = useNotificationStore();
 const which = ref("dashboard");
 const showNotifications = ref(false);
+const userStore = useUserStore();
+const showMenuValue = ref(false);
 const windowWidth = ref(window.innerWidth);
 const direction = ref("rtl");
 const router = useRouter();
@@ -185,10 +227,16 @@ const ifHasUnread = computed(() => {
 onMounted(() => {
   getNotifications();
 });
+const signOut = () => {
+  //路由重定向到login界面
+  router.push({
+    path: "/",
+  });
+};
 //刷新通知的函数
 const getNotifications = () => {
-notificationsByDate.splice(0, notificationsByDate.length);//清空数据
-const currentDateTime = getCurrentDateTime();
+  notificationsByDate.splice(0, notificationsByDate.length); //清空数据
+  const currentDateTime = getCurrentDateTime();
   todayDate.value = currentDateTime.split(" ")[0];
   yesterdayDate.value = new Date(
     new Date(currentDateTime).getTime() - 24 * 60 * 60 * 1000,
@@ -221,7 +269,7 @@ const currentDateTime = getCurrentDateTime();
     }
     num++;
   }
-}
+};
 const getDateTip = (dateValue: string): string => {
   if (dateValue === todayDate.value) {
     return "TODAY";
@@ -261,6 +309,9 @@ const handleMarkAllRead = () => {
 
 const handleMarkRead = (id: string) => {
   MarkRead("", id, false);
+};
+const showMenu = () => {
+  showMenuValue.value = !showMenuValue.value;
 };
 </script>
 <style scoped lang="scss">
@@ -350,6 +401,38 @@ const handleMarkRead = (id: string) => {
   img {
     width: 100%;
   }
+}
+.userMenu {
+  position: absolute;
+  width: 15rem;
+  border: 1px solid #aeadad;
+  right: 1rem;
+  top: 6.5vh;
+  padding: 0.5rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+}
+.menuTop {
+  display: flex;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #aeadad;
+}
+.signoutBox {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  img {
+    height: 1.2rem;
+    margin-right: 0.5rem;
+  }
+  font-size: 1rem;
+}
+.closeBtn {
+  position: absolute;
+  right: 1rem;
+  width: 1rem;
+  cursor: pointer;
 }
 .leftBox {
   background-color: #fff;

@@ -41,7 +41,7 @@
         </el-select>
       </div>
       <div>
-        <div class="inputName">DUELINE</div>
+      <div class="inputName">DUELINE</div>
         <el-date-picker
           v-model="formData.dueLine"
           type="date"

@@ -858,7 +858,6 @@ onMounted(() => {
 }
 
 .header-right {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -894,7 +893,6 @@ onMounted(() => {
     border-radius: 0.5rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     padding: 1rem;
-    z-index: 50;
     min-width: 280px;
     display: flex;
     flex-direction: column;
@@ -1101,7 +1099,6 @@ onMounted(() => {
   pointer-events: auto;
   transition: filter 0.15s;
   box-shadow: 0 1px 1px 0 rgb(0 0 0 / 0.05);
-  z-index: 10;
   border-left-width: 4px;
   border-left-style: solid;
 
