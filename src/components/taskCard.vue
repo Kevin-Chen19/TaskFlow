@@ -4,24 +4,24 @@
     <el-input
       v-model="formData.taskName"
       class="custom-input"
-      placeholder="Task Name..."
+      :placeholder="$t('taskCard.TaskName')"
     />
-    <div class="inputName">DISCRIPTION</div>
+    <div class="inputName">{{ $t('taskCard.DISCRIPTION') }}</div>
     <el-input
       v-model="formData.description"
       style="width: 100%"
       :rows="5"
       type="textarea"
       resize="none"
-      placeholder="Add details,requirements,or context..."
+      :placeholder="$t('taskCard.addDetails')"
       class="description-input"
     />
     <div style="width: 100%; display: flex; justify-content: space-between">
       <div>
-        <div class="inputName">PRIORITY LEVEL</div>
+        <div class="inputName">{{ $t('taskCard.PRIORITYLEVEL') }}</div>
         <el-select
           v-model="formData.priority"
-          placeholder="Select"
+          :placeholder="$t('taskCard.Select')"
           style="width: 18rem"
         >
           <template #label="{ label, value }">
@@ -41,21 +41,21 @@
         </el-select>
       </div>
       <div>
-      <div class="inputName">DUELINE</div>
+      <div class="inputName">{{ $t('taskCard.DUELINE') }}</div>
         <el-date-picker
           v-model="formData.dueLine"
           type="date"
-          placeholder="Pick a day"
+          :placeholder="$t('taskCard.PickADay')"
           style="width: 18rem"
           class="dateLine-input"
         />
       </div>
     </div>
-    <div class="inputName">ASSIGNEE</div>
+    <div class="inputName">{{ $t('taskPage.ASSIGNEE') }}</div>
     <el-input
       v-model="searchValue"
       style="width: 100%"
-      placeholder="Search by name or position..."
+      :placeholder="$t('taskCard.searchByNameOr')"
       class="search-input"
       :prefix-icon="Search"
       @change="toFind"

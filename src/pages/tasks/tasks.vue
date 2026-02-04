@@ -1,31 +1,31 @@
 <template>
   <div class="bigBox">
-    <div class="bigTitle">Tasks</div>
+    <div class="bigTitle">{{ $t('taskPage.Tasks') }}</div>
     <div class="Line_two">
-      <span class="smallText">View and manage project tasks.</span>
+      <span class="smallText">{{ $t('taskPage.viewAndManage') }}</span>
       <div style="display: flex; gap: 1rem">
         <div
           v-if="ifAll"
           class="new_task myBtn"
           @click="filterTasks('AssigneeName', userStore.user.userId, false)"
         >
-          My Tasks
+          {{ $t('taskPage.myTasks') }}
         </div>
         <div
           v-if="!ifAll"
           class="new_task allBtn"
           @click="filterTasks('AssigneeName', 'all', false)"
         >
-          All Tasks
+          {{ $t('taskPage.allTasks') }}
         </div>
-        <div class="new_task" @click="openNewTaskDialog">+ Add New Task</div>
+        <div class="new_task" @click="openNewTaskDialog">+ {{ $t('taskPage.addNewTask') }}</div>
       </div>
     </div>
     <div class="filterBox">
-      <span style="margin-right: 1rem">Filter by:</span>
+      <span style="margin-right: 1rem">{{ $t('taskPage.filterBy') }}:</span>
       <el-select
         v-model="filterLabel"
-        placeholder="Select Filter"
+        :placeholder="$t('taskPage.selectFilter')"
         style="width: 10rem"
       >
         <el-option
@@ -35,13 +35,13 @@
           :value="item.value"
         />
       </el-select>
-      <span style="margin: 0 1rem" v-if="filterLabel !== ''">Value:</span>
+      <span style="margin: 0 1rem" v-if="filterLabel !== ''">{{ $t('taskPage.Value') }}:</span>
       <el-select
         v-if="filterLabel === 'Assignee' || filterLabel === 'Creator'"
         v-model="MembersValue"
         multiple
         collapse-tags
-        placeholder="Select Member"
+        :placeholder="$t('taskPage.selectMember')"
         style="width: 10rem"
       >
         <el-option
@@ -56,7 +56,7 @@
         v-model="PriorityValue"
         multiple
         collapse-tags
-        placeholder="Select Priority"
+        :placeholder="$t('taskPage.selectPriority')"
         style="width: 10rem"
       >
         <el-option
@@ -69,7 +69,7 @@
       <el-input
         v-if="filterLabel === 'TaskName'"
         v-model="TaskNameValue"
-        placeholder="Task Name"
+        :placeholder="$t('taskPage.taskName')"
         style="width: 20rem"
       ></el-input>
       <el-slider
@@ -88,8 +88,8 @@
           end-placeholder="End date"
         />
       </div>
-      <div class="searchBtn" v-if="filterLabel !== ''" @click="filterTasks('filterSelect','',true)">Search</div>
-      <div class="searchBtn" v-if="filterLabel !== ''" @click="resetTableData" style="background-color: #04ab04;">Reset</div>
+      <div class="searchBtn" v-if="filterLabel !== ''" @click="filterTasks('filterSelect','',true)">{{ $t('taskPage.Search') }}</div>
+      <div class="searchBtn" v-if="filterLabel !== ''" @click="resetTableData" style="background-color: #04ab04;">{{ $t('taskPage.Reset') }}</div>
     </div>
     <div class="tableBox">
       <el-table
@@ -98,14 +98,14 @@
         @sort-change="handleSortChange"
         @row-click="showMessages"
       >
-        <el-table-column label="TASK NAME" width="310">
+        <el-table-column :label="$t('taskPage.TASKNAME')" width="310">
           <template #default="scope">
             <div class="rowName">{{ scope.row.taskName }}</div>
           </template>
         </el-table-column>
         <el-table-column
           prop="priority"
-          label="PRIORITY"
+          :label="$t('taskPage.PRIORITY')"
           sortable="custom"
           width="200"
         >
@@ -115,12 +115,12 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="CREATOR" width="220">
+        <el-table-column :label="$t('taskPage.CREATOR')" width="220">
           <template #default="scope">
             <div>{{ findUser(scope.row.createUser) }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="ASSIGNEE" width="220">
+        <el-table-column :label="$t('taskPage.ASSIGNEE')" width="220">
           <template #default="scope">
             <div v-for="item in scope.row.assignee.slice(0, 2)">
               {{ findUser(item) }}
@@ -128,13 +128,13 @@
             <div v-if="scope.row.assignee.length > 2">...</div>
           </template>
         </el-table-column>
-        <el-table-column label="TIMELINE" width="250">
+        <el-table-column :label="$t('taskPage.TIMELINE')" width="250">
           <template #default="scope">
             <div>{{ scope.row.createLine }}——{{ scope.row.dueLine }}</div>
           </template>
         </el-table-column>
         <el-table-column
-          label="PROGRESS"
+          :label="$t('taskPage.PROGRESS')"
           prop="progress"
           sortable="custom"
           width="311"
@@ -150,11 +150,11 @@
     </div>
     <div class="tableBottom">
       <div style="color: gray">
-        Showing
+        {{$t('taskPage.Showing')}}
         <span style="color: black"
           >1-{{ tasks.length >= 9 ? 9 : tasks.length }}</span
         >
-        of <span style="color: black">{{ tasks.length }}</span> tasks
+        {{$t('taskPage.of')}} <span style="color: black">{{ tasks.length }}</span> {{$t('taskPage.tasks')}}
       </div>
       <div>
         <el-pagination
@@ -169,7 +169,7 @@
   </div>
   <el-dialog
     v-model="centerDialogVisible"
-    :title="otherStore.ifEditTask ? 'Edit Task' : 'Add New Task'"
+    :title="otherStore.ifEditTask ? $t('taskPage.editTask') : $t('taskPage.addNewTask')"
     width="800"
     align-center
   >
@@ -177,37 +177,37 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
-          >Cancel</el-button
+          >{{ $t('cancel') }}</el-button
         >
         <el-button v-if="!otherStore.ifEditTask" type="primary" @click="handleSubmit" class="confirmBtn">
-          Creat Task
+          {{ $t('taskPage.creatTask') }}
         </el-button>
         <el-button v-if="otherStore.ifEditTask" type="primary" @click="submitEdit" class="confirmBtn">
-          Save Changes
+          {{ $t('taskPage.saveChanges') }}
         </el-button>
       </div>
     </template>
   </el-dialog>
   <el-dialog
     v-model="MessageDialogVisible"
-    title="Add New Task"
+    :title="$t('taskPage.addNewTask')"
     width="800"
     align-center
   >
   <template #header>
-    <div class="topTitle">Created on {{ MessageTask.createLine }}</div>
+    <div class="topTitle">{{ $t('taskPage.createdOn') }} {{ MessageTask.createLine }}</div>
     <div class="taskName">{{ MessageTask.taskName }}</div>
     <div style="width: 100%; height: 1px; background: #f3f4f4;"></div>
   </template>
   <div class="contentBox">
     <div class="contentBoxLeft">
-      <div class="tipTitle">Description</div>
+      <div class="tipTitle">{{ $t('taskPage.Description') }}</div>
       <div class="descriptionBox">{{ MessageTask.description }}</div>
         <div class="progressBox">
     <div class="topLine">
       <div>
-        <div style="color:black;">Task Progress</div>
-        <div v-if="ifCreator">Drag to update completion status</div>
+        <div style="color:black;">{{ $t('taskPage.taskProgress') }}</div>
+        <div v-if="ifCreator">{{ $t('taskPage.dragToUpdate') }}</div>
       </div>
       <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.percentage}}%</div>
     </div>
@@ -219,20 +219,20 @@
     />
     <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.percentage" />
     <div class="bottomTip">
-      <div>Not Started</div>
-      <div>Completed</div>
+      <div>{{ $t('taskPage.notStarted') }}</div>
+      <div>{{ $t('taskPage.Completed') }}</div>
     </div>
   </div>
     </div>
     <div class="contentBoxRight">
-      <div class="smallTip">CREATOR</div>
+      <div class="smallTip">{{ $t('taskPage.CREATOR') }}</div>
       <div class="creatorBox">
         <div class="picBox">
           <img :src="findUserPic(MessageTask.createUser)" alt="用户头像">
         </div>
         <div class="nameStyle">{{ findUser(MessageTask.createUser) }}</div>
       </div>
-      <div class="smallTip">ASSIGNEE</div>
+      <div class="smallTip">{{ $t('taskPage.ASSIGNEE') }}</div>
       <div class="assigneeBox">
         <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee">
           <div class="picBox">
@@ -241,15 +241,15 @@
           <div class="nameStyle">{{ findUser(item) }}</div>
         </div>
       </div>
-      <div class="smallTip">PRIORITY</div>
+      <div class="smallTip">{{ $t('taskPage.PRIORITY') }}</div>
       <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ MessageTask.priority }}</div>
-      <div class="smallTip">TIMEFRAME</div>
+      <div class="smallTip">{{ $t('taskPage.TIME') }}</div>
       <div class="timeBox">
         <div class="timePicBox">
           <img src="@/assets/icons/日历.png" alt="日历图标">
         </div>
         <div class="timeItem">
-          <div style="color: #898989; font-size: 0.8rem;">Due Date</div>
+          <div style="color: #898989; font-size: 0.8rem;">{{ $t('taskPage.dueDate') }}</div>
           <div>{{ MessageTask.dueLine }}</div>
         </div>
       </div>
@@ -258,10 +258,10 @@
 
   <template #footer>
     <div class="footerBox">
-      <div v-if="ifCreator" class="editBtn" @click="EditMessage">Edit</div>
-      <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">Save</div>
-      <div v-if="ifCreator" class="closeBtn" @click="handleDelete">Delete</div>
-      <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">Close</div>
+      <div v-if="ifCreator" class="editBtn" @click="EditMessage">{{ $t('Edit') }}</div>
+      <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">{{ $t('save') }}</div>
+      <div v-if="ifCreator" class="closeBtn" @click="handleDelete">{{ $t('Delete') }}</div>
+      <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">{{ $t('Close') }}</div>
     </div>
   </template>
   </el-dialog>
@@ -272,6 +272,8 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
@@ -318,27 +320,27 @@ const PriorityOptions = ["Critical", "High", "Medium", "Low", "Negligible"];
 const options = [
   {
     value: "Creator",
-    label: "Creator",
+    label: t('taskPage.Creator'),
   },
   {
     value: "TaskName",
-    label: "TaskName",
+    label: t('taskPage.taskName'),
   },
   {
     value: "Priority",
-    label: "Priority",
+    label: t('taskPage.Priority'),
   },
   {
     value: "Assignee",
-    label: "Assignee",
+    label: t('taskPage.Assignee'),
   },
   {
     value: "TimeLine",
-    label: "TimeLine",
+    label:  t('taskPage.TimeLine'),
   },
   {
     value: "Progress",
-    label: "Progress",
+    label: t('taskPage.Progress'),
   },
 ];
 //判断是否是任务创建者
@@ -583,13 +585,13 @@ const handleSubmit = () => {
     allTasks.push(componentData);
     tasks.push(componentData);
     ElMessage({
-      message: "Add Task Success",
+      message: t('addSuccessfully'),
       type: "success",
     });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
-      message: "Add Task Failed",
+      message: t('addFailed'),
       type: "error",
     });
   }
@@ -608,13 +610,13 @@ const submitEdit = () => {
     //刷新数据
     resetTableData();
       ElMessage({
-        message: "Edit Task Success",
+        message: t('updatedSuccess'),
         type: "success",
       });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
-      message: "Edit Task Failed",
+      message: t('updateFailed'),
       type: "error",
     });
   }
@@ -724,11 +726,11 @@ const reshowTableData = () =>{
 // 删除任务
 const handleDelete = () => {
     ElMessageBox.confirm(
-    'Are you sure to delete this task?',
-    'Warning',
+    t('taskPage.areYouDeleteTask'),
+    t('Warning'),
     {
-      confirmButtonText: 'OK',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: t('OK'),
+      cancelButtonText: t('cancel'),
       type: 'warning',
     }
   )
@@ -746,13 +748,13 @@ const handleDelete = () => {
       MessageDialogVisible.value = false;
       ElMessage({
         type: 'success',
-        message: 'Delete completed',
+        message: t('deleteSuccess'),
       })
     })
     .catch(() => {
       ElMessage({
         type: 'info',
-        message: 'Delete canceled',
+        message: t('deleteCanceled'),
       })
     })
 };

@@ -14,11 +14,11 @@
             <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="rename">重命名</el-dropdown-item>
-                <el-dropdown-item v-if="!props.ifBin" command="delete">移入回收站</el-dropdown-item>
-                <el-dropdown-item v-if="props.ifBin" command="drop">删除</el-dropdown-item>
-                <el-dropdown-item command="download">下载</el-dropdown-item>
-                <el-dropdown-item command="notify">提醒成员</el-dropdown-item>
+                <el-dropdown-item command="rename">{{ $t('projects.rename') }}</el-dropdown-item>
+                <el-dropdown-item v-if="!props.ifBin" command="delete">{{ $t('fileCard.moveToBin') }}</el-dropdown-item>
+                <el-dropdown-item v-if="props.ifBin" command="drop">{{ $t('fileCard.delete') }}</el-dropdown-item>
+                <el-dropdown-item command="download">{{ $t('fileCard.download') }}</el-dropdown-item>
+                <el-dropdown-item command="notify">{{ $t('fileCard.remindMembers') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>

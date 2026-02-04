@@ -12,7 +12,7 @@
           <div class="flex-1">
             <div class="ProjectData">
               <span style="color: gray; margin-right: 1rem"
-                >Current Project</span
+                >{{ $t('main.currentProject') }}</span
               >
               <span style="color: gray; margin-right: 1rem">/</span>
               <span style="font-weight: 500">项目管理平台PC端</span>
@@ -74,7 +74,7 @@
                 </div>
                 <div class="signoutBox" @click="signOut">
                   <img src="@/assets/icons/退出登录.png" alt="退出登录图标" />
-                  <span>Sign out</span>
+                  <span>{{ $t('main.signOut') }}</span>
                 </div>
               </div>
             </div>
@@ -89,7 +89,7 @@
             :class="which === 'dashboard' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/看板1.png" alt="看板1图标" />
-            <div>Dashboard</div>
+            <div>{{$t('main.dashboard')}}</div>
           </div>
           <div
             class="leftItem"
@@ -97,7 +97,7 @@
             :class="which === 'projects' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/文件1.png" alt="文件1图标" />
-            <div class="itemName">Projects</div>
+            <div class="itemName">{{$t('main.fileLibrary')}}</div>
           </div>
           <div
             class="leftItem"
@@ -105,7 +105,7 @@
             :class="which === 'tasks' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/任务1.png" alt="任务1图标" />
-            <div class="itemName">Tasks</div>
+            <div class="itemName">{{$t('main.tasks')}}</div>
           </div>
           <div
             class="leftItem"
@@ -113,7 +113,7 @@
             :class="which === 'calendar' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/日历栏.png" alt="日历栏图标" />
-            <div class="itemName">Calendar</div>
+            <div class="itemName">{{$t('main.calendar')}}</div>
           </div>
           <div
             class="leftItem"
@@ -121,7 +121,7 @@
             :class="which === 'team' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/团队1.png" alt="团队1图标" />
-            <div class="itemName">Team</div>
+            <div class="itemName">{{$t('main.team')}}</div>
           </div>
           <div
             class="leftItem"
@@ -129,7 +129,7 @@
             :class="which === 'roles' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/权限设置.png" alt="权限设置图标" />
-            <div class="itemName">Roles</div>
+            <div class="itemName">{{$t('main.roles')}}</div>
           </div>
           <div
             class="leftItem"
@@ -137,7 +137,7 @@
             :class="which === 'me' ? 'leftChoose' : ''"
           >
             <img src="../../assets/icons/我的.png" alt="我的图标" />
-            <div class="itemName">Me</div>
+            <div class="itemName">{{$t('main.me')}}</div>
           </div>
         </el-aside>
         <el-container>
@@ -163,9 +163,9 @@
       <div class="NotificationsTop">
         <div class="Icon_Name">
           <img src="@/assets/icons/通知提醒.png" alt="通知提醒图标" />
-          <span class="NotiTitle">Notifications</span>
+          <span class="NotiTitle">{{$t('main.notifications')}}</span>
         </div>
-        <div class="Mark" @click="handleMarkAllRead">Mark all read</div>
+        <div class="Mark" @click="handleMarkAllRead">{{$t('main.markAllRead')}}</div>
       </div>
     </template>
     <div class="MessageBox">
@@ -181,7 +181,7 @@
           />
         </div>
       </div>
-      <div class="moreBtn">View more Notifications</div>
+      <div class="moreBtn">{{ $t('viewMore') }}</div>
     </div>
   </el-drawer>
 </template>
@@ -189,10 +189,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import NotificationsCard from "@/components/NotificationsCard.vue";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { Close } from "@element-plus/icons-vue";
+const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const which = ref("dashboard");
 const languagePopoverRef = ref();
@@ -287,9 +289,9 @@ const getNotifications = () => {
 };
 const getDateTip = (dateValue: string): string => {
   if (dateValue === todayDate.value) {
-    return "TODAY";
+    return t('TODAY');
   } else if (dateValue === yesterdayDate.value) {
-    return "YESTERDAY";
+    return t('YESTERDAY');
   } else {
     return dateValue;
   }

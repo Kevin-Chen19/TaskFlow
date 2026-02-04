@@ -1,13 +1,13 @@
 <template>
   <div class="bigBox">
-    <div class="bigTitle">Project Document Libary</div>
+    <div class="bigTitle">{{ $t("projects.documentLibary") }}</div>
     <div class="Line_two">
-      <span class="smallText"> Welcome back,Kevin.Share team files here. </span>
+      <span class="smallText">{{ $t("projects.shareTeamFiles") }}</span>
       <div class="Line_two_right">
         <el-tooltip
           class="box-item"
           effect="dark"
-          :content="ifBin ? 'Close File Recycle Bin' : 'Open File Recycle Bin'"
+          :content="ifBin ? t('projects.colseBin') : t('projects.openbin')"
           placement="bottom"
         >
           <div class="iconBox">
@@ -40,7 +40,7 @@
         <div class="spaceLine"></div>
         <div class="iconBox uploadBox">
           <img src="@/assets/icons/上传文件.png" alt="上传文件图标" />
-          <div>Upload File</div>
+          <div>{{ $t("projects.uploadFile") }}</div>
         </div>
       </div>
     </div>
@@ -51,15 +51,15 @@
           class="backBtn"
           @click="backToParent"
         >
-          ← 返回上级
+          ← {{ $t("projects.returnSuperior") }}
         </span>
-        FLODERS
+        {{ $t("projects.FLODERS") }}
       </div>
       <div>
         <el-input
           v-model="searchFileValue"
           class="responsive-input"
-          placeholder="Search by file name..."
+          :placeholder="$t('projects.searchByFileName')"
           :prefix-icon="Search"
           @change="searchFiles"
         />
@@ -75,7 +75,7 @@
           :ifFolder="true"
           :bodyContent="item.fileName"
           :footerContent="
-            item.children ? item.children.length + 'files' : item.fileTime
+            item.children ? item.children.length + $t('projects.files') : item.fileTime
           "
           :topRightImg="true"
           :ifBin="item.ifInBin"
@@ -83,9 +83,13 @@
           @command="(command) => handleCommand(item, command)"
         ></CardTamp>
       </div>
-      <div class="createFolderBox" v-show="ifShowCreateBox" @click="createFolder">
+      <div
+        class="createFolderBox"
+        v-show="ifShowCreateBox"
+        @click="createFolder"
+      >
         <img src="@/assets/icons/新建文件夹.png" alt="新建文件夹图标" />
-        <div>New Folder</div>
+        <div>{{ $t("projects.newFolder") }}</div>
       </div>
     </div>
     <div class="listFloders" v-if="menuKind == 1">
@@ -103,7 +107,7 @@
               :ifBin="data.ifInBin"
               :fileName="data.fileName"
               :fileTime="
-                data.children ? data.children.length + ' files' : data.fileTime
+                data.children ? data.children.length + $t('projects.files') : data.fileTime
               "
               :fileMaker="data.fileMaker"
               :fileSize="data.fileSize"
@@ -114,7 +118,7 @@
         </template>
       </el-tree>
     </div>
-    <div class="emptyBox" v-if="ifEmpty">未找到匹配项</div>
+    <div class="emptyBox" v-if="ifEmpty">{{ $t("noMatchFound") }}</div>
     <div class="dropBox">
       <el-upload
         class="upload-demo"
@@ -124,38 +128,39 @@
       >
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
         <div class="el-upload__text">
-          Drop file here or <em>click to upload</em>
+          {{ $t("projects.dropFileOr") }}
+          <em>{{ $t("projects.clickToUpload") }}</em>
         </div>
       </el-upload>
     </div>
   </div>
   <el-dialog
     v-model="renameDialogVisible"
-    title="Rename"
+    :title="$t('projects.rename')"
     width="600"
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">New Name</div>
+    <div class="inputName">{{ $t("projects.newName") }}</div>
     <el-input
       v-model="newName"
-      placeholder="请输入新名称"
+      :placeholder="$t('pleaseEnterContent')"
       class="content-input"
     ></el-input>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="renameDialogVisible = false" class="cancelBtn">
-          Cancel
+          {{ $t("cancel") }}
         </el-button>
         <el-button type="primary" @click="submitName" class="confirmBtn">
-          Save
+          {{ $t("save") }}
         </el-button>
       </div>
     </template>
   </el-dialog>
   <el-dialog
     v-model="notificationDialogVisible"
-    title="Member Notification"
+    :title="$t('projects.memberNotification')"
     width="800"
     align-center
   >
@@ -164,10 +169,10 @@
     <template #footer>
       <div class="dialog-footer">
         <div @click="notificationDialogVisible = false" class="cancelBtn">
-          Cancel
+          {{$t('cancel')}}
         </div>
         <div type="primary" class="sendBtn" @click="sendNotification">
-          Send Notifications
+          {{$t('projects.sendNotifications')}}
         </div>
       </div>
     </template>
@@ -175,6 +180,7 @@
 </template>
 <script setup lang="ts">
 import CardTamp from "@/components/cardTamp.vue";
+import { useI18n } from "vue-i18n";
 import FileCard from "@/components/fileCard.vue";
 import MentionsCard from "@/components/mentionsCard.vue";
 import floderIcon from "@/assets/icons/文件夹.png";
@@ -182,6 +188,7 @@ import { UploadFilled } from "@element-plus/icons-vue";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 const userStore = useUserStore();
+const { t } = useI18n();
 const notificationStore = useNotificationStore();
 import type {
   RenderContentContext,
@@ -495,7 +502,10 @@ const enterFolder = (item: filesTree) => {
     // 从 AllFiles 中重新获取并显示子文件夹内容
     const folderInAllFiles = findFileById(AllFiles, item.id);
     if (folderInAllFiles && folderInAllFiles.children) {
-      const filteredChildren = filterFiles(folderInAllFiles.children, ifBin.value);
+      const filteredChildren = filterFiles(
+        folderInAllFiles.children,
+        ifBin.value,
+      );
       showFloders.push(...filteredChildren);
     }
   }
@@ -510,13 +520,16 @@ const backToParent = () => {
     if (folderPath.length === 0) {
       // 返回根目录
       showFloders.splice(0, showFloders.length);
-      showFloders.push(...ifBin.value ? binFloders : saveFloders);
+      showFloders.push(...(ifBin.value ? binFloders : saveFloders));
     } else {
       // 返回到上一级文件夹
       const parentId = folderPath[folderPath.length - 1];
       const parentFolder = findFileById(AllFiles, parentId);
       if (parentFolder && parentFolder.children) {
-        const filteredChildren = filterFiles(parentFolder.children, ifBin.value);
+        const filteredChildren = filterFiles(
+          parentFolder.children,
+          ifBin.value,
+        );
         showFloders.splice(0, showFloders.length);
         showFloders.push(...filteredChildren);
       }
@@ -553,10 +566,10 @@ const handleCommand = (file: filesTree, command: string) => {
   // 处理不同命令
   if (command === "rename") {
     newName.value = file.fileName;
-    houzhui.value = newName.value.split('.')[1];
+    houzhui.value = newName.value.split(".")[1];
     currentFileId.value = file.id;
     renameDialogVisible.value = true;
-  } else if (command === "delete"){
+  } else if (command === "delete") {
     // 在原始数据源中查找并递归删除
     const targetFile = findFileById(AllFiles, file.id);
     if (targetFile) {
@@ -580,30 +593,35 @@ const handleCommand = (file: filesTree, command: string) => {
         const currentFolderId = folderPath[folderPath.length - 1];
         const currentFolder = findFileById(AllFiles, currentFolderId);
         if (currentFolder && currentFolder.children) {
-          const filteredCurrentFolder = filterFiles(currentFolder.children, ifBin.value);
+          const filteredCurrentFolder = filterFiles(
+            currentFolder.children,
+            ifBin.value,
+          );
           showFloders.splice(0, showFloders.length);
           showFloders.push(...filteredCurrentFolder);
         }
       } else {
         // 在根目录：根据当前视图模式显示
         showFloders.splice(0, showFloders.length);
-        showFloders.push(...ifBin.value ? binFloders : saveFloders);
+        showFloders.push(...(ifBin.value ? binFloders : saveFloders));
       }
     }
-  } else if (command === "notify"){
+  } else if (command === "notify") {
     mentionsDate.fileName = file.fileName;
     notificationDialogVisible.value = true;
-  } else if (command === "drop"){
+  } else if (command === "drop") {
     //彻底删除文件
     const targetFile = findFileById(AllFiles, file.id);
     if (targetFile) {
       // 从父文件夹中移除该文件
       const parentFolder = findParentFolder(AllFiles, file.id);
       if (parentFolder && parentFolder.children) {
-        parentFolder.children = parentFolder.children.filter(item => item.id !== file.id);
+        parentFolder.children = parentFolder.children.filter(
+          (item) => item.id !== file.id,
+        );
       } else {
         // 如果没有父文件夹，说明在根目录，直接从 AllFiles 中移除
-        const index = AllFiles.findIndex(item => item.id === file.id);
+        const index = AllFiles.findIndex((item) => item.id === file.id);
         if (index !== -1) {
           AllFiles.splice(index, 1);
         }
@@ -625,14 +643,17 @@ const handleCommand = (file: filesTree, command: string) => {
         const currentFolderId = folderPath[folderPath.length - 1];
         const currentFolder = findFileById(AllFiles, currentFolderId);
         if (currentFolder && currentFolder.children) {
-          const filteredCurrentFolder = filterFiles(currentFolder.children, ifBin.value);
+          const filteredCurrentFolder = filterFiles(
+            currentFolder.children,
+            ifBin.value,
+          );
           showFloders.splice(0, showFloders.length);
           showFloders.push(...filteredCurrentFolder);
         }
       } else {
         // 在根目录：根据当前视图模式显示
         showFloders.splice(0, showFloders.length);
-        showFloders.push(...ifBin.value ? binFloders : saveFloders);
+        showFloders.push(...(ifBin.value ? binFloders : saveFloders));
       }
     }
   }
@@ -664,7 +685,10 @@ const deleteFileRecursively = (file: filesTree, inBin: boolean) => {
 };
 
 // 查找父文件夹
-const findParentFolder = (files: filesTree[], childId: string | undefined): filesTree | null => {
+const findParentFolder = (
+  files: filesTree[],
+  childId: string | undefined,
+): filesTree | null => {
   for (const file of files) {
     if (file.children) {
       for (const child of file.children) {
@@ -687,23 +711,23 @@ const submitName = () => {
   //实现对文件或文件夹的重命名
   const file = findFileById(showFloders, currentFileId.value);
   if (!file) {
-    console.error('File not found:', currentFileId.value);
+    console.error("File not found:", currentFileId.value);
     renameDialogVisible.value = false;
     return;
   }
   if (file.children) {
     // 文件夹：不需要后缀名
-    file.fileName = newName.value.split('.')[0];
+    file.fileName = newName.value.split(".")[0];
   } else {
     // 文件：处理后缀名
-    const parts = newName.value.split('.');
+    const parts = newName.value.split(".");
     const fileName = parts[0];
     const fileType = parts[1];
 
     if (fileType && fileType === houzhui.value) {
       file.fileName = newName.value;
     } else {
-      file.fileName = fileName + '.' + houzhui.value;
+      file.fileName = fileName + "." + houzhui.value;
     }
   }
   renameDialogVisible.value = false;
@@ -735,14 +759,14 @@ const createFolder = () => {
   let folderName = "新建文件夹";
   let counter = 1;
   let isNameExist = targetArray.some(
-    (item) => item.fileName === folderName && !!item.children
+    (item) => item.fileName === folderName && !!item.children,
   );
 
   while (isNameExist) {
     folderName = `新建文件夹${counter}`;
     counter++;
     isNameExist = targetArray.some(
-      (item) => item.fileName === folderName && !!item.children
+      (item) => item.fileName === folderName && !!item.children,
     );
   }
 
@@ -778,7 +802,7 @@ const createFolder = () => {
       showFloders.push(...filteredChildren);
     }
   }
-}
+};
 const sendNotification = () => {
   console.log(mentionsDate);
   notificationStore.notifications.unshift({
@@ -789,29 +813,29 @@ const sendNotification = () => {
     creator: userStore.user.name,
     receiver: [...mentionsDate.members],
     kind: "文件提醒",
-    content: mentionsDate.note
+    content: mentionsDate.note,
   });
-  console.log(notificationStore.notifications)
+  console.log(notificationStore.notifications);
   notificationDialogVisible.value = false;
-  clearmentionsDate()
-}
+  clearmentionsDate();
+};
 const clearmentionsDate = () => {
-  mentionsDate.note = "";  
-  mentionsDate.members.splice(0,mentionsDate.members.length);
+  mentionsDate.note = "";
+  mentionsDate.members.splice(0, mentionsDate.members.length);
   mentionsDate.fileName = "";
-  console.log(mentionsDate)
-}
+  console.log(mentionsDate);
+};
 
 // 格式化日期为 yyyy-MM-dd HH:mm:ss
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
+};
 </script>
 <style scoped lang="scss">
 .Line_two_right {
@@ -966,29 +990,29 @@ const formatDate = (date: Date): string => {
 :deep(.el-input__wrapper:focus-within) {
   border: 1px solid black;
 }
-.dialog-footer{
+.dialog-footer {
   display: flex;
   justify-content: end;
   align-items: center;
-  gap:1rem;
+  gap: 1rem;
 }
-.cancelBtn{
+.cancelBtn {
   padding: 0.5rem 1rem;
   border: 1px solid #ccc;
   border-radius: 0.5rem;
   cursor: pointer;
 }
-.cancelBtn:hover{
+.cancelBtn:hover {
   background-color: #ebe9e9;
 }
-.sendBtn{
+.sendBtn {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   background-color: #2563eb;
   color: #fff;
   cursor: pointer;
 }
-.sendBtn:hover{
+.sendBtn:hover {
   background-color: #1d4ed8;
 }
 </style>

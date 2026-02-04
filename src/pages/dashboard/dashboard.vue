@@ -1,17 +1,17 @@
 <template>
   <div class="bigBox">
-    <div class="bigTitle">Project Overview</div>
+    <div class="bigTitle">{{ $t("Dashboard.dashboard") }}</div>
     <div class="Line_two">
-      <span class="smallText"
-        >Welcome back,Kevin.Task Flow is on track for Q4 delivery.</span
-      >
-      <div class="new_task" @click="openNewProjectDialog">+ New Project</div>
+      <span class="smallText">{{ $t("Dashboard.pageTip") }}</span>
+      <div class="new_task" @click="openNewProjectDialog">
+        {{ $t("Dashboard.newProject") }}
+      </div>
     </div>
     <div class="cards">
       <div class="cardItem">
         <CardTamp
           :topLeftImg="TimeIcon"
-          bodyContent="Total Hours"
+          :bodyContent="$t('Dashboard.totalHours')"
           footerContent="100.5h"
         ></CardTamp>
       </div>
@@ -19,7 +19,7 @@
         <CardTamp
           :topLeftImg="taskIcon"
           topLeftBgc="rgba(167, 234, 167, 0.777)"
-          bodyContent="Tasks Completed"
+          :bodyContent="$t('Dashboard.tasksProgress')"
           footerContent="23/100"
         ></CardTamp>
       </div>
@@ -27,7 +27,7 @@
         <CardTamp
           :topLeftImg="WarningIcon"
           topLeftBgc="#f5e5d3a5"
-          bodyContent="Early Warning"
+          :bodyContent="$t('Dashboard.earlyWarning')"
           footerContent="3"
         ></CardTamp>
       </div>
@@ -35,17 +35,19 @@
         <CardTamp
           :topLeftImg="ExpiredIcon"
           topLeftBgc="rgba(227, 158, 158, 0.739)"
-          bodyContent="Expired Tasks"
+          :bodyContent="$t('Dashboard.expiredTasks')"
           footerContent="0"
         ></CardTamp>
       </div>
     </div>
     <div class="bottomBox">
       <div class="TimeLine">
-        <span class="MiddleTitle">Project Timeline</span>
+        <span class="MiddleTitle">{{ $t("Dashboard.projectMilestones") }}</span>
         <div class="Line_two" style="margin-bottom: 1.5rem">
-          <span style="color: #909cad">Phases and key milestones</span>
-          <span class="GanttSty" @click="addMilestone">Add Milestone event</span>
+          <span style="color: #909cad">{{ $t("Dashboard.phases_key") }}</span>
+          <span class="GanttSty" @click="addMilestone">{{
+            $t("Dashboard.addMilEvent")
+          }}</span>
         </div>
         <el-timeline>
           <el-timeline-item
@@ -58,14 +60,21 @@
             :hollow="activity.hollow"
             :timestamp="activity.timestamp"
           >
-            <span style="font-size: larger; cursor: pointer;" @click="editMilestone(index)">Phase{{index + 1}}: {{ activity.content }}</span>
-            <el-icon @click="deleteMilestone(index)" class="delete-icon"><Delete /></el-icon>
+            <span
+              style="font-size: larger; cursor: pointer"
+              @click="editMilestone(index)"
+              >{{ $t("Dashboard.phase") }}{{ index + 1 }}:
+              {{ activity.content }}</span
+            >
+            <el-icon @click="deleteMilestone(index)" class="delete-icon"
+              ><Delete
+            /></el-icon>
           </el-timeline-item>
         </el-timeline>
       </div>
       <div class="Team_Note">
         <div class="NoteBox">
-          <span class="noteStyle">Note</span>
+          <span class="noteStyle">{{ $t("Dashboard.notes") }}</span>
           <div class="noteItemBox">
             <div class="noteItem" v-for="(item, index) in notes" :key="item.id">
               <div class="noteSelect" @click="item.ifFinish = !item.ifFinish">
@@ -81,10 +90,12 @@
               </div>
             </div>
           </div>
-          <div class="addBtn" @click="addNote">+ Add Note</div>
+          <div class="addBtn" @click="addNote">
+            {{ $t("Dashboard.addNote") }}
+          </div>
         </div>
         <div class="NoteBox TeamBox">
-          <span class="noteStyle">Team Avaliability</span>
+          <span class="noteStyle">{{ $t("Dashboard.memberProgress") }}</span>
           <div class="noteItemBox teamBox">
             <div class="noteItem" v-for="item in users" :key="item.name">
               <div class="userPic">
@@ -111,77 +122,84 @@
   </div>
   <el-dialog
     v-model="centerDialogVisible"
-    title="Create New Project"
+    :title="$t('Dashboard.createProject')"
     width="800"
     align-center
   >
-    <NewProjectCard v-if="centerDialogVisible" ref="newProjectCardRef"></NewProjectCard>
+    <NewProjectCard
+      v-if="centerDialogVisible"
+      ref="newProjectCardRef"
+    ></NewProjectCard>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="centerDialogVisible = false" class="cancelBtn"
-          >Cancel</el-button
-        >
+        <el-button @click="centerDialogVisible = false" class="cancelBtn">{{
+          $t("cancel")
+        }}</el-button>
         <el-button type="primary" @click="handleSubmit" class="confirmBtn">
-          Creat Project
+          {{ $t("Dashboard.create_project") }}
         </el-button>
       </div>
     </template>
   </el-dialog>
   <el-dialog
     v-model="noteDialogVisible"
-    title="Add New Note"
+    :title="$t('Dashboard.addNote')"
     width="600"
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">CONTENT</div>
+    <div class="inputName">{{ $t("CONTENT") }}</div>
     <el-input
       v-model="noteContent"
-      placeholder="请输入内容"
+      :placeholder="$t('pleaseEnterContent')"
       class="content-input"
       @change="submitNote"
     ></el-input>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn">
-          Cancel
+          {{ $t("cancel") }}
         </el-button>
         <el-button type="primary" @click="submitNote" class="confirmBtn">
-          Add Note
+          {{ $t("Dashboard.add_note") }}
         </el-button>
       </div>
     </template>
   </el-dialog>
   <el-dialog
     v-model="TimeLineDialogVisible"
-    :title="isEditingMilestone ? 'Edit Milestone Event' : 'Add Milestone Event'"
+    :title="
+      isEditingMilestone
+        ? t('Dashboard.editMilestone')
+        : t('Dashboard.addMilEvent')
+    "
     width="600"
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">CONTENT</div>
+    <div class="inputName">{{ $t("CONTENT") }}</div>
     <el-input
       v-model="milestoneData.content"
-      placeholder="请输入里程碑标题"
+      :placeholder="$t('pleaseEnterContent')"
       class="content-input"
       @change="submitNote"
     ></el-input>
-    <div class="inputName">DUELINE</div>
+    <div class="inputName">{{ $t("DUELINE") }}</div>
     <div class="dateLine-input">
       <el-date-picker
         v-model="milestoneData.dueLine"
         type="date"
-        placeholder="Pick a day"
+        :placeholder="$t('pickADay')"
         style="width: 18rem"
       />
     </div>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="cancelMilestoneDialog" class="cancelBtn">
-          Cancel
+          {{ $t("cancel") }}
         </el-button>
         <el-button type="primary" @click="saveMilestone" class="confirmBtn">
-          Save
+          {{ $t("save") }}
         </el-button>
       </div>
     </template>
@@ -189,6 +207,7 @@
 </template>
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import CardTamp from "../../components/cardTamp.vue";
 import NewProjectCard from "../../components/newProjectCard.vue";
 import TimeIcon from "@/assets/icons/时间.png";
@@ -207,13 +226,14 @@ const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
 const TimeLineDialogVisible = ref(false);
 const userStore = useUserStore();
-const noteContent = ref('');
+const noteContent = ref("");
 const isEditingMilestone = ref(false);
 const editingMilestoneIndex = ref(-1);
+const { t } = useI18n();
 const milestoneData = reactive({
-  content: '',
-  dueLine: '',
-})
+  content: "",
+  dueLine: "",
+});
 
 interface ActivityType extends Partial<TimelineItemProps> {
   content: string;
@@ -317,7 +337,7 @@ const deleteNote = (index: number) => {
 const newProjectCardRef = ref<InstanceType<typeof NewProjectCard> | null>(null);
 
 const formatDate = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === "string" ? new Date(date) : date;
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -348,12 +368,12 @@ const handleSubmit = () => {
 };
 const addNote = () => {
   noteDialogVisible.value = true;
-}
+};
 
 const openNewProjectDialog = () => {
   centerDialogVisible.value = true;
-  noteContent.value = '';
-}
+  noteContent.value = "";
+};
 const submitNote = () => {
   console.log(noteContent);
   notes.push({
@@ -363,18 +383,18 @@ const submitNote = () => {
     id: Date.now(),
   });
   console.log(notes);
-  noteContent.value = '';
+  noteContent.value = "";
   noteDialogVisible.value = false;
-}
+};
 
 const addMilestone = () => {
   isEditingMilestone.value = false;
   editingMilestoneIndex.value = -1;
   TimeLineDialogVisible.value = true;
   // 清空表单
-  milestoneData.content = '';
-  milestoneData.dueLine = '';
-}
+  milestoneData.content = "";
+  milestoneData.dueLine = "";
+};
 
 // 编辑里程碑
 const editMilestone = (index: number) => {
@@ -384,7 +404,7 @@ const editMilestone = (index: number) => {
   milestoneData.content = activities[index].content;
   milestoneData.dueLine = activities[index].date;
   TimeLineDialogVisible.value = true;
-}
+};
 
 // 删除里程碑
 const deleteMilestone = (index: number) => {
@@ -393,19 +413,19 @@ const deleteMilestone = (index: number) => {
   getActivityDisplayProps();
 
   ElMessage({
-    message: "Milestone deleted successfully",
+    message: t("deleteSuccess"),
     type: "success",
   });
-}
+};
 
 // 取消里程碑对话框
 const cancelMilestoneDialog = () => {
   TimeLineDialogVisible.value = false;
-  milestoneData.content = '';
-  milestoneData.dueLine = '';
+  milestoneData.content = "";
+  milestoneData.dueLine = "";
   isEditingMilestone.value = false;
   editingMilestoneIndex.value = -1;
-}
+};
 
 // 计算显示的 timestamp
 const getDisplayTimestamp = (date: string): string => {
@@ -418,11 +438,9 @@ const getDisplayTimestamp = (date: string): string => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return `Completed on ${date}`;
-  } else if (diffDays === 0) {
-    return `Due today on ${date}`;
+    return t("Dashboard.completedOn") + `${date}`;
   } else {
-    return `Scheduled on ${date}`;
+    return t("Dashboard.scheduledOn") +  `${date}`;
   }
 };
 
@@ -466,7 +484,7 @@ const getActivityDisplayProps = () => {
 const saveMilestone = () => {
   if (!milestoneData.content || !milestoneData.dueLine) {
     ElMessage({
-      message: "Please fill in all fields",
+      message: t('pleaseFillAll'),
       type: "warning",
     });
     return;
@@ -498,7 +516,7 @@ const saveMilestone = () => {
     activities.splice(insertIndex, 0, updatedMilestone);
 
     ElMessage({
-      message: "Milestone updated successfully",
+      message: t('updatedSuccess'),
       type: "success",
     });
   } else {
@@ -516,7 +534,7 @@ const saveMilestone = () => {
     activities.splice(insertIndex, 0, updatedMilestone);
 
     ElMessage({
-      message: "Milestone added successfully",
+      message: t('addSuccessfully'),
       type: "success",
     });
   }
@@ -525,8 +543,8 @@ const saveMilestone = () => {
   getActivityDisplayProps();
 
   // 清空表单并关闭对话框
-  milestoneData.content = '';
-  milestoneData.dueLine = '';
+  milestoneData.content = "";
+  milestoneData.dueLine = "";
   isEditingMilestone.value = false;
   editingMilestoneIndex.value = -1;
   TimeLineDialogVisible.value = false;
@@ -538,7 +556,6 @@ onMounted(() => {
 });
 </script>
 <style scoped lang="scss">
-
 .new_task {
   padding: 0.4rem 0.7rem;
   background-color: rgb(56, 55, 55);
@@ -591,7 +608,7 @@ onMounted(() => {
   cursor: pointer;
   color: #036eba;
 }
-:deep(.el-timeline-item__content ){
+:deep(.el-timeline-item__content) {
   font-size: 1.1rem;
 }
 :deep(.el-timeline-item__timestamp) {
@@ -675,8 +692,8 @@ onMounted(() => {
     width: 100%;
   }
 }
-.item_content{
-  flex:1;
+.item_content {
+  flex: 1;
   //设置文本不换行，超出范围省略号表示
   white-space: nowrap;
   overflow: hidden;

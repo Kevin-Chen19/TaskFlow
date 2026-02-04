@@ -1,8 +1,8 @@
 <template>
   <div class="mainBox">
-    <div class="bigTitle">File Alert</div>
+    <div class="bigTitle">{{ $t('projects.fileAlert') }}</div>
     <div class="littleSpan">
-      Manage who receives instant push alerts for "{{ props.mentionsDate.fileName }}"
+      {{ $t('projects.manageWhoReceives') }}"{{ props.mentionsDate.fileName }}"
     </div>
     <div class="tableBox">
       <el-table
@@ -12,7 +12,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column fixed type="selection" width="55" />
-        <el-table-column label="MEMBER" width="250">
+        <el-table-column :label="$t('projects.MEMBER')" width="250">
           <template #default="scope">
             <div class="nameBox">
               <div class="picBox">
@@ -22,28 +22,28 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="postion" label="ROLE" width="250" />
-        <el-table-column label="STATUS" width="176">
+        <el-table-column prop="postion" :label="$t('projects.ROLE')" width="250" />
+        <el-table-column :label="$t('projects.STATUS')" width="176">
           <template #default="scope">
             <div
               class="statusStyle1"
               :class="scope.row.status === 'offline' ? 'statusStyle2' : ''"
             >
-              {{ scope.row.status }}
+              {{ $t(scope.row.status) }}
             </div>
           </template>
         </el-table-column>
       </el-table>
     </div>
-    <div class="numberBox">{{ selectedNum }} MEMBERS SELECTED</div>
-    <div class="noteBox">Add a note for the team(Optional)</div>
+    <div class="numberBox">{{ selectedNum }} {{$t('projects.MEMBERSSELECTED')}}</div>
+    <div class="noteBox"> {{$t('projects.addANoteForTeam')}}</div>
     <div>
       <el-input
         v-model="props.mentionsDate.note"
         style="width: 100%"
         :rows="5"
         type="textarea"
-        placeholder="Enter context for this file..."
+        :placeholder="$t('projects.enterContextFile')"
         resize="none"
       />
     </div>

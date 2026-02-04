@@ -8,20 +8,20 @@
     </div>
     <div class="messageBox">
       <div class="messTop">
-        <span class="messTitle">{{ props.notification?.name }}</span>
+        <span class="messTitle">{{ $t(props.notification?.name) }}</span>
         <span class="messTime">{{ props.notification?.time.split(' ')[1] }}</span>
       </div>
       <div class="whoSayBox" v-if="props.notification?.kind === '聊天消息'">
         <span style="color: #135bec; margin-right: 0.4rem;">@{{ props.notification?.creator }}</span>
-        <span>commented:</span>
+        <span>{{$t('notificationCard.commented')}}:</span>
       </div>
       <div class="descriptionBox">
         <span>{{  props.notification?.content }}</span>
       </div>
       <div class="messBottom">
-        <div class="replyBtn" v-if="props.notification?.kind === '聊天消息'">Reply</div>
-        <div v-if="props.notification?.status === '未读'" class="MarkBtn" @click="handleMarkRead">Mark as read</div>
-        <div v-if="props.notification?.status !== '未读'" class="MarkBtn" @click="handleMarkUnread">Mark as unread</div>
+        <div class="replyBtn" v-if="props.notification?.kind === '聊天消息'">{{ $t('notificationCard.reply') }}</div>
+        <div v-if="props.notification?.status === '未读'" class="MarkBtn" @click="handleMarkRead">{{ $t('notificationCard.markAsRead') }}</div>
+        <div v-if="props.notification?.status !== '未读'" class="MarkBtn" @click="handleMarkUnread">{{ $t('notificationCard.markAsUnread') }}</div>
       </div>
     </div>
   </div>
