@@ -18,6 +18,20 @@
               <span style="font-weight: 500">项目管理平台PC端</span>
             </div>
             <div style="display: flex; align-items: center">
+              <el-popover
+                ref="languagePopoverRef"
+                trigger="hover"
+              >
+                <template #reference>
+                  <div class="transBox">
+                    <img src="@/assets/icons/翻译.png" alt="翻译图标" />
+                  </div>
+                </template>
+                 <template #default>
+                  <div class="languageSpan" @click="changeLanguage('中文')">简体中文</div>
+                  <div class="languageSpan" @click="changeLanguage('English')">English</div>
+                 </template>
+                </el-popover>
               <div
                 class="notifyStyle"
                 @click="
@@ -181,6 +195,7 @@ import { useUserStore } from "@/stores/userStore";
 import { Close } from "@element-plus/icons-vue";
 const notificationStore = useNotificationStore();
 const which = ref("dashboard");
+const languagePopoverRef = ref();
 const showNotifications = ref(false);
 const userStore = useUserStore();
 const showMenuValue = ref(false);
@@ -313,6 +328,10 @@ const handleMarkRead = (id: string) => {
 const showMenu = () => {
   showMenuValue.value = !showMenuValue.value;
 };
+
+const changeLanguage = (lang: string) => {
+  languagePopoverRef.value?.hide();
+};
 </script>
 <style scoped lang="scss">
 .el-header,
@@ -377,6 +396,22 @@ const showMenu = () => {
   border-radius: 1vw;
   background-color: #eff0f1;
   font-size: medium;
+}
+.transBox {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 1rem;
+  cursor: pointer;
+  img {
+    width: 100%;
+  }
+}
+.languageSpan{
+  cursor: pointer;
+  margin-bottom:0.5rem;
+}
+.languageSpan:hover{
+  color: #03b8fa;
 }
 .notifyStyle {
   position: relative;
