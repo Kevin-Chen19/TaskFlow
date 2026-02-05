@@ -4,23 +4,23 @@
     <el-input
       v-model="projectData.taskName"
       class="custom-input"
-      placeholder="Project Name..."
+      :placeholder="$t('newPeojectCard.ProjectName')"
     />
-    <div class="inputName">Project Goal / Description</div>
+    <div class="inputName">{{ $t('newPeojectCard.ProjectGoal') }} / {{ $t('newPeojectCard.Description') }}</div>
     <el-input
       v-model="projectData.description"
       style="width: 100%"
       :rows="5"
       type="textarea"
       resize="none"
-      placeholder="Briefly describe the project..."
+      :placeholder="$t('newPeojectCard.Brieflydescribe')"
       class="description-input"
     />
-    <div class="inputName">Invite Team Members</div>
+    <div class="inputName">{{ $t('newPeojectCard.InviteTeamMembers') }}</div>
     <el-input
       v-model="searchValue"
       style="width: 100%"
-      placeholder="Search by name or position..."
+      :placeholder="$t('taskCard.searchByNameOr')"
       class="search-input"
       :prefix-icon="Search"
       @change="toFind"

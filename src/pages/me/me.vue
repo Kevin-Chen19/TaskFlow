@@ -26,7 +26,7 @@
           <div class="iconBox">
             <img src="@/assets/icons/文件夹2.png" alt="文件夹图标" />
           </div>
-          <div class="titleName">Projects | Created</div>
+          <div class="titleName">{{$t('me.Projects')}} | {{$t('me.Created')}}</div>
         </div>
         <div class="btnBox">
           <div
@@ -73,7 +73,7 @@
           <div class="iconBox" style="width: 2rem; height: 2rem">
             <img src="@/assets/icons/加入.png" alt="加入图标" />
           </div>
-          <div class="titleName">Projects | Joined</div>
+          <div class="titleName">{{$t('me.Projects')}} | {{$t('me.Joined')}}</div>
         </div>
         <div class="btnBox">
           <div
@@ -122,16 +122,16 @@
         <div class="iconBox" style="width: 2rem; height: 2rem">
           <img src="@/assets/icons/图表.png" alt="图表图标" />
         </div>
-        <div class="titleName">Performance Analytics</div>
+        <div class="titleName">{{ $t('me.PerformanceAnalytics') }}</div>
       </div>
       <div class="analyticsBox">
         <div class="analyticsLeft">
           <div class="Line_two">
             <div>
-              <div class="titleName">Task Velocity</div>
-              <div class="smallTips">Tasks completed over the last 30 days</div>
+              <div class="titleName">{{ $t('me.TaskVelocity') }}</div>
+              <div class="smallTips">{{ $t('me.Taskscompleteddays') }}</div>
             </div>
-            <div class="timeBox">Last 30 Day</div>
+            <div class="timeBox">{{ $t('me.Last30Day') }}</div>
           </div>
           <div class="echarsBox">
             <Velocity></Velocity>
@@ -140,7 +140,7 @@
         <div class="analyticsRight">
           <div class="rightItem1">
             <div>
-              <div class="smallTips">On-time Completion</div>
+              <div class="smallTips">{{ $t('me.OntimeCompletion') }}</div>
               <div class="rateNumber">94%</div>
             </div>
             <div class="progressBox">
@@ -159,7 +159,7 @@
           <div class="rightItem2">
             <div class="Line_two" style="align-items: center">
               <div>
-                <div class="smallTips">Number of tasks completed</div>
+                <div class="smallTips">{{ $t('me.Numberoftasks') }}</div>
                 <div class="rateNumber">25</div>
               </div>
               <div class="icon_Box">
@@ -174,7 +174,7 @@
                 color="#9256f5"
               />
             </div>
-            <div class="bottomTip">The task completion rate reached {{userStore.user.percentage}}%</div>
+            <div class="bottomTip">{{ $t('me.ratereached') }} {{userStore.user.percentage}}%</div>
           </div>
         </div>
       </div>
@@ -182,8 +182,8 @@
   </div>
    <el-dialog v-model="dialogFormVisible" width="500">
     <template #header>
-      <div class="bigTitle">Edit Profile</div>
-      <div class="smallTips">Update your profile settings.</div>
+      <div class="bigTitle">{{ $t('me.EditProfile') }}</div>
+      <div class="smallTips">{{ $t('me.UpdateProfile') }}</div>
     </template>
     <div class="contentBox">
       <div class="userPicBox">
@@ -199,33 +199,33 @@
           </div>
         </el-upload>
       </div>
-      <div class="bigTips">Profile Picture</div>
-      <div class="smallTips">JPG or PNG.Max size 2MB</div>
+      <div class="bigTips">{{ $t('me.ProfilePicture') }}</div>
+      <div class="smallTips">{{ $t('me.JPGorPNG') }}</div>
       <div class="formBox">
-        <div class="labelName">Full Name</div>
+        <div class="labelName">{{ $t('me.FullName') }}</div>
         <el-input v-model="userStore.user.name"></el-input>
-        <div class="labelName">Job Title</div>
+        <div class="labelName">{{ $t('me.Position') }}</div>
         <el-input v-model="userStore.user.postion" disabled></el-input>
-        <div class="labelName">Skill Tags</div>
+        <div class="labelName">{{ $t('me.SkillTags') }}</div>
         <el-input-tag
               v-model="userStore.user.tags"
               collapse-tags
               collapse-tags-tooltip
               :max-collapse-tags="3"
-              placeholder="Please input"
+              :placeholder="$t('pleaseEnterContent')"
               aria-label="Please click the Enter key after input"
             />
-        <div class="labelName">Email Address</div>
+        <div class="labelName">{{ $t('me.EmailAddress') }}</div>
         <el-input v-model="userStore.user.email"></el-input>
-        <div class="labelName">Motto</div>
+        <div class="labelName">{{ $t('team.SIGNATURE') }}</div>
         <el-input v-model="userStore.user.signature"></el-input>
       </div>
     </div>
     <template #footer>
       <div class="dialog-footer">
         <div style="display: flex; justify-content: end;">
-          <div class="cancelBtn" @click="dialogFormVisible = false">Cancel</div>
-          <div class="saveBtn" @click="saveProfile">Save Changes</div>
+          <div class="cancelBtn" @click="dialogFormVisible = false">{{ $t('cancel') }}</div>
+          <div class="saveBtn" @click="saveProfile">{{ $t('me.SaveChanges') }}</div>
         </div>
       </div>
     </template>

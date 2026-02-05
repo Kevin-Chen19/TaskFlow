@@ -58,7 +58,7 @@
             :color="activity.color"
             :size="activity.size"
             :hollow="activity.hollow"
-            :timestamp="activity.timestamp"
+            :timestamp="getDisplayTimestamp(activity.date)"
           >
             <span
               style="font-size: larger; cursor: pointer"
@@ -354,13 +354,13 @@ const handleSubmit = () => {
     //设置id为时间戳加随机数
     componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
     ElMessage({
-      message: "Create Project Success",
+      message: t('Dashboard.CreateProjectSuccess'),
       type: "success",
     });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
-      message: "Create Project Failed",
+      message: t('Dashboard.CreateProjectFailed'),
       type: "error",
     });
   }
@@ -458,9 +458,6 @@ const getActivityDisplayProps = () => {
     if (activityDate.getTime() < today.getTime()) {
       lastCompletedIndex = index;
     }
-
-    // 设置 timestamp
-    activity.timestamp = getDisplayTimestamp(activity.date);
 
     // 重置 color 和 icon
     activity.color = undefined;

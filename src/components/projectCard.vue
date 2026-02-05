@@ -4,7 +4,7 @@
     <div class="name">{{ project.projectName }}</div>
     <div class="description">{{ project.description }}</div>
     <div class="Line_two">
-     <div class="litleTitle">Progress</div>
+     <div class="litleTitle">{{ $t('taskPage.Progress') }}</div>
      <div :style="{ color:customColorMethod(project.percentage) }">{{project.percentage}}%</div>
     </div>
     <div class="progressBox">

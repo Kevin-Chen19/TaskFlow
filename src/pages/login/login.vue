@@ -5,20 +5,20 @@
         <img src="../../assets/pics/登录页.png" alt="登录页图片" />
       </div>
       <div class="texts">
-        <div class="bigTips">"The clarity needed to move mountains."</div>
+        <div class="bigTips">"{{ $t('loginPage.Asimple') }}"</div>
         <div class="smallTips">
-          Join a workspace designed for focus.Manage projects,
+          {{ $t('loginPage.Simpleefficient') }}
         </div>
         <div class="smallTips">
-          collaborate with your team, and ship faster-all in one place.
+          {{ $t('loginPage.anintuitive') }}
         </div>
       </div>
     </div>
     <div class="right">
       <div class="right_box">
-        <div class="bigTips">Welcome Back</div>
+        <div class="bigTips">{{ $t('loginPage.WelcomeBack') }}</div>
         <div class="smallTips">
-          Enter your details to access your workspace.
+          {{ $t('loginPage.Enteryour') }}
         </div>
         <el-form
           ref="ruleFormRef"
@@ -30,39 +30,39 @@
           label-width="auto"
           class="form_el"
         >
-          <el-form-item label="Phone Number" prop="phoneNumber">
+          <el-form-item :label="$t('loginPage.PhoneNumber')" prop="phoneNumber">
             <el-input
               v-model="ruleForm.phoneNumber"
-              placeholder="Enter your phone number"
+              :placeholder="$t('loginPage.Enterphone')"
               autocomplete="off"
               :prefix-icon="Iphone"
             />
           </el-form-item>
           <el-form-item
             v-if="loginStore.ifSignUp || loginStore.ifForgot"
-            label="Identifying Number"
+            :label="$t('loginPage.Identifying')"
             prop="identifyingNumber"
           >
             <el-input
               v-model="ruleForm.identifyingNumber"
-              placeholder="Enter your identifying number"
+              :placeholder="$t('loginPage.EnterIdentifying')"
               autocomplete="off"
               :prefix-icon="ChatDotRound"
             >
               <template #append>
-                <div class="btn_getCode">getCode</div>
+                <div class="btn_getCode">{{ $t('loginPage.getCode') }}</div>
               </template>
             </el-input>
           </el-form-item>
 
           <el-form-item
             v-if="!loginStore.ifForgot"
-            label="Password"
+            :label="$t('loginPage.Password')"
             prop="password"
           >
             <el-input
               v-model="ruleForm.password"
-              placeholder="Enter your password"
+              :placeholder="$t('loginPage.EnterPassword')"
               type="password"
               autocomplete="off"
               :prefix-icon="Lock"
@@ -71,25 +71,25 @@
           </el-form-item>
           <div class="smallTips oneLine">
             <div v-if="!loginStore.ifSignUp">
-              Don't have an account?
+              {{$t('loginPage.havenoaccount')}}
               <span
                 class="PointStyle"
                 @click="
                   loginStore.ifSignUp = true;
                   loginStore.ifForgot = false;
                 "
-                >Sign Up</span
+                >{{$t('loginPage.Signup')}}</span
               >
             </div>
             <div v-if="loginStore.ifSignUp">
-              I already have an account?
+              {{$t('loginPage.haveanaccount')}}
               <span
                 class="PointStyle"
                 @click="
                   loginStore.ifSignUp = false;
                   loginStore.ifForgot = false;
                 "
-                >Sign in</span
+                >{{$t('loginPage.Signin')}}</span
               >
             </div>
             <span
@@ -98,7 +98,7 @@
                 loginStore.ifForgot = true;
                 loginStore.ifSignUp = false;
               "
-              >Forgot password?</span
+              >{{$t('loginPage.Forgotpassword')}}</span
             >
           </div>
           <el-form-item>
@@ -107,7 +107,7 @@
               @click="submitForm(ruleFormRef)"
               class="btn_sign"
             >
-              Sign In
+              {{ $t('loginPage.Signin') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -117,10 +117,12 @@
 </template>
 <script setup lang="ts">
 import { reactive, ref, onMounted, onUnmounted  } from "vue";
+import { useI18n } from "vue-i18n";
 import { Iphone, Lock, ChatDotRound } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useLoginStore } from "../../stores/loginStore";
 import { useRouter } from "vue-router";
+const { t } = useI18n();
 const router = useRouter();
 const loginStore = useLoginStore();
 const ruleFormRef = ref<FormInstance>();
@@ -142,21 +144,21 @@ onUnmounted(() => {
 })
 const validatePass = (rule: any, value: any, callback: any) => {
   if (value === "") {
-    callback(new Error("Please input the phone number"));
+    callback(new Error(t('loginPage.Enterphone')));
   } else {
     callback();
   }
 };
 const validatePass1 = (rule: any, value: any, callback: any) => {
   if (value === "") {
-    callback(new Error("Please input the identifying number"));
+    callback(new Error(t('loginPage.EnterIdentifying')));
   } else {
     callback();
   }
 };
 const validatePass2 = (rule: any, value: any, callback: any) => {
   if (value === "") {
-    callback(new Error("Please input the password again"));
+    callback(new Error(t('loginPage.EnterPassword')));
   } else {
     callback();
   }
@@ -178,7 +180,6 @@ const submitForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      console.log("submit!");
       router.push({
           path:'/dashboard',
         })

@@ -45,7 +45,7 @@
               <el-tooltip
                 class="box-item"
                 effect="dark"
-                content="Open user navigation menu"
+                :content="$t('main.Openusermenu')"
                 placement="bottom"
               >
                 <div style="position: relative">
@@ -194,6 +194,7 @@ import NotificationsCard from "@/components/NotificationsCard.vue";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { Close } from "@element-plus/icons-vue";
+import i18n from "@/language";
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const which = ref("dashboard");
@@ -207,6 +208,14 @@ const router = useRouter();
 const todayDate = ref("");
 const yesterdayDate = ref("");
 const notificationsByDate = reactive([]);
+const changeLanguage = (languageValue: string) => {
+  if (languageValue === "中文") {
+    i18n.global.locale.value = 'zh';
+  } else {
+    i18n.global.locale.value = 'en';
+  }
+  languagePopoverRef.value?.hide();
+}
 const changePage = (name: string) => {
   which.value = name;
   router.push({
@@ -329,10 +338,6 @@ const handleMarkRead = (id: string) => {
 };
 const showMenu = () => {
   showMenuValue.value = !showMenuValue.value;
-};
-
-const changeLanguage = (lang: string) => {
-  languagePopoverRef.value?.hide();
 };
 </script>
 <style scoped lang="scss">
