@@ -11,83 +11,101 @@
           <button class="nav-btn" @click="nextMonth">
             <span class="arrow">›</span>
           </button>
-          <button class="today-btn" @click="goToToday">Today</button>
+          <button class="today-btn" @click="goToToday">{{ $t('calendar.Today') }}</button>
         </div>
         <div class="header-right">
           <!-- 筛选按钮 -->
-          <button class="filter-btn" @click="toggleFilters">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 12.46 14 19 22 3"></polygon>
-            </svg>
-            Filters
-          </button>
-
-          <!-- 筛选面板 -->
-          <div v-if="showFilters" class="filter-panel">
-            <div class="filter-section">
-              <label>负责人</label>
-              <el-select
-                v-model="filters.assignee"
-                placeholder="全部"
-                clearable
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                class="filter-select"
+            <el-popover
+                ref="languagePopoverRef"
+                trigger="click"
+                width="250px"
               >
-                <el-option
-                  v-for="user in allUsers"
-                  :key="user.userId"
-                  :label="user.name"
-                  :value="user.userId"
-                />
-              </el-select>
-            </div>
+                <template #reference>
+                  <button class="filter-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 12.46 14 19 22 3"></polygon>
+                  </svg>
+                  {{ $t('calendar.Filters') }}
+                </button>
+                </template>
+                 <template #default>
+                  <div class="filter-panel">
+                    <div class="filter-section">
+                      <label>负责人</label>
+                      <el-select
+                        v-model="filters.assignee"
+                        placeholder="全部"
+                        clearable
+                        multiple
+                        collapse-tags
+                        collapse-tags-tooltip
+                        class="filter-select"
+                      >
+                        <el-option
+                          v-for="user in allUsers"
+                          :key="user.userId"
+                          :label="user.name"
+                          :value="user.userId"
+                        />
+                      </el-select>
+                    </div>
 
-            <div class="filter-section">
-              <label>创建者</label>
-              <el-select
-                v-model="filters.creator"
-                placeholder="全部"
-                clearable
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                class="filter-select"
-              >
-                <el-option
-                  v-for="user in allUsers"
-                  :key="user.userId"
-                  :label="user.name"
-                  :value="user.userId"
-                />
-              </el-select>
-            </div>
-            <div class="filter-section">
-              <label>优先级</label>
-              <el-select
-                v-model="filters.priority"
-                placeholder="全部"
-                clearable
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                class="filter-select"
-              >
-                <el-option label="Critical" value="Critical"></el-option>
-                <el-option label="High" value="High"></el-option>
-                <el-option label="Medium" value="Medium"></el-option>
-                <el-option label="Low" value="Low"></el-option>
-                <el-option label="Negligible" value="Negligible"></el-option>
-              </el-select>
-            </div>
-
-            <div class="filter-actions">
-              <button class="clear-filters-btn" @click="clearFilters">恢复默认</button>
-              <button class="apply-filters-btn" @click="applyFilters">应用筛选</button>
-            </div>
-          </div>
-
+                    <div class="filter-section">
+                      <label>创建者</label>
+                      <el-select
+                        v-model="filters.creator"
+                        placeholder="全部"
+                        clearable
+                        multiple
+                        collapse-tags
+                        collapse-tags-tooltip
+                        class="filter-select"
+                      >
+                        <el-option
+                          v-for="user in allUsers"
+                          :key="user.userId"
+                          :label="user.name"
+                          :value="user.userId"
+                        />
+                      </el-select>
+                    </div>
+                    <div class="filter-section">
+                      <label>优先级</label>
+                      <el-select
+                        v-model="filters.priority"
+                        placeholder="全部"
+                        clearable
+                        multiple
+                        collapse-tags
+                        collapse-tags-tooltip
+                        class="filter-select"
+                      >
+                        <el-option label="Critical" value="Critical"></el-option>
+                        <el-option label="High" value="High"></el-option>
+                        <el-option label="Medium" value="Medium"></el-option>
+                        <el-option label="Low" value="Low"></el-option>
+                        <el-option label="Negligible" value="Negligible"></el-option>
+                      </el-select>
+                    </div>
+                    <div style="width: 100%;
+                      display: flex;
+                      justify-content: end;
+                      margin-top: 1rem;
+                      padding-top: 1rem;
+                      border-top: 1px solid #e2e8f0;">
+                      <div @click="clearFilters" style="width: fit-content;
+                        padding: 0.5rem;
+                        border: 1px solid #e2e8f0;
+                        background: #f8fafc;
+                        border-radius: 0.25rem;
+                        cursor: pointer;
+                        font-size: 0.875rem;">
+                        恢复默认
+                      </div>
+                    </div>
+                  </div>
+                 </template>
+                </el-popover>
           <div class="legend">
             <div class="legend-item">
               <div class="legend-color in-progress" :class="filters.status.includes('InProgress') ? 'in-progress_selected' : ''" @click="selectStaus('InProgress')"></div>
@@ -288,7 +306,6 @@ const otherStore = useOtherStore();
 const tasksStore = useTasksStore();
 const currentMonth = ref(new Date());
 const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const showFilters = ref(false);
 const MessageDialogVisible = ref(false);
 const centerDialogVisible = ref(false);
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
@@ -747,17 +764,6 @@ const handleTaskClick = (task: any) => {
   // 打开对话框
   MessageDialogVisible.value = true;
 };
-
-// 切换筛选面板
-const toggleFilters = () => {
-  showFilters.value = !showFilters.value;
-};
-
-// 应用筛选
-const applyFilters = () => {
-  showFilters.value = false;
-};
-
 // 清空筛选
 const clearFilters = () => {
   filters.value = {
@@ -882,11 +888,8 @@ onMounted(() => {
       color: #64748b;
     }
   }
-
   .filter-panel {
-    position: absolute;
-    top: 2.5rem;
-    right: 10rem;
+    width: 100%;
     margin-top: 0.5rem;
     background: white;
     border: 1px solid #e2e8f0;
@@ -912,45 +915,6 @@ onMounted(() => {
 
     .filter-select {
       width: 100%;
-    }
-  }
-
-  .filter-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
-  }
-
-  .clear-filters-btn {
-    flex: 1;
-    padding: 0.5rem;
-    border: 1px solid #e2e8f0;
-    background: white;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #f8fafc;
-    }
-  }
-
-  .apply-filters-btn {
-    flex: 1;
-    padding: 0.5rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #2563eb;
     }
   }
 

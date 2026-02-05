@@ -132,6 +132,10 @@ export default {
       TaskName: 'Task Name...',
       PickADay: 'Pick a day',
     },
+    calendar:{
+      Today: 'Today',
+      Filters: 'Filters',
+    },
     CONTENT: 'CONTENT',
     DUELINE: 'DUELINE',
     pickADay: 'Pick a day',
