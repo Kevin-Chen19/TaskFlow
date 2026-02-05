@@ -10,7 +10,7 @@
             Task Flow
           </div>
           <div class="flex-1">
-            <div class="ProjectData">
+            <div id="tour1" class="ProjectData">
               <span style="color: gray; margin-right: 1rem"
                 >{{ $t('main.currentProject') }}</span
               >
@@ -24,7 +24,7 @@
               >
                 <template #reference>
                   <div class="transBox">
-                    <img src="@/assets/icons/翻译.png" alt="翻译图标" />
+                    <img id="tour2" src="@/assets/icons/翻译.png" alt="翻译图标" />
                   </div>
                 </template>
                  <template #default>
@@ -39,7 +39,7 @@
                   showNotifications = true;
                 "
               >
-                <img src="../../assets/icons/通知.png" alt="通知图标" />
+                <img id="tour3" src="../../assets/icons/通知.png" alt="通知图标" />
                 <div v-show="ifHasUnread" class="point"></div>
               </div>
               <el-tooltip
@@ -49,7 +49,7 @@
                 placement="bottom"
               >
                 <div style="position: relative">
-                  <div class="notifyStyle userPic" @click="showMenu">
+                  <div id="tour4" class="notifyStyle userPic" @click="showMenu">
                     <img :src="userStore.user.pic" alt="用户头像" />
                   </div>
                 </div>
@@ -83,7 +83,7 @@
       </el-header>
       <el-container>
         <el-aside width="13vw">
-          <div
+          <div id="tour5"
             class="leftItem"
             @click="changePage('dashboard')"
             :class="which === 'dashboard' ? 'leftChoose' : ''"
@@ -92,6 +92,7 @@
             <div>{{$t('main.dashboard')}}</div>
           </div>
           <div
+            id="tour6"
             class="leftItem"
             @click="changePage('projects')"
             :class="which === 'projects' ? 'leftChoose' : ''"
@@ -100,6 +101,7 @@
             <div class="itemName">{{$t('main.fileLibrary')}}</div>
           </div>
           <div
+            id="tour7"
             class="leftItem"
             @click="changePage('tasks')"
             :class="which === 'tasks' ? 'leftChoose' : ''"
@@ -108,6 +110,7 @@
             <div class="itemName">{{$t('main.tasks')}}</div>
           </div>
           <div
+            id="tour8"
             class="leftItem"
             @click="changePage('calendar')"
             :class="which === 'calendar' ? 'leftChoose' : ''"
@@ -116,6 +119,7 @@
             <div class="itemName">{{$t('main.calendar')}}</div>
           </div>
           <div
+            id="tour9"
             class="leftItem"
             @click="changePage('team')"
             :class="which === 'team' ? 'leftChoose' : ''"
@@ -124,6 +128,7 @@
             <div class="itemName">{{$t('main.team')}}</div>
           </div>
           <div
+            id="tour10"
             class="leftItem"
             @click="changePage('roles')"
             :class="which === 'roles' ? 'leftChoose' : ''"
@@ -132,6 +137,7 @@
             <div class="itemName">{{$t('main.roles')}}</div>
           </div>
           <div
+            id="tour11"
             class="leftItem"
             @click="changePage('me')"
             :class="which === 'me' ? 'leftChoose' : ''"
@@ -184,6 +190,7 @@
       <div class="moreBtn">{{ $t('viewMore') }}</div>
     </div>
   </el-drawer>
+  <TourComponents :mode="showTour" @finish="handleTourFinish"></TourComponents>
 </template>
 
 <script setup lang="ts">
@@ -191,6 +198,7 @@ import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import NotificationsCard from "@/components/NotificationsCard.vue";
+import TourComponents from "@/components/TourComponents.vue";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { Close } from "@element-plus/icons-vue";
@@ -338,6 +346,11 @@ const handleMarkRead = (id: string) => {
 };
 const showMenu = () => {
   showMenuValue.value = !showMenuValue.value;
+};
+
+const showTour = ref(true);
+const handleTourFinish = () => {
+  showTour.value = false;
 };
 </script>
 <style scoped lang="scss">

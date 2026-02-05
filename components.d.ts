@@ -42,6 +42,8 @@ declare module 'vue' {
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
+    ElTour: typeof import('element-plus/es')['ElTour']
+    ElTourStep: typeof import('element-plus/es')['ElTourStep']
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     FileCard: typeof import('./src/components/fileCard.vue')['default']
@@ -52,6 +54,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TaskCard: typeof import('./src/components/taskCard.vue')['default']
+    TourComponents: typeof import('./src/components/TourComponents.vue')['default']
     Velocity: typeof import('./src/components/velocity.vue')['default']
   }
 }
