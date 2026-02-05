@@ -1,13 +1,13 @@
 <template>
   <div class="bigBox">
-    <div class="bigTitle">Project Team</div>
+    <div class="bigTitle">{{ $t('team.projectTeam') }}</div>
     <div class="Line_two">
-      <span class="smallText"> Welcome back,Kevin.Share team files here. </span>
+      <span class="smallText"> {{ $t('team.seeTeamHere') }}</span>
       <div class="searchBox">
         <el-input
           v-model="searchValue"
           style="width: 100%"
-          placeholder="Search by name or position..."
+          :placeholder="$t('taskCard.searchByNameOr')"
           class="search-input"
           :prefix-icon="Search"
           @change="toFind"
@@ -19,9 +19,9 @@
         <div class="addBox">
           <img src="@/assets/icons/加号.png" alt="加号" />
         </div>
-        <div class="nameStyle">Add New Member</div>
-        <div class="positionStyle">Invite a new colleague to join</div>
-        <div class="positionStyle">the project team</div>
+        <div class="nameStyle">{{ $t('team.addNewMember') }}</div>
+        <div class="positionStyle">{{ $t('team.inviteToJoin') }}</div>
+        <div class="positionStyle">{{ $t('team.theProjectTeam') }}</div>
       </div>
       <div
         class="teamItem"
@@ -56,7 +56,7 @@
     :size="drawerWidth"
   >
     <template #header="{ close, titleId, titleClass }">
-      <h4 :id="titleId" :class="titleClass">Member Details</h4>
+      <h4 :id="titleId" :class="titleClass">{{ $t('team.memberDetails') }}</h4>
     </template>
     <div class="drawer_Box">
       <div class="drawer_picBox">
@@ -68,15 +68,15 @@
         class="drawer_Status"
         :class="{ drawer_Status_offline: drawerUser.status === 'offline' }"
       >
-        {{ drawerUser.status }}
+        {{ $t(drawerUser.status) }}
       </div>
-      <div class="drawer_title">POSITION</div>
+      <div class="drawer_title">{{ $t('team.POSITION') }}</div>
       <div class="drawer_title drawer_Position">{{ drawerUser.postion }}</div>
-      <div class="drawer_title">ROLE</div>
+      <div class="drawer_title">{{ $t('projects.ROLE') }}</div>
       <div class="drawer_title drawer_Position">
         <el-select
           v-model="drawerUser.role"
-          placeholder="Select"
+          :placeholder="$t('taskCard.Select')"
           style="width: 100%"
           class="drawer_select"
         >
@@ -88,11 +88,11 @@
           />
         </el-select>
       </div>
-      <div class="drawer_title">signature</div>
+      <div class="drawer_title">{{ $t('team.SIGNATURE') }}</div>
       <div class="drawer_Position">
         {{ drawerUser.signature }}
       </div>
-      <div class="drawer_title">SKILLS</div>
+      <div class="drawer_title">{{ $t('team.SKILLS') }}</div>
       <div class="tagsBox">
         <div class="tagsItem" v-for="(value, index) in drawerUser.tags" :key="index">
           {{ value }}
@@ -100,28 +100,28 @@
       </div>
     </div>
     <template #footer>
-      <div class="chatBtn">Chat</div>
-      <div class="chatBtn saveBtn">Save</div>
+      <div class="chatBtn">{{ $t('team.Chat') }}</div>
+      <div class="chatBtn saveBtn">{{ $t('save') }}</div>
     </template>
   </el-drawer>
   <el-dialog
     v-model="inviteDialogVisible"
-    title="Invite Members"
+    :title="$t('team.InviteMembers')"
     width="700"
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">EMAIL ADRESS</div>
+    <div class="inputName">{{ $t('team.EMAILADRESS') }}</div>
     <el-input
       v-model="inviteData.emailContent"
-      placeholder="请输入邮箱地址"
+      :placeholder="$t('pleaseEnterContent')"
     ></el-input>
     <div style="width: 100%; display: flex; justify-content: space-between">
       <div>
-        <div class="inputName">ROLE ASSIGNMENT</div>
+        <div class="inputName">{{ $t('team.ROLEASSIGNMENT') }}</div>
         <el-select
           v-model="inviteData.roleContent"
-          placeholder="Select Role"
+          :placeholder="$t('taskCard.Select')"
           style="width: 18rem"
         >
           <template #label="{ label, value }">
@@ -138,10 +138,10 @@
         </el-select>
       </div>
       <div>
-        <div class="inputName">ADD TO PROJECT</div>
+        <div class="inputName">{{ $t('team.POSITION') }}</div>
         <el-select
           v-model="inviteData.positionContent"
-          placeholder="Select Position"
+          :placeholder="$t('taskCard.Select')"
           style="width: 18rem"
         >
           <template #label="{ label, value }">
@@ -161,10 +161,10 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="inviteDialogVisible = false" class="cancelBtn">
-          Cancel
+          {{ $t('cancel') }}
         </el-button>
         <el-button type="primary" @click="submitInvite" class="confirmBtn">
-          Send Invites
+          {{ $t('team.SendInvites') }}
         </el-button>
       </div>
     </template>

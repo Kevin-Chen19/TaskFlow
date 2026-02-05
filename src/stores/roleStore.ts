@@ -1,7 +1,8 @@
 import { reactive } from 'vue'
 import { defineStore } from 'pinia'
-
+import i18n from '@/language';
 export const useRoleStore = defineStore('role', () => {
+  const t = i18n.global.t
   const allRoles = reactive([
   {
     roleName: "Project Manager",
@@ -9,179 +10,179 @@ export const useRoleStore = defineStore('role', () => {
     //任务权限
     tasksData: [
       {
-        label: "Create Tasks",
-        value: false,
+        label: t('roleStore.CreateTasks'),
+        value: true,
       },
       {
-        label: "Delete Tasks",
-        value: false,
+        label: t('roleStore.DeleteTasks'),
+        value: true,
       },
       {
-        label: "Edit All Tasks",
-        value: false,
+        label: t('roleStore.EditAllTasks'),
+        value: true,
       },
       {
-        label: "Edit Own Tasks",
-        value: false,
+        label: t('roleStore.EditOwnTasks'),
+        value: true,
       },
       {
-        label: "Edit Time Line",
-        value: false,
+        label: t('roleStore.EditProjectMilestones'),
+        value: true,
       },
     ],
     //成员权限
     membersData: [
       {
-        label: "Invite Members",
-        value: false,
+        label: t('roleStore.InviteMembers'),
+        value: true,
       },
       {
-        label: "Delete Members",
-        value: false,
+        label: t('roleStore.DeleteMembers'),
+        value: true,
       },
       {
-        label: "Manage Roles",
-        value: false,
+        label: t('roleStore.ManageRoles'),
+        value: true,
       },
       {
-        label: "Manage Positions",
-        value: false,
+        label: t('roleStore.ManagePositions'),
+        value: true,
       },
     ],
     //协作权限(文件权限默认创建者有删除的权限,回收站同理)
     documentsData: [
       {
-        label: "Create Documents",
-        value: false,
+        label: t('roleStore.CreateDocuments'),
+        value: true,
       },
       {
-        label: "Delete All Documents",
-        value: false,
+        label: t('roleStore.DeleteAllDocuments'),
+        value: true,
       },
       {
-        label: "Chat",
-        value: false,
+        label: t('roleStore.Chat'),
+        value: true,
       },
     ],
   },
   {
-    roleName: "Contributor",
+    roleName: "Participants",
     roleMess: "Standard role for team members executing tasks.",
-    //任务权限
+   //任务权限
     tasksData: [
       {
-        label: "Create Tasks",
+        label: t('roleStore.CreateTasks'),
         value: false,
       },
       {
-        label: "Delete Tasks",
+        label: t('roleStore.DeleteTasks'),
         value: false,
       },
       {
-        label: "Edit All Tasks",
+        label: t('roleStore.EditAllTasks'),
         value: false,
       },
       {
-        label: "Edit Own Tasks",
-        value: false,
+        label: t('roleStore.EditOwnTasks'),
+        value: true,
       },
       {
-        label: "Edit Time Line",
+        label: t('roleStore.EditProjectMilestones'),
         value: false,
       },
     ],
     //成员权限
     membersData: [
       {
-        label: "Invite Members",
+        label: t('roleStore.InviteMembers'),
+        value: true,
+      },
+      {
+        label: t('roleStore.DeleteMembers'),
         value: false,
       },
       {
-        label: "Delete Members",
+        label: t('roleStore.ManageRoles'),
         value: false,
       },
       {
-        label: "Manage Roles",
-        value: false,
-      },
-      {
-        label: "Manage Positions",
+        label: t('roleStore.ManagePositions'),
         value: false,
       },
     ],
     //协作权限(文件权限默认创建者有删除的权限,回收站同理)
     documentsData: [
       {
-        label: "Create Documents",
+        label: t('roleStore.CreateDocuments'),
+        value: true,
+      },
+      {
+        label: t('roleStore.DeleteAllDocuments'),
         value: false,
       },
       {
-        label: "Delete All Documents",
-        value: false,
-      },
-      {
-        label: "Chat",
-        value: false,
+        label: t('roleStore.Chat'),
+        value: true,
       },
     ],
   },
   {
-    roleName: "viewer",
+    roleName: "Viewer",
     roleMess: "External clients or internal stakeholders",
     //任务权限
     tasksData: [
       {
-        label: "Create Tasks",
+        label: t('roleStore.CreateTasks'),
         value: false,
       },
       {
-        label: "Delete Tasks",
+        label: t('roleStore.DeleteTasks'),
         value: false,
       },
       {
-        label: "Edit All Tasks",
+        label: t('roleStore.EditAllTasks'),
         value: false,
       },
       {
-        label: "Edit Own Tasks",
+        label: t('roleStore.EditOwnTasks'),
         value: false,
       },
       {
-        label: "Edit Time Line",
+        label: t('roleStore.EditProjectMilestones'),
         value: false,
       },
     ],
     //成员权限
     membersData: [
       {
-        label: "Invite Members",
+        label: t('roleStore.InviteMembers'),
         value: false,
       },
       {
-        label: "Delete Members",
+        label: t('roleStore.DeleteMembers'),
         value: false,
       },
       {
-        label: "Manage Roles",
+        label: t('roleStore.ManageRoles'),
         value: false,
       },
       {
-        label: "Manage Positions",
+        label: t('roleStore.ManagePositions'),
         value: false,
       },
     ],
     //协作权限(文件权限默认创建者有删除的权限,回收站同理)
     documentsData: [
       {
-        label: "Create Documents",
+        label: t('roleStore.CreateDocuments'),
         value: false,
       },
       {
-        label: "Delete All Documents",
+        label: t('roleStore.DeleteAllDocuments'),
         value: false,
       },
       {
-        label: "Chat",
+        label: t('roleStore.Chat'),
         value: false,
       },
     ],

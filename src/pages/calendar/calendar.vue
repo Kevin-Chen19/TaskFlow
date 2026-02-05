@@ -31,10 +31,10 @@
                  <template #default>
                   <div class="filter-panel">
                     <div class="filter-section">
-                      <label>负责人</label>
+                      <label>{{ $t('taskPage.Assignee') }}</label>
                       <el-select
                         v-model="filters.assignee"
-                        placeholder="全部"
+                        :placeholder="$t('All')"
                         clearable
                         multiple
                         collapse-tags
@@ -51,10 +51,10 @@
                     </div>
 
                     <div class="filter-section">
-                      <label>创建者</label>
+                      <label>{{ $t('taskPage.Creator') }}</label>
                       <el-select
                         v-model="filters.creator"
-                        placeholder="全部"
+                        :placeholder="$t('All')"
                         clearable
                         multiple
                         collapse-tags
@@ -70,10 +70,10 @@
                       </el-select>
                     </div>
                     <div class="filter-section">
-                      <label>优先级</label>
+                      <label>{{ $t('taskPage.Priority') }}</label>
                       <el-select
                         v-model="filters.priority"
-                        placeholder="全部"
+                        :placeholder="$t('All')"
                         clearable
                         multiple
                         collapse-tags
@@ -100,7 +100,7 @@
                         border-radius: 0.25rem;
                         cursor: pointer;
                         font-size: 0.875rem;">
-                        恢复默认
+                        {{ $t('restoreDefault') }}
                       </div>
                     </div>
                   </div>
@@ -109,15 +109,15 @@
           <div class="legend">
             <div class="legend-item">
               <div class="legend-color in-progress" :class="filters.status.includes('InProgress') ? 'in-progress_selected' : ''" @click="selectStaus('InProgress')"></div>
-              <span>In Progress</span>
+              <span>{{ $t('calendar.inProgress') }}</span>
             </div>
             <div class="legend-item">
               <div class="legend-color completed" :class="filters.status.includes('Completed') ? 'completed_selected' : ''" @click="selectStaus('Completed')"></div>
-              <span>Completed</span>
+              <span>{{ $t('calendar.Completed') }}</span>
             </div>
             <div class="legend-item">
               <div class="legend-color overdue" :class="filters.status.includes('Overdue') ? 'overdue_selected' : ''" @click="selectStaus('Overdue')"></div>
-              <span>Overdue</span>
+              <span>{{ $t('calendar.Overdue') }}</span>
             </div>
           </div>
         </div>
@@ -194,24 +194,24 @@
   </div>
   <el-dialog
     v-model="MessageDialogVisible"
-    title="Add New Task"
+    :title="$t('taskPage.addNewTask')"
     width="800"
     align-center
   >
   <template #header>
-    <div class="topTitle">Created on {{ MessageTask.createLine }}</div>
+    <div class="topTitle">{{$t('taskPage.createdOn')}} {{ MessageTask.createLine }}</div>
     <div class="taskName">{{ MessageTask.taskName }}</div>
     <div style="width: 100%; height: 1px; background: #f3f4f4;"></div>
   </template>
   <div class="contentBox">
     <div class="contentBoxLeft">
-      <div class="tipTitle">Description</div>
+      <div class="tipTitle">{{$t('taskPage.Description')}}</div>
       <div class="descriptionBox">{{ MessageTask.description }}</div>
         <div class="progressBox">
     <div class="topLine">
       <div>
-        <div style="color:black;">Task Progress</div>
-        <div v-if="ifCreator">Drag to update completion status</div>
+        <div style="color:black;">{{$t('taskPage.taskProgress')}}</div>
+        <div v-if="ifCreator">{{$t('taskPage.dragToUpdate')}}</div>
       </div>
       <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.percentage}}%</div>
     </div>
@@ -223,20 +223,20 @@
     />
     <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.percentage" />
     <div class="bottomTip">
-      <div>Not Started</div>
-      <div>Completed</div>
+      <div>{{$t('taskPage.notStarted')}}</div>
+      <div>{{$t('taskPage.Completed')}}</div>
     </div>
   </div>
     </div>
     <div class="contentBoxRight">
-      <div class="smallTip">CREATOR</div>
+      <div class="smallTip">{{$t('taskPage.CREATOR')}}</div>
       <div class="creatorBox">
         <div class="picBox">
           <img :src="findUserPic(MessageTask.createUser)" alt="用户头像">
         </div>
         <div class="nameStyle">{{ findUser(MessageTask.createUser) }}</div>
       </div>
-      <div class="smallTip">ASSIGNEE</div>
+      <div class="smallTip">{{$t('taskPage.ASSIGNEE')}}</div>
       <div class="assigneeBox">
         <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee">
           <div class="picBox">
@@ -245,15 +245,15 @@
           <div class="nameStyle">{{ findUser(item) }}</div>
         </div>
       </div>
-      <div class="smallTip">PRIORITY</div>
+      <div class="smallTip">{{$t('taskPage.PRIORITY')}}</div>
       <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ MessageTask.priority }}</div>
-      <div class="smallTip">TIMEFRAME</div>
+      <div class="smallTip">{{$t('taskCard.DUELINE')}}</div>
       <div class="timeBox">
         <div class="timePicBox">
           <img src="@/assets/icons/日历.png" alt="日历图标">
         </div>
         <div class="timeItem">
-          <div style="color: #898989; font-size: 0.8rem;">Due Date</div>
+          <div style="color: #898989; font-size: 0.8rem;">{{$t('taskPage.dueDate')}}</div>
           <div>{{ MessageTask.dueLine }}</div>
         </div>
       </div>
@@ -262,16 +262,16 @@
 
   <template #footer>
     <div class="footerBox">
-      <div v-if="ifCreator" class="editBtn" @click="EditMessage">Edit</div>
-      <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">Save</div>
-      <div v-if="ifCreator" class="closeBtn" @click="handleDelete">Delete</div>
-      <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">Close</div>
+      <div v-if="ifCreator" class="editBtn" @click="EditMessage">{{ $t('Edit') }}</div>
+      <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">{{ $t('save') }}</div>
+      <div v-if="ifCreator" class="closeBtn" @click="handleDelete">{{ $t('Delete') }}</div>
+      <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">{{ $t('Close') }}</div>
     </div>
   </template>
   </el-dialog>
   <el-dialog
     v-model="centerDialogVisible"
-    :title="otherStore.ifEditTask ? 'Edit Task' : 'Add New Task'"
+    :title="otherStore.ifEditTask ? t('taskPage.editTask') : t('taskPage.addNewTask')"
     width="800"
     align-center
   >
@@ -279,13 +279,13 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
-          >Cancel</el-button
+          >{{ $t('cancel') }}</el-button
         >
         <el-button v-if="!otherStore.ifEditTask" type="primary" @click="handleSubmit" class="confirmBtn">
-          Creat Task
+          {{ $t('taskPage.creatTask') }}
         </el-button>
         <el-button v-if="otherStore.ifEditTask" type="primary" @click="submitEdit" class="confirmBtn">
-          Save Changes
+          {{ $t('taskPage.saveChanges') }}
         </el-button>
       </div>
     </template>
@@ -294,6 +294,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useTasksStore, type Task } from "@/stores/tasksStore";
 import { AlertCircle, CheckCircle } from "lucide-vue-next";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -301,6 +302,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { ElSelect, ElOption } from "element-plus";
 import TaskCard from "@/components/TaskCard.vue";
+const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
 const tasksStore = useTasksStore();
@@ -360,13 +362,13 @@ const handleSubmit = () => {
     allTasks.push(componentData);
     tasks.push(componentData);
     ElMessage({
-      message: "Add Task Success",
+      message: t('addSuccessfully'),
       type: "success",
     });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
-      message: "Add Task Failed",
+      message: t('addFailed'),
       type: "error",
     });
   }
@@ -383,13 +385,13 @@ const submitEdit = () => {
      const index = tasksStore.allTasks.findIndex((task) => task.id === MessageTask.id);
     tasksStore.allTasks[index] = { ...componentData };
     ElMessage({
-      message: "Edit Task Success",
+      message: t('updatedSuccess'),
       type: "success",
     });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
-      message: "Edit Task Failed",
+      message: t('updateFailed'),
       type: "error",
     });
   }
@@ -398,11 +400,11 @@ const submitEdit = () => {
 // 删除任务
 const handleDelete = () => {
     ElMessageBox.confirm(
-    'Are you sure to delete this task?',
-    'Warning',
+    t('taskPage.areYouDeleteTask'),
+    t('Warning'),
     {
-      confirmButtonText: 'OK',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: t('OK'),
+      cancelButtonText: t('cancel'),
       type: 'warning',
     }
   )
@@ -414,13 +416,13 @@ const handleDelete = () => {
       MessageDialogVisible.value = false;
       ElMessage({
         type: 'success',
-        message: 'Delete completed',
+        message: t('deleteSuccess'),
       })
     })
     .catch(() => {
       ElMessage({
         type: 'info',
-        message: 'Delete canceled',
+        message:  t('deleteCanceled'),
       })
     })
 };
@@ -518,18 +520,18 @@ const calendarWeeks = computed(() => {
 // 格式化月份显示
 const formatMonth = (date: Date): string => {
   const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    t("calendar.January"),
+    t("calendar.February"),
+    t("calendar.March"),
+    t("calendar.April"),
+    t("calendar.May"),
+    t("calendar.June"),
+    t("calendar.July"),
+   t("calendar.August") ,
+   t("calendar.September") ,
+   t("calendar.October") ,
+    t("calendar.November"),
+    t("calendar.December"),
   ];
   return `${months[date.getMonth()]} ${date.getFullYear()}`;
 };

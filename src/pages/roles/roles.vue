@@ -1,13 +1,12 @@
 <!--优化点：根据中英文修改输入框的不同输入长度限制-->
 <template>
   <div class="bigBox">
-    <div class="bigTitle" style="">Role & Position Management</div>
+    <div class="bigTitle" style="">{{ $t('roles.RolePosition') }}</div>
     <span class="smallText">
-      Manage access levels, granular capabilities,and technical job titles
-      for</span
+      {{$t('roles.Manageaccess')}}</span
     >
     <br />
-    <span class="smallText"> team members across the organization.</span>
+    <span class="smallText"> {{$t('roles.teammembers')}}</span>
     <div class="Line_two bottomLine">
       <div class="changeBox">
         <div
@@ -15,25 +14,25 @@
           @click="chooseWhich = 0"
           :class="chooseWhich == 0 ? 'chooseItem' : ''"
         >
-          Permission Roles
+          {{$t('roles.PermissionRoles')}}
         </div>
         <div
           class="changeItem"
           @click="chooseWhich = 1"
           :class="chooseWhich == 1 ? 'chooseItem' : ''"
         >
-          Position Titles
+          {{$t('roles.PositionTitles')}}
         </div>
       </div>
-      <div v-if="chooseWhich == 0" class="addBtn" @click="addOne('Role')">+ Add new Role</div>
-      <div v-if="chooseWhich == 1" class="addBtn" @click="addOne('Position')">+ Add new Position</div>
+      <div v-if="chooseWhich == 0" class="addBtn" @click="addOne('Role')">+ {{$t('roles.AddNewRole')}}</div>
+      <div v-if="chooseWhich == 1" class="addBtn" @click="addOne('Position')">+ {{$t('roles.AddNewPosition')}}</div>
     </div>
     <div v-if="chooseWhich == 0" class="teamBox">
       <div class="RoleItem" v-for="(item, index) in roleStore.allRoles" :key="index">
-        <div class="roleTitle">{{ item.roleName }}</div>
+        <div class="roleTitle">{{ $t(item.roleName) }}</div>
         <div class="roleMess">{{ item.roleMess }}</div>
         <div class="switchBigBox">
-          <div class="roleItem_Kind">PROJECT ACCESS</div>
+          <div class="roleItem_Kind">{{$t('roles.PROJECTACCESS')}}</div>
           <div
             class="switchBox"
             v-for="(lowItem, index) in item.tasksData"
@@ -45,7 +44,7 @@
               style="--el-switch-on-color: #2eb867"
             />
           </div>
-          <div class="roleItem_Kind">TEAM & PEOPLE</div>
+          <div class="roleItem_Kind">{{$t('roles.TEAMPEOPLE')}}</div>
           <div
             class="switchBox"
             v-for="(lowItem, index) in item.membersData"
@@ -57,7 +56,7 @@
               style="--el-switch-on-color: #2eb867"
             />
           </div>
-          <div class="roleItem_Kind">COLLABORATION</div>
+          <div class="roleItem_Kind">{{$t('roles.COLLABORATION')}}</div>
           <div
             class="switchBox"
             v-for="(lowItem, index) in item.documentsData"
@@ -79,29 +78,29 @@
         :ifFolder="false"
         :fileName="item.positionName"
         :fileTime="item.positionMess"
-        :fileSize="item.count + ' members'"
+        :fileSize="item.count + $t('roles.members')"
       />
     </div>
   </div>
   <el-dialog
     v-model="rolesDialogVisible"
-    title="Add New Role"
+    :title="$t('roles.AddNewRole')"
     width="600"
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">Role Name</div>
+    <div class="inputName">{{ $t('roles.RoleName') }}</div>
     <el-input
       v-model="newRoleData.roleName"
-      placeholder="请输入内容"
+      :placeholder="$t('pleaseEnterContent')"
       class="content-input"
     ></el-input>
-     <div class="inputName">Role Description</div>
+     <div class="inputName">{{ $t('roles.RoleDescription') }}</div>
     <el-input
       v-model="newRoleData.roleDescription"
       style="width: 100%;"
       maxlength="20"
-      placeholder="Please input"
+      :placeholder="$t('pleaseEnterContent')"
       show-word-limit
       resize="none"
       word-limit-position="outside"
@@ -110,33 +109,33 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="rolesDialogVisible = false" class="cancelBtn">
-          Cancel
+          {{ $t('cancel') }}
         </el-button>
         <el-button type="primary" @click="addSubmit('Role')" class="confirmBtn">
-          Add Role
+          {{ $t('roles.AddRole') }}
         </el-button>
       </div>
     </template>
   </el-dialog>
   <el-dialog
     v-model="positionsDialogVisible"
-    title="Add New Position"
+    :title="$t('roles.AddNewPosition')"
     width="600"
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">Position Name</div>
+    <div class="inputName">{{ $t('roles.PositionName') }}</div>
     <el-input
       v-model="newPositionData.positionName"
-      placeholder="请输入内容"
+      :placeholder="$t('pleaseEnterContent')"
       class="content-input"
     ></el-input>
-     <div class="inputName">Position Description</div>
+     <div class="inputName">{{ $t('roles.PositionDescription') }}</div>
     <el-input
       v-model="newPositionData.positionDescription"
       style="width: 100%;"
       maxlength="20"
-      placeholder="Please input"
+      :placeholder="$t('pleaseEnterContent')"
       show-word-limit
       resize="none"
       word-limit-position="outside"
@@ -145,10 +144,10 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="positionsDialogVisible = false" class="cancelBtn">
-          Cancel
+          {{ $t('cancel') }}
         </el-button>
         <el-button type="primary" @click="addSubmit('Position')" class="confirmBtn">
-          Add Position
+          {{ $t('roles.AddPosition') }}
         </el-button>
       </div>
     </template>

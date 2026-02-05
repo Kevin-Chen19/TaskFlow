@@ -1,32 +1,49 @@
 <template>
-  <div class="fileBigBox" :style="{ height: computedHeight}">
+  <div class="fileBigBox" :style="{ height: computedHeight }">
     <div class="kindPic" :style="{ backgroundColor: topLeftBgColor }">
-      <img :src="computedFileIcon"
-          alt="左侧图标"/>
+      <img :src="computedFileIcon" alt="左侧图标" />
     </div>
     <div class="fileMess">
       <div class="fileMessLeft">
         <div class="fileNameSty">{{ computedFileName }}</div>
         <div class="fileSmallSty">{{ computedFileTime }}</div>
       </div>
-      <div class="rightBox">
-        <div class="rightPic">
-           <el-dropdown trigger="click" @command="handleCommand">
-            <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
+      <div
+        class="rightBox"
+        :style="!props.ifFolder ? { justifyContent: 'end' } : {}"
+      >
+        <div v-if="props.ifFolder" class="rightPic">
+          <el-dropdown trigger="click" @command="handleCommand">
+            <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop />
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="rename">{{ $t('projects.rename') }}</el-dropdown-item>
-                <el-dropdown-item v-if="!props.ifBin" command="delete">{{ $t('fileCard.moveToBin') }}</el-dropdown-item>
-                <el-dropdown-item v-if="props.ifBin" command="drop">{{ $t('fileCard.delete') }}</el-dropdown-item>
-                <el-dropdown-item command="download">{{ $t('fileCard.download') }}</el-dropdown-item>
-                <el-dropdown-item command="notify">{{ $t('fileCard.remindMembers') }}</el-dropdown-item>
+                <el-dropdown-item command="rename">{{
+                  $t("projects.rename")
+                }}</el-dropdown-item>
+                <el-dropdown-item v-if="!props.ifBin" command="delete">{{
+                  $t("fileCard.moveToBin")
+                }}</el-dropdown-item>
+                <el-dropdown-item v-if="props.ifBin" command="drop">{{
+                  $t("fileCard.delete")
+                }}</el-dropdown-item>
+                <el-dropdown-item command="download">{{
+                  $t("fileCard.download")
+                }}</el-dropdown-item>
+                <el-dropdown-item command="notify">{{
+                  $t("fileCard.remindMembers")
+                }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </div>
         <div class="fileMessRight">
           <div class="fileSmallSty">{{ computedFileMaker }}</div>
-          <div class="fileSmallSty" :class="props.ifFolder ? '': 'positionStyle'">{{ computedFileSize }}</div>
+          <div
+            class="fileSmallSty"
+            :class="props.ifFolder ? '' : 'positionStyle'"
+          >
+            {{ computedFileSize }}
+          </div>
         </div>
       </div>
     </div>
@@ -35,17 +52,17 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import floderIcon from "@/assets/icons/文件夹.png";
-import DocIcon from '@/assets/icons/Doc.png';
-import PdfIcon from '@/assets/icons/pdf.png';
-import PptIcon from '@/assets/icons/ppt.png';
-import ImgIcon from '@/assets/icons/img.png';
-import XlsxIcon from '@/assets/icons/xlsx.png';
+import DocIcon from "@/assets/icons/Doc.png";
+import PdfIcon from "@/assets/icons/pdf.png";
+import PptIcon from "@/assets/icons/ppt.png";
+import ImgIcon from "@/assets/icons/img.png";
+import XlsxIcon from "@/assets/icons/xlsx.png";
 //职位相关图标
-import FrontIcon from '@/assets/icons/前端.png';
-import BackendIcon from '@/assets/icons/数据库.png';
-import TestIcon from '@/assets/icons/Debug.png';
-import DesignIcon from '@/assets/icons/调色板.png';
-import OtherJobIcon from '@/assets/icons/职位.png';
+import FrontIcon from "@/assets/icons/前端.png";
+import BackendIcon from "@/assets/icons/数据库.png";
+import TestIcon from "@/assets/icons/Debug.png";
+import DesignIcon from "@/assets/icons/调色板.png";
+import OtherJobIcon from "@/assets/icons/职位.png";
 // 定义组件属性
 const props = defineProps({
   //定义组件类型
@@ -70,34 +87,38 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  fileMaker:{
+  fileMaker: {
     type: String,
     default: "",
   },
-  fileSize:{
+  fileSize: {
     type: String,
     default: "",
-  }
+  },
 });
-const computedHeight = computed(() => props.ifFolder ? "4rem" : "5rem");
+const computedHeight = computed(() => (props.ifFolder ? "4rem" : "5rem"));
 const topLeftBgColor = computed(() => props.topLeftBgc || "#faf5ff");
 const computedFileName = computed(() => props.fileName || "");
 const computedFileTime = computed(() => props.fileTime || "");
 const computedFileMaker = computed(() => props.fileMaker || "");
 const computedFileSize = computed(() => props.fileSize || "");
 const computedFileIcon = computed(() => {
-  if(props.ifFolder){
+  if (props.ifFolder) {
     if (props.fileName.endsWith(".docx")) {
       return DocIcon;
     } else if (props.fileName.endsWith(".ppt")) {
       return PptIcon;
     } else if (props.fileName.endsWith(".pdf")) {
       return PdfIcon;
-    } else if (props.fileName.endsWith(".png") || props.fileName.endsWith(".jpg") || props.fileName.endsWith(".jpeg")) {
+    } else if (
+      props.fileName.endsWith(".png") ||
+      props.fileName.endsWith(".jpg") ||
+      props.fileName.endsWith(".jpeg")
+    ) {
       return ImgIcon;
     } else if (props.fileName.endsWith(".xlsx")) {
       return XlsxIcon;
-    }else{
+    } else {
       return floderIcon;
     }
   } else {
@@ -109,19 +130,18 @@ const computedFileIcon = computed(() => {
       return TestIcon;
     } else if (props.fileName.includes("Designer")) {
       return DesignIcon;
-    }else{
+    } else {
       return OtherJobIcon;
     }
   }
-  
 });
 // 定义组件事件
 const emit = defineEmits<{
   command: [command: string];
 }>();
 const handleCommand = (command: string) => {
-  emit('command', command);
-}
+  emit("command", command);
+};
 </script>
 <style scoped lang="scss">
 .fileBigBox {
@@ -135,7 +155,7 @@ const handleCommand = (command: string) => {
   border-radius: 0.5rem;
   cursor: pointer;
 }
-.fileBigBox:hover{
+.fileBigBox:hover {
   background-color: #b2e4e6b0;
   border: 1px solid #1fa2ad;
 }
@@ -151,9 +171,9 @@ const handleCommand = (command: string) => {
     width: 50%;
   }
 }
-.leftIcon{
+.leftIcon {
   background-color: transparent;
-  img{
+  img {
     width: 30%;
   }
 }
@@ -166,7 +186,7 @@ const handleCommand = (command: string) => {
   justify-content: space-between;
   padding: 0 1rem;
 }
-.fileMessLeft{
+.fileMessLeft {
   width: 45%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -185,21 +205,21 @@ const handleCommand = (command: string) => {
     margin-left: 3rem;
   }
 }
-.positionStyle{
+.positionStyle {
   font-size: 1rem;
-  color:black;
+  color: black;
   font-weight: 500;
 }
-.rightBox{
+.rightBox {
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: end;
-  .rightPic{
+  .rightPic {
     width: 1.5rem;
     height: 1.5rem;
-    img{
+    img {
       width: 100%;
     }
   }
