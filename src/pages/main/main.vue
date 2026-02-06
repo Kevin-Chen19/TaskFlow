@@ -17,21 +17,21 @@
               <span style="color: gray; margin-right: 1rem">/</span>
               <span style="font-weight: 500">项目管理平台PC端</span>
             </div>
-            <div style="display: flex; align-items: center">
+            <div id="tour2" style="display: flex; align-items: center;gap: 1rem;">
               <el-popover
                 ref="languagePopoverRef"
                 trigger="hover"
               >
                 <template #reference>
                   <div class="transBox">
-                    <img id="tour2" src="@/assets/icons/翻译.png" alt="翻译图标" />
+                    <img src="@/assets/icons/翻译.png" alt="翻译图标" />
                   </div>
                 </template>
                  <template #default>
                   <div class="languageSpan" @click="changeLanguage('中文')">简体中文</div>
                   <div class="languageSpan" @click="changeLanguage('English')">English</div>
                  </template>
-                </el-popover>
+              </el-popover>
               <div
                 class="notifyStyle"
                 @click="
@@ -39,7 +39,7 @@
                   showNotifications = true;
                 "
               >
-                <img id="tour3" src="../../assets/icons/通知.png" alt="通知图标" />
+                <img src="../../assets/icons/通知.png" alt="通知图标" />
                 <div v-show="ifHasUnread" class="point"></div>
               </div>
               <el-tooltip
@@ -49,7 +49,7 @@
                 placement="bottom"
               >
                 <div style="position: relative">
-                  <div id="tour4" class="notifyStyle userPic" @click="showMenu">
+                  <div class="notifyStyle userPic" @click="showMenu">
                     <img :src="userStore.user.pic" alt="用户头像" />
                   </div>
                 </div>
@@ -406,6 +406,8 @@ const handleTourFinish = () => {
 }
 .flex-1 {
   flex: 1;
+  box-sizing: border-box;
+  padding-right: 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -420,7 +422,6 @@ const handleTourFinish = () => {
 .transBox {
   width: 1.5rem;
   height: 1.5rem;
-  margin-right: 1rem;
   cursor: pointer;
   img {
     width: 100%;
@@ -435,7 +436,6 @@ const handleTourFinish = () => {
 }
 .notifyStyle {
   position: relative;
-  margin-left: 10px;
   width: 3vh;
   height: 3vh;
   background-color: #eff0f1;
@@ -445,6 +445,7 @@ const handleTourFinish = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
   img {
     width: 50%;
   }
