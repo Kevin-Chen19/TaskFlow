@@ -405,11 +405,12 @@ const addMilestone = () => {
 
 // 编辑里程碑
 const editMilestone = (index: number) => {
+  if (!activities[index]) return;
   isEditingMilestone.value = true;
   editingMilestoneIndex.value = index;
   // 填充表单
-  milestoneData.content = activities[index].content;
-  milestoneData.dueLine = activities[index].date;
+  milestoneData.content = activities[index].content || '';
+  milestoneData.dueLine = activities[index].date || '';
   TimeLineDialogVisible.value = true;
 };
 
@@ -473,14 +474,16 @@ const getActivityDisplayProps = () => {
 
   // 为已完成的项添加完成图标
   for (let i = 0; i <= lastCompletedIndex; i++) {
-    activities[i].color = "#0bbd87";
-    activities[i].icon = Check;
+    if (!activities[i]) continue;
+    (activities[i] as any).color = "#0bbd87";
+    (activities[i] as any).icon = Check;
   }
 
   // 为第一个未完成的项添加刷新图标
-  if (lastCompletedIndex + 1 < activities.length) {
-    activities[lastCompletedIndex + 1].color = "#24a4af";
-    activities[lastCompletedIndex + 1].icon = Refresh;
+  const nextIndex = lastCompletedIndex + 1;
+  if (nextIndex < activities.length && activities[nextIndex]) {
+    (activities[nextIndex] as any).color = "#24a4af";
+    (activities[nextIndex] as any).icon = Refresh;
   }
 };
 
@@ -510,7 +513,8 @@ const saveMilestone = () => {
     // 找到插入位置（按日期排序）
     let insertIndex = activities.length;
     for (let i = 0; i < activities.length; i++) {
-      if (new Date(updatedMilestone.date) < new Date(activities[i].date)) {
+      const activityDate = activities[i]?.date;
+      if (activityDate && new Date(updatedMilestone.date) < new Date(activityDate)) {
         insertIndex = i;
         break;
       }
@@ -528,7 +532,8 @@ const saveMilestone = () => {
     // 找到插入位置（按日期排序）
     let insertIndex = activities.length;
     for (let i = 0; i < activities.length; i++) {
-      if (new Date(updatedMilestone.date) < new Date(activities[i].date)) {
+      const activityDate = activities[i]?.date;
+      if (activityDate && new Date(updatedMilestone.date) < new Date(activityDate)) {
         insertIndex = i;
         break;
       }

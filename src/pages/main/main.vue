@@ -181,7 +181,7 @@
           <div class="longLine"></div>
         </div>
         <div v-for="littleItem in item.notifications">
-          <NotificationsCard
+          <NotificationsCardComponent
             :notification="littleItem"
             @mark-as-read="handleMarkRead"
           />
@@ -197,7 +197,7 @@
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import NotificationsCard from "@/components/notificationsCard.vue";
+import NotificationsCardComponent from "@/components/notificationsCard.vue";
 import TourComponents from "@/components/TourComponents.vue";
 import { useNotificationStore, type notificationItem } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
@@ -282,7 +282,7 @@ const getNotifications = () => {
     .toISOString()
     .split("T")[0] || '';
   let curentDate = "";
-  let datejih = {
+  let datejih: DateNotifications = {
     date: curentDate,
     notifications: [],
   };
@@ -293,7 +293,7 @@ const getNotifications = () => {
       datejih.notifications.push(item);
     } else {
       if (curentDate !== "") {
-        notificationsByDate.push(datejih);
+        notificationsByDate.push({...datejih});
       }
       curentDate = splitDate || '';
       datejih = {
@@ -302,7 +302,7 @@ const getNotifications = () => {
       };
       datejih.notifications.push(item);
       if (num === notificationStore.notifications.length - 1) {
-        notificationsByDate.push(datejih);
+        notificationsByDate.push({...datejih});
       }
     }
     num++;

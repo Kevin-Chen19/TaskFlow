@@ -75,9 +75,9 @@
           :ifFolder="true"
           :bodyContent="item.fileName"
           :footerContent="
-            item.children ? item.children.length + $t('projects.files') : (item.fileTime || '')
+            item.children ? String(item.children.length) + $t('projects.files') : (item.fileTime || '')
           "
-          :topRightImg="true"
+          :topRightImg="'菜单.png'"
           :ifBin="item.ifInBin"
           @click="enterFolder(item)"
           @command="(command) => handleCommand(item, command)"
@@ -718,7 +718,8 @@ const submitName = () => {
   }
   if (file.children) {
     // 文件夹：不需要后缀名
-    file.fileName = newName.value.split(".")[0];
+    const parts = newName.value.split(".");
+    file.fileName = parts[0] || "";
   } else {
     // 文件：处理后缀名
     const parts = newName.value.split(".");

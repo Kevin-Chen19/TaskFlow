@@ -275,7 +275,7 @@
     width="800"
     align-center
   >
-    <TaskCard v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></taskCard>
+    <task-card v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></task-card>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
@@ -301,7 +301,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { ElSelect, ElOption } from "element-plus";
-import TaskCard from "@/components/TaskCard.vue";
+import TaskCard from "@/components/taskCard.vue";
 const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -350,9 +350,9 @@ const EditMessage = () => {
 }
 const SaveMessage = () => {
   // 保存任务进度
-  const taskIndex = tasksStore.allTasks.findIndex((task) => task.id === MessageTask.id);
-  if (taskIndex !== -1) {
-    tasksStore.allTasks[taskIndex].percentage = MessageTask.percentage;
+  const task = tasksStore.allTasks.find((task) => task.id === MessageTask.id);
+  if (task) {
+    task.percentage = MessageTask.percentage;
     ElMessage({
       message: t('updatedSuccess'),
       type: 'success',
@@ -686,7 +686,12 @@ const assignLanes = (tasks: any[], weekStart: Date, weekEnd: Date) => {
   tasks.forEach((task) => {
     let laneIndex = 0;
     while (true) {
-      const lane = lanes[laneIndex] || [];
+      if (!lanes[laneIndex]) {
+        lanes[laneIndex] = [];
+      }
+
+      const lane = lanes[laneIndex];
+      if (!lane) break;
 
       const hasOverlap = lane.some((existingTask: any) => {
         const t1Start = new Date(existingTask.startDate);
@@ -708,9 +713,11 @@ const assignLanes = (tasks: any[], weekStart: Date, weekEnd: Date) => {
       });
 
       if (!hasOverlap) {
-        if (!lanes[laneIndex]) lanes[laneIndex] = [];
-        lanes[laneIndex].push(task);
-        taskLaneMap.set(task.id, laneIndex);
+        const currentLane = lanes[laneIndex];
+        if (currentLane) {
+          currentLane.push(task);
+          taskLaneMap.set(task.id, laneIndex);
+        }
         break;
       }
       laneIndex++;

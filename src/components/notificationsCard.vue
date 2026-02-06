@@ -28,12 +28,12 @@
 </template>
 <script setup lang="ts">
 import { computed } from "vue";
-import type notificationItem from "@/components/notificationCard.vue";
+import type { notificationItem } from "@/stores/notificationStore";
 import ChatIcon from "@/assets/icons/聊天消息.png";
 import FileIcon from "@/assets/icons/文件上传.png";
 import TaskIcon from "@/assets/icons/变更.png";
 const props = defineProps<{
-  notification?: typeof notificationItem;
+  notification?: notificationItem;
   markRead?: (id: string) => void;
 }>();
 const emit = defineEmits<{
