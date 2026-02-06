@@ -68,7 +68,7 @@
         class="drawer_Status"
         :class="{ drawer_Status_offline: drawerUser.status === 'offline' }"
       >
-        {{ $t(drawerUser.status) }}
+        {{ $t(drawerUser.status || '') }}
       </div>
       <div class="drawer_title">{{ $t('team.POSITION') }}</div>
       <div class="drawer_title drawer_Position">{{ drawerUser.postion }}</div>

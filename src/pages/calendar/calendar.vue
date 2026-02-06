@@ -275,7 +275,7 @@
     width="800"
     align-center
   >
-    <TaskCard v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></TaskCard>
+    <TaskCard v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></taskCard>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
@@ -348,19 +348,36 @@ const EditMessage = () => {
   MessageDialogVisible.value = false;
   centerDialogVisible.value = true;
 }
+const SaveMessage = () => {
+  // 保存任务进度
+  const taskIndex = tasksStore.allTasks.findIndex((task) => task.id === MessageTask.id);
+  if (taskIndex !== -1) {
+    tasksStore.allTasks[taskIndex].percentage = MessageTask.percentage;
+    ElMessage({
+      message: t('updatedSuccess'),
+      type: 'success',
+    });
+  }
+  MessageDialogVisible.value = false;
+}
 const handleSubmit = () => {
   try {
     // 访问子组件暴露的数据
-    const componentData = JSON.parse(
-      JSON.stringify(taskCardRef.value?.formData),
-    ); // 深拷贝
+    const formData = taskCardRef.value?.formData;
+    if (!formData) {
+      ElMessage({
+        message: t('addFailed'),
+        type: "error",
+      });
+      return;
+    }
+    const componentData = JSON.parse(JSON.stringify(formData)); // 深拷贝
     componentData.createLine = formatDate(new Date());
     componentData.dueLine = formatDate(new Date(componentData.dueLine));
     componentData.createUser = userStore.user.userId;
     //设置id为时间戳加随机数
     componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
-    allTasks.push(componentData);
-    tasks.push(componentData);
+    tasksStore.allTasks.push(componentData);
     ElMessage({
       message: t('addSuccessfully'),
       type: "success",
@@ -377,9 +394,15 @@ const handleSubmit = () => {
 const submitEdit = () => {
     try {
     // 访问子组件暴露的数据
-    const componentData = JSON.parse(
-      JSON.stringify(taskCardRef.value?.formData),
-    ); // 深拷贝
+    const formData = taskCardRef.value?.formData;
+    if (!formData) {
+      ElMessage({
+        message: t('updateFailed'),
+        type: "error",
+      });
+      return;
+    }
+    const componentData = JSON.parse(JSON.stringify(formData)); // 深拷贝
     componentData.dueLine = formatDate(new Date(componentData.dueLine));
     componentData.createUser = userStore.user.userId;
      const index = tasksStore.allTasks.findIndex((task) => task.id === MessageTask.id);
@@ -610,11 +633,13 @@ const getTaskStatus = (task: Task): string => {
 
 // 获取用户名首字母
 const getUserInitials = (userId: string): string => {
-  return userStore.getUserNameById(userId).slice(0,2);
+  const userName = userStore.getUserNameById(userId);
+  return userName ? userName.slice(0, 2) : '';
 };
 
 // 获取某周的任务
 const getTasksForWeek = (week: Date[]) => {
+  if (!week[0] || !week[6]) return [];
   const weekStart = new Date(week[0]);
   weekStart.setHours(0, 0, 0, 0);
   const weekEnd = new Date(week[6]);
@@ -663,7 +688,7 @@ const assignLanes = (tasks: any[], weekStart: Date, weekEnd: Date) => {
     while (true) {
       const lane = lanes[laneIndex] || [];
 
-      const hasOverlap = lane.some((existingTask) => {
+      const hasOverlap = lane.some((existingTask: any) => {
         const t1Start = new Date(existingTask.startDate);
         t1Start.setHours(0, 0, 0, 0);
         const t1End = new Date(existingTask.endDate);
@@ -701,7 +726,7 @@ const assignLanes = (tasks: any[], weekStart: Date, weekEnd: Date) => {
 // 计算周高度
 const getWeekHeight = (week: Date[]): number => {
   const tasks = getTasksForWeek(week);
-  const lanes = new Set(tasks.map((t) => t.laneIndex));
+  const lanes = new Set(tasks.map((t: any) => t.laneIndex));
   const tasksHeight = lanes.size * 32;
   const minHeight = 140;
   return Math.max(minHeight, 32 + tasksHeight + 10);
@@ -723,6 +748,7 @@ const getTaskClass = (task: any): string => {
 
 // 获取任务位置样式
 const getTaskStyle = (task: any, week: Date[]) => {
+  if (!week[0] || !week[6]) return {};
   const weekStart = new Date(week[0]);
   weekStart.setHours(0, 0, 0, 0);
   const weekEnd = new Date(week[6]);

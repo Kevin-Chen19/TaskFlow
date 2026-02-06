@@ -75,7 +75,7 @@
           :ifFolder="true"
           :bodyContent="item.fileName"
           :footerContent="
-            item.children ? item.children.length + $t('projects.files') : item.fileTime
+            item.children ? item.children.length + $t('projects.files') : (item.fileTime || '')
           "
           :topRightImg="true"
           :ifBin="item.ifInBin"
@@ -483,11 +483,11 @@ interface filesTree {
   fileSize?: string;
   children?: filesTree[];
   ifInBin: boolean;
-  id?: string;
+  id: string;
 }
 const defaultProps = {
   children: "children",
-  label: "label",
+  label: "fileName",
 };
 const handleNodeClick = (data: filesTree) => {
   console.log(data);
@@ -524,7 +524,7 @@ const backToParent = () => {
     } else {
       // 返回到上一级文件夹
       const parentId = folderPath[folderPath.length - 1];
-      const parentFolder = findFileById(AllFiles, parentId);
+      const parentFolder = findFileById(AllFiles, parentId!);
       if (parentFolder && parentFolder.children) {
         const filteredChildren = filterFiles(
           parentFolder.children,
@@ -566,7 +566,8 @@ const handleCommand = (file: filesTree, command: string) => {
   // 处理不同命令
   if (command === "rename") {
     newName.value = file.fileName;
-    houzhui.value = newName.value.split(".")[1];
+    const parts = newName.value.split(".");
+    houzhui.value = parts.length > 1 ? parts[1] || "" : "";
     currentFileId.value = file.id;
     renameDialogVisible.value = true;
   } else if (command === "delete") {
@@ -591,7 +592,7 @@ const handleCommand = (file: filesTree, command: string) => {
       if (folderPath.length > 0) {
         // 在子文件夹中：从路径栈获取当前文件夹ID，重新构建显示
         const currentFolderId = folderPath[folderPath.length - 1];
-        const currentFolder = findFileById(AllFiles, currentFolderId);
+        const currentFolder = findFileById(AllFiles, currentFolderId!);
         if (currentFolder && currentFolder.children) {
           const filteredCurrentFolder = filterFiles(
             currentFolder.children,
@@ -641,7 +642,7 @@ const handleCommand = (file: filesTree, command: string) => {
       if (folderPath.length > 0) {
         // 在子文件夹中：从路径栈获取当前文件夹ID，重新构建显示
         const currentFolderId = folderPath[folderPath.length - 1];
-        const currentFolder = findFileById(AllFiles, currentFolderId);
+        const currentFolder = findFileById(AllFiles, currentFolderId!);
         if (currentFolder && currentFolder.children) {
           const filteredCurrentFolder = filterFiles(
             currentFolder.children,
@@ -709,7 +710,7 @@ const findParentFolder = (
 
 const submitName = () => {
   //实现对文件或文件夹的重命名
-  const file = findFileById(showFloders, currentFileId.value);
+  const file = findFileById(showFloders, currentFileId.value!);
   if (!file) {
     console.error("File not found:", currentFileId.value);
     renameDialogVisible.value = false;
@@ -721,8 +722,8 @@ const submitName = () => {
   } else {
     // 文件：处理后缀名
     const parts = newName.value.split(".");
-    const fileName = parts[0];
-    const fileType = parts[1];
+    const fileName = parts[0] || "";
+    const fileType = parts.length > 1 ? parts[1] : "";
 
     if (fileType && fileType === houzhui.value) {
       file.fileName = newName.value;

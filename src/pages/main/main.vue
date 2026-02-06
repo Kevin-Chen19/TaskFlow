@@ -197,9 +197,9 @@
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import NotificationsCard from "@/components/NotificationsCard.vue";
+import NotificationsCard from "@/components/notificationsCard.vue";
 import TourComponents from "@/components/TourComponents.vue";
-import { useNotificationStore } from "@/stores/notificationStore";
+import { useNotificationStore, type notificationItem } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { Close } from "@element-plus/icons-vue";
 import i18n from "@/language";
@@ -215,7 +215,11 @@ const direction = ref("rtl");
 const router = useRouter();
 const todayDate = ref("");
 const yesterdayDate = ref("");
-const notificationsByDate = reactive([]);
+interface DateNotifications {
+  date: string;
+  notifications: notificationItem[];
+}
+const notificationsByDate = reactive<DateNotifications[]>([]);
 const changeLanguage = (languageValue: string) => {
   if (languageValue === "中文") {
     i18n.global.locale.value = 'zh';
@@ -271,12 +275,12 @@ const signOut = () => {
 const getNotifications = () => {
   notificationsByDate.splice(0, notificationsByDate.length); //清空数据
   const currentDateTime = getCurrentDateTime();
-  todayDate.value = currentDateTime.split(" ")[0];
+  todayDate.value = currentDateTime.split(" ")[0] || '';
   yesterdayDate.value = new Date(
     new Date(currentDateTime).getTime() - 24 * 60 * 60 * 1000,
   )
     .toISOString()
-    .split("T")[0];
+    .split("T")[0] || '';
   let curentDate = "";
   let datejih = {
     date: curentDate,
@@ -291,7 +295,7 @@ const getNotifications = () => {
       if (curentDate !== "") {
         notificationsByDate.push(datejih);
       }
-      curentDate = splitDate;
+      curentDate = splitDate || '';
       datejih = {
         date: curentDate,
         notifications: [],

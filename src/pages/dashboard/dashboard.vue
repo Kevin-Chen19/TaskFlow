@@ -60,7 +60,7 @@
             :hollow="activity.hollow"
             :timestamp="getDisplayTimestamp(activity.date)"
           >
-            <span
+              <span
               style="font-size: larger; cursor: pointer"
               @click="editMilestone(index)"
               >{{ $t("Dashboard.phase") }}{{ index + 1 }}:
@@ -143,7 +143,7 @@
   </el-dialog>
   <el-dialog
     v-model="noteDialogVisible"
-    :title="$t('Dashboard.addNote')"
+    :title="$t('Dashboard.addNewNote')"
     width="600"
     align-center
   >
@@ -157,7 +157,7 @@
     ></el-input>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="centerDialogVisible = false" class="cancelBtn">
+        <el-button @click="noteDialogVisible = false" class="cancelBtn">
           {{ $t("cancel") }}
         </el-button>
         <el-button type="primary" @click="submitNote" class="confirmBtn">
@@ -235,8 +235,15 @@ const milestoneData = reactive({
   dueLine: "",
 });
 
-interface ActivityType extends Partial<TimelineItemProps> {
+interface ActivityType {
   content: string;
+  date: string;
+  color?: string;
+  icon?: any;
+  type?: string;
+  size?: string;
+  hollow?: boolean;
+  timestamp?: string;
 }
 
 const activities = reactive<ActivityType[]>([

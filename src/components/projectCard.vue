@@ -1,5 +1,5 @@
 <template>
-  <div class="contentBox1">
+  <div class="contentBox1" v-if="project">
     <div class="iconBox">{{ project.projectName.slice(0,1) }}</div>
     <div class="name">{{ project.projectName }}</div>
     <div class="description">{{ project.description }}</div>

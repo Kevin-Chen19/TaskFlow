@@ -2,7 +2,7 @@
   <div class="line"></div>
   <div class="formBox">
     <el-input
-      v-model="projectData.taskName"
+      v-model="projectData.projectName"
       class="custom-input"
       :placeholder="$t('newPeojectCard.ProjectName')"
     />

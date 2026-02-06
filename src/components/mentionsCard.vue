@@ -1,5 +1,5 @@
 <template>
-  <div class="mainBox">
+  <div class="mainBox" v-if="props.mentionsDate">
     <div class="bigTitle">{{ $t('projects.fileAlert') }}</div>
     <div class="littleSpan">
       {{ $t('projects.manageWhoReceives') }}"{{ props.mentionsDate.fileName }}"
@@ -68,8 +68,10 @@ const props = defineProps<{
   mentionsDate?: MentionsDate;
 }>();
 
-const handleSelectionChange = (selection: UserItem[]) => {
-  props.mentionsDate.members = selection.map(user => user.userId);
+const handleSelectionChange = (selection: typeof userStore.usersTable) => {
+  if (props.mentionsDate) {
+    props.mentionsDate.members = selection.map(user => user.userId);
+  }
   // 更新显示的选中数量文本
   selectedNum.value = selection.length;
 };

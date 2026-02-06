@@ -237,12 +237,22 @@ import ProjectCard from "@/components/projectCard.vue";
 import Velocity from "@/components/velocity.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useUserStore } from "@/stores/userStore";
-import { ElMessageBox } from "element-plus";
+import { ElMessageBox, ElMessage } from "element-plus";
 import { Plus } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
 const userStore = useUserStore();
 import avatarImg from "@/assets/pics/用户头像.jpg";
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
+
+interface Project {
+  id: string;
+  creator: string;
+  projectName: string;
+  description: string;
+  percentage: number;
+  joinUser: string[];
+}
+
 const allProjects = [
   {
     id: "202601271",
@@ -339,10 +349,10 @@ const MyPageNum = ref(0);
 const JoinPageNum = ref(0);
 const dialogFormVisible = ref(false);
 const imageUrl = ref('')
-const MyProjects = reactive([]);
-const JoinProjects = reactive([]);
+const MyProjects = reactive<Project[]>([]);
+const JoinProjects = reactive<Project[]>([]);
 const avator = ref('');
-const avatorFile = ref(null)
+const avatorFile = ref<File | null>(null);
 const defaultPic = ref(defaultAvatarImg)
 onMounted(() => {
   MyProjects.push(
@@ -383,15 +393,16 @@ const changeShow = (type: string, pageNum: number, action: string) => {
     JoinPageNum.value = pageNum;
   }
 };
-const handleChange = async (file) => {
+const handleChange = async (file: any) => {
   avator.value = URL.createObjectURL(file.raw)
   avatorFile.value = file.raw
   console.log(avatorFile.value , avator.value )
 }
 const open = (name: string) => {
- ElMessageBox.alert(`Are you sure to switch the current project to ${name}?`, 'Switch Project', {
+ ElMessageBox.confirm(`Are you sure to switch the current project to ${name}?`, 'Switch Project', {
     confirmButtonText: 'OK',
-    showCancelButton: 'true'
+    cancelButtonText: 'Cancel',
+    type: 'warning'
   })
 };
 const handleAvatarSuccess: UploadProps['onSuccess'] = (

@@ -8,8 +8,8 @@
     </div>
     <div class="messageBox">
       <div class="messTop">
-        <span class="messTitle">{{ $t(props.notification?.name) }}</span>
-        <span class="messTime">{{ props.notification?.time.split(' ')[1] }}</span>
+        <span class="messTitle">{{ props.notification?.name ? $t(props.notification?.name) : '' }}</span>
+        <span class="messTime">{{ props.notification?.time?.split(' ')[1] || '' }}</span>
       </div>
       <div class="whoSayBox" v-if="props.notification?.kind === '聊天消息'">
         <span style="color: #135bec; margin-right: 0.4rem;">@{{ props.notification?.creator }}</span>
@@ -28,12 +28,12 @@
 </template>
 <script setup lang="ts">
 import { computed } from "vue";
-import notificationItem from "@/components/notificationCard.vue";
+import type notificationItem from "@/components/notificationCard.vue";
 import ChatIcon from "@/assets/icons/聊天消息.png";
 import FileIcon from "@/assets/icons/文件上传.png";
 import TaskIcon from "@/assets/icons/变更.png";
 const props = defineProps<{
-  notification?: notificationItem;
+  notification?: typeof notificationItem;
   markRead?: (id: string) => void;
 }>();
 const emit = defineEmits<{
