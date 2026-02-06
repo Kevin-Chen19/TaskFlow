@@ -240,6 +240,8 @@ import { useUserStore } from "@/stores/userStore";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { Plus } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 const userStore = useUserStore();
 import avatarImg from "@/assets/pics/用户头像.jpg";
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
@@ -399,9 +401,9 @@ const handleChange = async (file: any) => {
   console.log(avatorFile.value , avator.value )
 }
 const open = (name: string) => {
- ElMessageBox.confirm(`Are you sure to switch the current project to ${name}?`, 'Switch Project', {
-    confirmButtonText: 'OK',
-    cancelButtonText: 'Cancel',
+ ElMessageBox.confirm(t('me.Areyousureto') + ` ${name}?`, t('me.SwitchProject'), {
+    confirmButtonText: t('OK'),
+    cancelButtonText: t('cancel'),
     type: 'warning'
   })
 };

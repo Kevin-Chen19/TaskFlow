@@ -238,6 +238,8 @@ export default {
     SkillTags: 'Skill Tags',
     SaveChanges: 'Save Changes',
     EmailAddress: 'Email Address',
+    Areyousureto: 'Are you sure to switch the current project to',
+    SwitchProject: 'Switch Project',
   },
   newPeojectCard:{
     ProjectName: 'Project Name...',

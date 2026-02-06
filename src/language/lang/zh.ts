@@ -237,6 +237,8 @@ export default {
     SkillTags: '技能标签',
     SaveChanges: '保存更改',
     EmailAddress: '邮箱地址',
+    Areyousureto: '你确定要切换当前项目为',
+    SwitchProject: '切换项目',
   },
   newPeojectCard:{
     ProjectName: '项目名称',
