@@ -6,7 +6,7 @@ import { query } from './config/database.js';
 import userRoutes from './routes/users.js';
 import projectRoutes from './routes/projects.js';
 import taskRoutes from './routes/tasks.js';
-import teamRoutes from './routes/teams.js';
+import authRoutes from './routes/auth.js';
 import projectMembersRoutes from './routes/projectMembers.js';
 import notificationsRoutes from './routes/notifications.js';
 import notesRoutes from './routes/notes.js';
@@ -49,7 +49,7 @@ app.get('/health', async (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
-app.use('/api/teams', teamRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/project-members', projectMembersRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/notes', notesRoutes);
