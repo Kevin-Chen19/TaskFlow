@@ -230,7 +230,6 @@ router.put('/:id', async (req, res, next) => {
            assignee_ids = COALESCE($3, assignee_ids),
            progress = COALESCE($4, progress),
            total_hours = COALESCE($5, total_hours),
-           updated_at = NOW()
        WHERE id = $6
        RETURNING *`,
       [name, description, assignee_ids, progress, total_hours, id]

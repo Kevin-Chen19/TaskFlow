@@ -12,6 +12,10 @@ const routesConfig = [
     component: dashboard,
   },
   {
+    path: "/project-list",
+    component: () => import("../pages/projects/project-list.vue"),
+  },
+  {
     path: "/projects",
     component: projects,
   },
