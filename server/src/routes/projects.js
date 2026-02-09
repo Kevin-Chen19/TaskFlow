@@ -41,7 +41,7 @@ router.get('/:id', async (req, res, next) => {
 // 创建项目
 router.post('/', async (req, res, next) => {
   try {
-    const { name, description, owner_id, status, color } = req.body;
+    const { name, description, owner_id, assignee_ids, progress, total_hours } = req.body;
 
     if (!name || !owner_id) {
       return res.status(400).json({
@@ -51,10 +51,10 @@ router.post('/', async (req, res, next) => {
     }
 
     const result = await query(
-      `INSERT INTO projects (name, description, owner_id, status, color)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO projects (name, description, owner_id, assignee_ids, progress, total_hours)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [name, description, owner_id, status || 'active', color || '#409EFF']
+      [name, description, owner_id, assignee_ids || [], progress || 0, total_hours || 0]
     );
 
     res.status(201).json({
@@ -71,18 +71,19 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, status, color } = req.body;
+    const { name, description, assignee_ids, progress, total_hours } = req.body;
 
     const result = await query(
       `UPDATE projects
        SET name = COALESCE($1, name),
            description = COALESCE($2, description),
-           status = COALESCE($3, status),
-           color = COALESCE($4, color),
+           assignee_ids = COALESCE($3, assignee_ids),
+           progress = COALESCE($4, progress),
+           total_hours = COALESCE($5, total_hours),
            updated_at = NOW()
-       WHERE id = $5
+       WHERE id = $6
        RETURNING *`,
-      [name, description, status, color, id]
+      [name, description, assignee_ids, progress, total_hours, id]
     );
 
     if (result.rows.length === 0) {

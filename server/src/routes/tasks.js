@@ -50,20 +50,20 @@ router.get('/:id', async (req, res, next) => {
 // 创建任务
 router.post('/', async (req, res, next) => {
   try {
-    const { title, description, project_id, assignee_id, status, priority, due_date } = req.body;
+    const { title, description, project_id, creator_id, assignee_ids, due_date, start_date, progress, priority } = req.body;
 
-    if (!title || !project_id) {
+    if (!title || !project_id || !creator_id) {
       return res.status(400).json({
         success: false,
-        message: '任务标题和项目ID为必填项'
+        message: '任务标题、项目ID和创建者ID为必填项'
       });
     }
 
     const result = await query(
-      `INSERT INTO tasks (title, description, project_id, assignee_id, status, priority, due_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO tasks (title, description, project_id, creator_id, assignee_ids, due_date, start_date, progress, priority)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [title, description, project_id, assignee_id, status || 'todo', priority || 'medium', due_date]
+      [title, description, project_id, creator_id, assignee_ids || [], due_date, start_date, progress || 0, priority || 1]
     );
 
     res.status(201).json({
@@ -80,20 +80,21 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, description, assignee_id, status, priority, due_date } = req.body;
+    const { title, description, assignee_ids, due_date, start_date, progress, priority } = req.body;
 
     const result = await query(
       `UPDATE tasks
        SET title = COALESCE($1, title),
            description = COALESCE($2, description),
-           assignee_id = COALESCE($3, assignee_id),
-           status = COALESCE($4, status),
-           priority = COALESCE($5, priority),
-           due_date = COALESCE($6, due_date),
+           assignee_ids = COALESCE($3, assignee_ids),
+           due_date = COALESCE($4, due_date),
+           start_date = COALESCE($5, start_date),
+           progress = COALESCE($6, progress),
+           priority = COALESCE($7, priority),
            updated_at = NOW()
-       WHERE id = $7
+       WHERE id = $8
        RETURNING *`,
-      [title, description, assignee_id, status, priority, due_date, id]
+      [title, description, assignee_ids, due_date, start_date, progress, priority, id]
     );
 
     if (result.rows.length === 0) {

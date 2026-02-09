@@ -7,6 +7,13 @@ import userRoutes from './routes/users.js';
 import projectRoutes from './routes/projects.js';
 import taskRoutes from './routes/tasks.js';
 import teamRoutes from './routes/teams.js';
+import projectMembersRoutes from './routes/projectMembers.js';
+import notificationsRoutes from './routes/notifications.js';
+import notesRoutes from './routes/notes.js';
+import projectRolesRoutes from './routes/projectRoles.js';
+import projectPositionsRoutes from './routes/projectPositions.js';
+import projectFoldersRoutes from './routes/projectFolders.js';
+import projectDocumentsRoutes from './routes/projectDocuments.js';
 
 dotenv.config();
 
@@ -43,6 +50,13 @@ app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/project-members', projectMembersRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/project-roles', projectRolesRoutes);
+app.use('/api/project-positions', projectPositionsRoutes);
+app.use('/api/project-folders', projectFoldersRoutes);
+app.use('/api/project-documents', projectDocumentsRoutes);
 
 // 404 处理
 app.use((req, res) => {

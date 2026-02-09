@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
-      'SELECT id, username, email, avatar, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, phone, fullname, email, avatar_url, skills, mooto FROM users ORDER BY id DESC'
     );
     res.json({
       success: true,
@@ -24,7 +24,7 @@ router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     const result = await query(
-      'SELECT id, username, email, avatar, created_at FROM users WHERE id = $1',
+      'SELECT id, phone, fullname, email, avatar_url, skills, mooto FROM users WHERE id = $1',
       [id]
     );
 
@@ -47,23 +47,36 @@ router.get('/:id', async (req, res, next) => {
 // 创建用户
 router.post('/', async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
+    const { phone, fullname, email, password, avatar_url, skills, mooto } = req.body;
 
     // 验证必填字段
-    if (!username || !email || !password) {
+    if (!phone || !fullname || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: '用户名、邮箱和密码为必填项'
+        message: '手机号、姓名、邮箱和密码为必填项'
+      });
+    }
+
+    // 检查手机号是否已存在
+    const existingPhone = await query(
+      'SELECT id FROM users WHERE phone = $1',
+      [phone]
+    );
+
+    if (existingPhone.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: '该手机号已被注册'
       });
     }
 
     // 检查邮箱是否已存在
-    const existingUser = await query(
+    const existingEmail = await query(
       'SELECT id FROM users WHERE email = $1',
       [email]
     );
 
-    if (existingUser.rows.length > 0) {
+    if (existingEmail.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: '该邮箱已被注册'
@@ -71,8 +84,8 @@ router.post('/', async (req, res, next) => {
     }
 
     const result = await query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, avatar, created_at',
-      [username, email, password] // 注意：实际项目中应该对密码进行哈希加密
+      'INSERT INTO users (phone, fullname, email, password, avatar_url, skills, mooto) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, phone, fullname, email, avatar_url, skills, mooto',
+      [phone, fullname, email, password, avatar_url, skills, mooto || 'I am a mooto']
     );
 
     res.status(201).json({
@@ -89,11 +102,11 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { username, email, avatar } = req.body;
+    const { phone, fullname, email, avatar_url, skills, mooto } = req.body;
 
     const result = await query(
-      'UPDATE users SET username = COALESCE($1, username), email = COALESCE($2, email), avatar = COALESCE($3, avatar) WHERE id = $4 RETURNING id, username, email, avatar, updated_at',
-      [username, email, avatar, id]
+      'UPDATE users SET phone = COALESCE($1, phone), fullname = COALESCE($2, fullname), email = COALESCE($3, email), avatar_url = COALESCE($4, avatar_url), skills = COALESCE($5, skills), mooto = COALESCE($6, mooto) WHERE id = $7 RETURNING id, phone, fullname, email, avatar_url, skills, mooto',
+      [phone, fullname, email, avatar_url, skills, mooto, id]
     );
 
     if (result.rows.length === 0) {
