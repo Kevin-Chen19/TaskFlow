@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import specs from './swagger.js';
 import { query } from './config/database.js';
 import userRoutes from './routes/users.js';
 import projectRoutes from './routes/projects.js';
@@ -44,6 +46,13 @@ app.get('/health', async (req, res) => {
     });
   }
 });
+
+// Swagger API 文档
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'TaskFlow API 文档',
+}));
 
 // API 路由
 app.use('/api/users', userRoutes);

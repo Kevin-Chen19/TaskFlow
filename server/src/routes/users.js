@@ -3,7 +3,29 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取所有用户
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: 获取所有用户
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: 成功返回用户列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
+ *                     count:
+ *                       type: integer
+ */
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
@@ -19,7 +41,34 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 获取单个用户
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: 获取单个用户
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 用户ID
+ *     responses:
+ *       200:
+ *         description: 成功返回用户信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
+ *       404:
+ *         description: 用户不存在
+ */
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -44,7 +93,64 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// 创建用户
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: 创建用户
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *               - fullname
+ *               - email
+ *               - password
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "13800138001"
+ *               fullname:
+ *                 type: string
+ *                 example: "张三"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "password123"
+ *               avatar_url:
+ *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
+ *               skills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["JavaScript", "Node.js"]
+ *               mooto:
+ *                 type: string
+ *                 example: "I am a mooto"
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
+ *       400:
+ *         description: 请求参数错误或用户已存在
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { phone, fullname, email, password, avatar_url, skills, mooto } = req.body;
@@ -98,7 +204,62 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新用户
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: 更新用户
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 用户ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "13800138001"
+ *               fullname:
+ *                 type: string
+ *                 example: "张三"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "user@example.com"
+ *               avatar_url:
+ *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
+ *               skills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["JavaScript", "Node.js"]
+ *               mooto:
+ *                 type: string
+ *                 example: "I am a mooto"
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
+ *       404:
+ *         description: 用户不存在
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -126,7 +287,29 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除用户
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: 删除用户
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 用户ID
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: 用户不存在
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

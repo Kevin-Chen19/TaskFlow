@@ -6,8 +6,65 @@ import { generateToken, authenticateToken } from '../utils/jwtUtils.js';
 const router = express.Router();
 
 /**
- * User registration
- * POST /api/auth/register
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: 用户注册
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *               - fullname
+ *               - email
+ *               - password
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "13800138001"
+ *               fullname:
+ *                 type: string
+ *                 example: "张三"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: "password123"
+ *               avatar_url:
+ *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
+ *               skills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["JavaScript", "Node.js"]
+ *               mooto:
+ *                 type: string
+ *                 example: "I am a mooto"
+ *     responses:
+ *       201:
+ *         description: 注册成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
+ *       400:
+ *         description: 请求参数错误
+ *       409:
+ *         description: 用户已存在
  */
 router.post('/register', async (req, res, next) => {
   try {
@@ -84,8 +141,50 @@ router.post('/register', async (req, res, next) => {
 });
 
 /**
- * User login
- * POST /api/auth/login
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: 用户登录
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "13800138001"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: 登录成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/User'
+ *                         token:
+ *                           type: string
+ *       401:
+ *         description: 凭证无效
  */
 router.post('/login', async (req, res, next) => {
   try {
@@ -152,8 +251,27 @@ router.post('/login', async (req, res, next) => {
 });
 
 /**
- * Get current user info
- * GET /api/auth/me
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: 获取当前用户信息
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功返回用户信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
+ *       401:
+ *         description: 未授权
  */
 router.get('/me', authenticateToken, async (req, res, next) => {
   try {
@@ -181,8 +299,41 @@ router.get('/me', authenticateToken, async (req, res, next) => {
 });
 
 /**
- * Change password
- * POST /api/auth/change-password
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: 修改密码
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - current_password
+ *               - new_password
+ *             properties:
+ *               current_password:
+ *                 type: string
+ *                 format: password
+ *                 example: "oldpassword"
+ *               new_password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: "newpassword123"
+ *     responses:
+ *       200:
+ *         description: 修改成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         description: 旧密码错误或未授权
  */
 router.post('/change-password', authenticateToken, async (req, res, next) => {
   try {

@@ -3,7 +3,35 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取所有任务
+/**
+ * @swagger
+ * /api/tasks:
+ *   get:
+ *     summary: 获取任务列表
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         schema:
+ *           type: integer
+ *         description: 按项目筛选任务
+ *     responses:
+ *       200:
+ *         description: 成功返回任务列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Task'
+ *                     count:
+ *                       type: integer
+ */
 router.get('/', async (req, res, next) => {
   try {
     const { project_id } = req.query;
@@ -28,7 +56,34 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 获取单个任务
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   get:
+ *     summary: 获取单个任务
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 任务ID
+ *     responses:
+ *       200:
+ *         description: 成功返回任务信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Task'
+ *       404:
+ *         description: 任务不存在
+ */
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -47,7 +102,71 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// 创建任务
+/**
+ * @swagger
+ * /api/tasks:
+ *   post:
+ *     summary: 创建任务
+ *     tags: [Tasks]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - project_id
+ *               - creator_id
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "完成前端开发"
+ *               description:
+ *                 type: string
+ *                 example: "任务描述"
+ *               project_id:
+ *                 type: integer
+ *                 example: 1
+ *               creator_id:
+ *                 type: integer
+ *                 example: 1
+ *               assignee_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               due_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-12-31T23:59:59Z"
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-01T00:00:00Z"
+ *               progress:
+ *                 type: integer
+ *                 example: 0
+ *               priority:
+ *                 type: integer
+ *                 enum: [0, 1, 2, 3]
+ *                 description: 0=无, 1=低, 2=中, 3=高
+ *                 example: 2
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: 请求参数错误
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { title, description, project_id, creator_id, assignee_ids, due_date, start_date, progress, priority } = req.body;
@@ -76,7 +195,67 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新任务
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   put:
+ *     summary: 更新任务
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 任务ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "更新后的任务标题"
+ *               description:
+ *                 type: string
+ *                 example: "更新后的描述"
+ *               assignee_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               due_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-12-31T23:59:59Z"
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-01T00:00:00Z"
+ *               progress:
+ *                 type: integer
+ *                 example: 50
+ *               priority:
+ *                 type: integer
+ *                 enum: [0, 1, 2, 3]
+ *                 example: 3
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Task'
+ *       404:
+ *         description: 任务不存在
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -114,7 +293,29 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除任务
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   delete:
+ *     summary: 删除任务
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 任务ID
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: 任务不存在
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

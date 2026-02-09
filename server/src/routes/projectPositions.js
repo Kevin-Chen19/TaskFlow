@@ -3,7 +3,25 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取项目职位列表
+/**
+ * @swagger
+ * /api/project-positions:
+ *   get:
+ *     summary: 获取项目职位列表
+ *     tags: [Project Positions]
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功返回项目职位列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/', async (req, res, next) => {
   try {
     const { project_id } = req.query;
@@ -28,7 +46,36 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 创建项目职位
+/**
+ * @swagger
+ * /api/project-positions:
+ *   post:
+ *     summary: 创建项目职位
+ *     tags: [Project Positions]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - project_id
+ *               - positionname
+ *             properties:
+ *               project_id:
+ *                 type: integer
+ *               positionname:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { project_id, positionname, description } = req.body;
@@ -55,7 +102,37 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新项目职位
+/**
+ * @swagger
+ * /api/project-positions/{id}:
+ *   put:
+ *     summary: 更新项目职位
+ *     tags: [Project Positions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               positionname:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -83,7 +160,26 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除项目职位
+/**
+ * @swagger
+ * /api/project-positions/{id}:
+ *   delete:
+ *     summary: 删除项目职位
+ *     tags: [Project Positions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

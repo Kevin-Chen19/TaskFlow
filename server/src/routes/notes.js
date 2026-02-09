@@ -3,7 +3,29 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取笔记列表
+/**
+ * @swagger
+ * /api/notes:
+ *   get:
+ *     summary: 获取笔记列表
+ *     tags: [Notes]
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: creator_id
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功返回笔记列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/', async (req, res, next) => {
   try {
     const { project_id, creator_id } = req.query;
@@ -37,7 +59,38 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 创建笔记
+/**
+ * @swagger
+ * /api/notes:
+ *   post:
+ *     summary: 创建笔记
+ *     tags: [Notes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - project_id
+ *               - description
+ *             properties:
+ *               project_id:
+ *                 type: integer
+ *               creator_id:
+ *                 type: integer
+ *               description:
+ *                 type: string
+ *               status:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { project_id, creator_id, description, status } = req.body;
@@ -64,7 +117,37 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新笔记
+/**
+ * @swagger
+ * /api/notes/{id}:
+ *   put:
+ *     summary: 更新笔记
+ *     tags: [Notes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *               status:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -92,7 +175,26 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除笔记
+/**
+ * @swagger
+ * /api/notes/{id}:
+ *   delete:
+ *     summary: 删除笔记
+ *     tags: [Notes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

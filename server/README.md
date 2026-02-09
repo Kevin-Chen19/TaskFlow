@@ -110,6 +110,20 @@ npm start
 curl http://localhost:3000/health
 ```
 
+### 6. API 文档
+
+启动服务后，访问 Swagger API 文档：
+
+```
+http://localhost:3000/api-docs
+```
+
+Swagger 文档提供：
+- 所有 API 端点的详细说明
+- 请求参数和响应格式
+- 在线测试接口功能
+- 认证配置支持（Bearer Token）
+
 ## API 接口
 
 ### 认证接口
@@ -396,14 +410,14 @@ router.use(authenticateToken); // 此路由下所有接口都需要认证
 
 ## 后续扩展建议
 
-- [x] 密码加密（bcrypt）
+- [✅] 密码加密（bcrypt）
 -   ✅ 密码使用 bcrypt 哈希存储
     ✅ Salt rounds: 10
     ✅ 响应中不返回密码
     ✅ 邮箱格式验证
     ✅ 密码长度验证（最少6位）
     ✅ 手机号/邮箱唯一性检查
-- [ ] 用户认证与授权（JWT）
+- [✅] 用户认证与授权（JWT）
 -   注意事项
     ✅ 生产环境必须修改 JWT_SECRET
     ✅ Token 默认有效期为 7 天
@@ -411,7 +425,7 @@ router.use(authenticateToken); // 此路由下所有接口都需要认证
     ✅ 受保护接口返回 401 当 token 无效/过期
     ✅ req.user 包含 { userId, email, phone } 信息
 - [ ] 文件上传（multer）
-- [ ] API 文档（Swagger）
+- [✅] API 文档（Swagger）
 - [ ] 单元测试（Jest）
 - [ ] 日志系统（Winston）
 - [ ] 缓存机制（Redis）

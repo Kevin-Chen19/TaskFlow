@@ -3,7 +3,25 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取项目角色列表
+/**
+ * @swagger
+ * /api/project-roles:
+ *   get:
+ *     summary: 获取项目角色列表
+ *     tags: [Project Roles]
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功返回项目角色列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/', async (req, res, next) => {
   try {
     const { project_id } = req.query;
@@ -28,7 +46,38 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 创建项目角色
+/**
+ * @swagger
+ * /api/project-roles:
+ *   post:
+ *     summary: 创建项目角色
+ *     tags: [Project Roles]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - project_id
+ *               - rolename
+ *             properties:
+ *               project_id:
+ *                 type: integer
+ *               rolename:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               settings:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { project_id, rolename, description, settings } = req.body;
@@ -55,7 +104,39 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新项目角色
+/**
+ * @swagger
+ * /api/project-roles/{id}:
+ *   put:
+ *     summary: 更新项目角色
+ *     tags: [Project Roles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rolename:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               settings:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -83,7 +164,26 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除项目角色
+/**
+ * @swagger
+ * /api/project-roles/{id}:
+ *   delete:
+ *     summary: 删除项目角色
+ *     tags: [Project Roles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

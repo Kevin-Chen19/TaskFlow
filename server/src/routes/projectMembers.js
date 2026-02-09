@@ -3,7 +3,26 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取项目的所有成员
+/**
+ * @swagger
+ * /api/project-members/project/{projectId}:
+ *   get:
+ *     summary: 获取项目的所有成员
+ *     tags: [Project Members]
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功返回项目成员列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/project/:projectId', async (req, res, next) => {
   try {
     const { projectId } = req.params;
@@ -21,7 +40,41 @@ router.get('/project/:projectId', async (req, res, next) => {
   }
 });
 
-// 添加项目成员
+/**
+ * @swagger
+ * /api/project-members:
+ *   post:
+ *     summary: 添加项目成员
+ *     tags: [Project Members]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - project_id
+ *               - user_id
+ *             properties:
+ *               project_id:
+ *                 type: integer
+ *               user_id:
+ *                 type: integer
+ *               role:
+ *                 type: string
+ *                 example: "member"
+ *               position:
+ *                 type: string
+ *               is_active:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: 添加成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { project_id, user_id, role, position, is_active } = req.body;
@@ -48,7 +101,39 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新项目成员
+/**
+ * @swagger
+ * /api/project-members/{id}:
+ *   put:
+ *     summary: 更新项目成员
+ *     tags: [Project Members]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role:
+ *                 type: string
+ *               position:
+ *                 type: string
+ *               is_active:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -76,7 +161,26 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除项目成员
+/**
+ * @swagger
+ * /api/project-members/{id}:
+ *   delete:
+ *     summary: 删除项目成员
+ *     tags: [Project Members]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

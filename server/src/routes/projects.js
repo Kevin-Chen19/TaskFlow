@@ -3,7 +3,29 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取所有项目
+/**
+ * @swagger
+ * /api/projects:
+ *   get:
+ *     summary: 获取所有项目
+ *     tags: [Projects]
+ *     responses:
+ *       200:
+ *         description: 成功返回项目列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Project'
+ *                     count:
+ *                       type: integer
+ */
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
@@ -19,7 +41,34 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 获取单个项目
+/**
+ * @swagger
+ * /api/projects/{id}:
+ *   get:
+ *     summary: 获取单个项目
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 项目ID
+ *     responses:
+ *       200:
+ *         description: 成功返回项目信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Project'
+ *       404:
+ *         description: 项目不存在
+ */
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -38,7 +87,57 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// 创建项目
+/**
+ * @swagger
+ * /api/projects:
+ *   post:
+ *     summary: 创建项目
+ *     tags: [Projects]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - owner_id
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "新项目"
+ *               description:
+ *                 type: string
+ *                 example: "项目描述"
+ *               owner_id:
+ *                 type: integer
+ *                 example: 1
+ *               assignee_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               progress:
+ *                 type: integer
+ *                 example: 0
+ *               total_hours:
+ *                 type: integer
+ *                 example: 0
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Project'
+ *       400:
+ *         description: 请求参数错误
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { name, description, owner_id, assignee_ids, progress, total_hours } = req.body;
@@ -67,7 +166,58 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新项目
+/**
+ * @swagger
+ * /api/projects/{id}:
+ *   put:
+ *     summary: 更新项目
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 项目ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "更新后的项目名称"
+ *               description:
+ *                 type: string
+ *                 example: "更新后的描述"
+ *               assignee_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               progress:
+ *                 type: integer
+ *                 example: 50
+ *               total_hours:
+ *                 type: integer
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Project'
+ *       404:
+ *         description: 项目不存在
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -103,7 +253,29 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除项目
+/**
+ * @swagger
+ * /api/projects/{id}:
+ *   delete:
+ *     summary: 删除项目
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 项目ID
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: 项目不存在
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

@@ -3,7 +3,29 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// 获取通知列表
+/**
+ * @swagger
+ * /api/notifications:
+ *   get:
+ *     summary: 获取通知列表
+ *     tags: [Notifications]
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: creator_id
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功返回通知列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/', async (req, res, next) => {
   try {
     const { project_id, creator_id } = req.query;
@@ -37,7 +59,48 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// 创建通知
+/**
+ * @swagger
+ * /api/notifications:
+ *   post:
+ *     summary: 创建通知
+ *     tags: [Notifications]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - project_id
+ *               - creator_id
+ *               - description
+ *             properties:
+ *               project_id:
+ *                 type: integer
+ *               creator_id:
+ *                 type: integer
+ *               description:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 example: "聊天"
+ *               assignee_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *               status:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.post('/', async (req, res, next) => {
   try {
     const { project_id, creator_id, description, type, assignee_ids, status } = req.body;
@@ -64,7 +127,45 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// 更新通知
+/**
+ * @swagger
+ * /api/notifications/{id}:
+ *   put:
+ *     summary: 更新通知
+ *     tags: [Notifications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               assignee_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *               status:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -92,7 +193,26 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 删除通知
+/**
+ * @swagger
+ * /api/notifications/{id}:
+ *   delete:
+ *     summary: 删除通知
+ *     tags: [Notifications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
