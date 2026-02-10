@@ -261,7 +261,6 @@ interface Project {
   percentage: number;
   joinUser: string[];
 }
-
 const MyPageNum = ref(0);
 const JoinPageNum = ref(0);
 const dialogFormVisible = ref(false);

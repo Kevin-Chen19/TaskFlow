@@ -77,16 +77,16 @@
           <span class="noteStyle">{{ $t("Dashboard.notes") }}</span>
           <div class="noteItemBox">
             <div class="noteItem" v-for="(item, index) in notes" :key="item.id">
-              <div class="noteSelect" @click="item.ifFinish = !item.ifFinish">
+              <div class="noteSelect" @click="changeNoteStatus(item.id, index); item.status = !item.status">
                 <img
-                  v-if="item.ifFinish"
+                  v-if="item.status"
                   src="@/assets/icons/通过.png"
                   alt="通过图标"
                 />
               </div>
-              <div class="item_content">{{ item.content }}</div>
+              <div class="item_content">{{ item.description }}</div>
               <div class="delete">
-                <el-icon @click="deleteNote(index)"><Delete /></el-icon>
+                <el-icon @click="deleteNotes(item.id, index)"><Delete /></el-icon>
               </div>
             </div>
           </div>
@@ -218,10 +218,13 @@ import user1 from "@/assets/pics/用户头像.jpg";
 import user2 from "@/assets/pics/用户2.jpg";
 import user3 from "@/assets/pics/用户3.jpg";
 import user4 from "@/assets/pics/用户4.jpg";
+import {useOtherStore} from "@/stores/otherStore";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
 import { ElMessage } from "element-plus";
+import {getNotes, createNote, updateNote, deleteNote} from "@/api";
+const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
 const TimeLineDialogVisible = ref(false);
@@ -278,28 +281,7 @@ const activities = reactive<ActivityType[]>([
     size: "large",
   },
 ]);
-const notes = reactive([
-  {
-    content: "Finish the task1",
-    ifFinish: true,
-    id: 1,
-  },
-  {
-    content: "Finish the task2",
-    ifFinish: false,
-    id: 2,
-  },
-  {
-    content: "Finish the task3",
-    ifFinish: false,
-    id: 3,
-  },
-  {
-    content: "Finish the task4",
-    ifFinish: false,
-    id: 4,
-  },
-]);
+const notes = reactive([]);
 const percentage = ref(70);
 const customColor = ref("#409eff");
 const customColorMethod = (percentage: number) => {
@@ -338,8 +320,17 @@ const users = [
   },
 ];
 // 删除笔记
-const deleteNote = (index: number) => {
-  notes.splice(index, 1);
+const deleteNotes = async(id: number, index: number) => {
+  try{
+    const res = await deleteNote(id);
+    if(res.success){
+      notes.splice(index, 1);
+      //不需要发送不必要请求
+      //getNotes();
+    }
+  }catch(e){
+    console.error("删除笔记失败:", e);
+  }
 };
 const newProjectCardRef = ref<InstanceType<typeof NewProjectCard> | null>(null);
 
@@ -381,17 +372,24 @@ const openNewProjectDialog = () => {
   centerDialogVisible.value = true;
   noteContent.value = "";
 };
-const submitNote = () => {
+const submitNote = async () => {
   console.log(noteContent);
-  notes.push({
-    content: noteContent.value,
-    ifFinish: false,
-    //将id设置为时间戳
-    id: Date.now(),
-  });
-  console.log(notes);
-  noteContent.value = "";
-  noteDialogVisible.value = false;
+  try{
+    const res = await createNote({
+      project_id:otherStore.currentProjectId,
+      creator_id:userStore.user.userId,
+      description: noteContent.value,
+      status: false
+    })
+    //重新获取笔记列表
+    getNote();
+  } catch (e) {
+    console.log('创建笔记失败',e);
+  } finally {
+    console.log(notes);
+    noteContent.value = "";
+    noteDialogVisible.value = false;
+  }
 };
 
 const addMilestone = () => {
@@ -558,10 +556,37 @@ const saveMilestone = () => {
   editingMilestoneIndex.value = -1;
   TimeLineDialogVisible.value = false;
 };
-
+const getNote = async() => {
+  try{
+    const res = await getNotes({
+      project_id:otherStore.currentProjectId,
+      creator_id:userStore.user.userId
+    })
+    notes.splice(0,notes.length,...res.data);
+    console.log(res);
+  } catch(e){
+    console.log('获取笔记失败', e);
+  }
+}
+const changeNoteStatus = async(id: number, index:number) => {
+  try{
+    const stu = notes[index].status
+    const res = await updateNote(id,{
+      status: !stu
+    })
+    if(res.success){
+      notes[index].status = !stu
+      //无需多余网络请求
+      //getNote()
+    }
+  }catch(e){
+    console.log('笔记更新失败', e);
+  }
+}
 // 组件挂载时初始化显示属性
 onMounted(() => {
   getActivityDisplayProps();
+  getNote();
 });
 </script>
 <style scoped lang="scss">

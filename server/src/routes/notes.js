@@ -136,8 +136,6 @@ router.post('/', async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               description:
- *                 type: string
  *               status:
  *                 type: boolean
  *     responses:
@@ -151,11 +149,11 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { description, status } = req.body;
+    const { status } = req.body;
 
     const result = await query(
-      'UPDATE notes SET description = COALESCE($1, description), status = COALESCE($2, status) WHERE id = $3 RETURNING *',
-      [description, status, id]
+      'UPDATE notes SET status = COALESCE($1, status) WHERE id = $2 RETURNING *',
+      [status, id]
     );
 
     if (result.rows.length === 0) {

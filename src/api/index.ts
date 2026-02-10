@@ -382,9 +382,9 @@ export const getNotes = (params?: {
  */
 export const createNote = (data: {
   project_id: number
-  creator_id?: number
+  creator_id: number
   description: string
-  status?: boolean
+  status: boolean
 }) => {
   return request({
     url: '/notes',
@@ -397,7 +397,6 @@ export const createNote = (data: {
  * 更新笔记
  */
 export const updateNote = (id: number, data: {
-  description?: string
   status?: boolean
 }) => {
   return request({
