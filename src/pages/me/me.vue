@@ -254,7 +254,7 @@ import avatarImg from "@/assets/pics/用户头像.jpg";
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
 
 interface Project {
-  id: string;
+  id: number;
   creator: string;
   projectName: string;
   description: string;
@@ -262,98 +262,6 @@ interface Project {
   joinUser: string[];
 }
 
-const allProjects = [
-  {
-    id: "202601271",
-    creator: "202601051",
-    projectName: "项目管理平台PC端",
-    description:
-      "Final UI polish and integration testing before the beta release next month1.",
-    percentage: 70,
-    joinUser: ["202601051", "202601053", "202601054"],
-  },
-  {
-    id: "202601272",
-    creator: "202601051",
-    projectName: "项目管理平台移动端",
-    description:
-      "Final UI polish and integration testing before the beta release next month2.",
-    percentage: 40,
-    joinUser: ["202601051", "202601053", "202601054", "202601055"],
-  },
-  {
-    id: "202601273",
-    creator: "202601051",
-    projectName: "Electron跨端终端图形化命令行工具",
-    description:
-      "Final UI polish and integration testing before the beta release next month3.",
-    percentage: 20,
-    joinUser: ["202601051", "202601053", "202601055", "202601054"],
-  },
-  {
-    id: "202601274",
-    creator: "202601053",
-    projectName: "Project Name4",
-    description:
-      "Final UI polish and integration testing before the beta release next month.4",
-    percentage: 70,
-    joinUser: ["202601051", "202601053", "202601054"],
-  },
-  {
-    id: "202601275",
-    creator: "202601054",
-    projectName: "Project Name5",
-    description:
-      "Final UI polish and integration testing before the beta release next month.5",
-    percentage: 70,
-    joinUser: ["202601051", "202601053", "202601054"],
-  },
-  {
-    id: "202601271",
-    creator: "202601051",
-    projectName: "项目管理平台PC端2",
-    description:
-      "Final UI polish and integration testing before the beta release next month1.",
-    percentage: 70,
-    joinUser: ["202601051", "202601053", "202601054"],
-  },
-  {
-    id: "202601272",
-    creator: "202601051",
-    projectName: "项目管理平台移动端2",
-    description:
-      "Final UI polish and integration testing before the beta release next month2.",
-    percentage: 40,
-    joinUser: ["202601051", "202601053", "202601054", "202601055"],
-  },
-  {
-    id: "202601273",
-    creator: "202601051",
-    projectName: "Electron跨端终端图形化命令行工具2",
-    description:
-      "Final UI polish and integration testing before the beta release next month3.",
-    percentage: 20,
-    joinUser: ["202601051", "202601053", "202601055", "202601054"],
-  },
-  {
-    id: "202601274",
-    creator: "202601053",
-    projectName: "Project Name9",
-    description:
-      "Final UI polish and integration testing before the beta release next month.4",
-    percentage: 70,
-    joinUser: ["202601051", "202601053", "202601054"],
-  },
-  {
-    id: "202601275",
-    creator: "202601054",
-    projectName: "Project Name8",
-    description:
-      "Final UI polish and integration testing before the beta release next month.5",
-    percentage: 70,
-    joinUser: ["202601051", "202601053", "202601054"],
-  },
-];
 const MyPageNum = ref(0);
 const JoinPageNum = ref(0);
 const dialogFormVisible = ref(false);
