@@ -203,12 +203,12 @@
       <div class="smallTips">{{ $t('me.JPGorPNG') }}</div>
       <div class="formBox">
         <div class="labelName">{{ $t('me.FullName') }}</div>
-        <el-input v-model="userStore.user.name"></el-input>
+        <el-input v-model="userForm.fullname"></el-input>
         <div class="labelName">{{ $t('me.Position') }}</div>
         <el-input v-model="userStore.user.postion" disabled></el-input>
         <div class="labelName">{{ $t('me.SkillTags') }}</div>
         <el-input-tag
-              v-model="userStore.user.tags"
+              v-model="userForm.skills"
               collapse-tags
               collapse-tags-tooltip
               :max-collapse-tags="3"
@@ -216,9 +216,9 @@
               aria-label="Please click the Enter key after input"
             />
         <div class="labelName">{{ $t('me.EmailAddress') }}</div>
-        <el-input v-model="userStore.user.email"></el-input>
+        <el-input v-model="userForm.email"></el-input>
         <div class="labelName">{{ $t('team.SIGNATURE') }}</div>
-        <el-input v-model="userStore.user.signature"></el-input>
+        <el-input v-model="userForm.mooto"></el-input>
       </div>
     </div>
     <template #footer>
@@ -242,6 +242,12 @@ import { Plus } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
+const userForm = reactive({
+  fullname: "",
+  skills: [],
+  email: "",
+  motto: "",
+});
 const userStore = useUserStore();
 import avatarImg from "@/assets/pics/用户头像.jpg";
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
@@ -424,10 +430,12 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
   }
   return true
 }
-const saveProfile = () => {
+const saveProfile = async() => {
   if(avator.value !== ''){
     userStore.user.pic = avator.value;
   }
+  const userId = parseInt(userStore.user.userId);
+  await userStore.updateUserdata(userId, userForm);
   dialogFormVisible.value = false;
 }
 </script>

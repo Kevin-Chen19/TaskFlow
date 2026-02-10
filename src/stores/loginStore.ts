@@ -1,3 +1,9 @@
+/**
+ * 登录状态管理
+ * 登录/注册方法
+Token 持久化存储
+自动恢复登录状态
+ */
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { login as loginApi, register as registerApi, getCurrentUser } from '@/api'

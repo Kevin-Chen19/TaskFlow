@@ -1,5 +1,19 @@
+/**
+ * axios 请求封装
+ * 自动添加 JWT Token
+ * 统一错误处理
+ * 401 自动跳转登录页
+ */
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
+
+// API 响应类型
+export interface ApiResponse<T = any> {
+  success: boolean
+  message: string
+  data: T
+  count?: number
+}
 
 // 创建 axios 实例
 const request: AxiosInstance = axios.create({
@@ -27,7 +41,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response: AxiosResponse) => {
+  (response: AxiosResponse<any, ApiResponse<any>>) => {
     const res = response.data
     if (res.success) {
       return res
@@ -44,7 +58,7 @@ request.interceptors.response.use(
           ElMessage.error('未授权，请重新登录')
           localStorage.removeItem('token')
           localStorage.removeItem('user')
-          window.location.href = '/login'
+          window.location.href = '/'
           break
         case 404:
           ElMessage.error('请求的资源不存在')

@@ -1,3 +1,5 @@
+//TypeScript 类型定义
+//User、Project、Task、Notification 等类型
 export interface User {
   id: number;
   phone: string;

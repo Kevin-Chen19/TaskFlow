@@ -1,7 +1,16 @@
-import request from '@/utils/request'
+/*
+ * 完整的 API 接口
+*认证接口（注册、登录、获取用户、修改密码）
+*用户接口（CRUD）
+*项目接口（CRUD）
+*任务接口（CRUD）
+*通知、笔记、项目成员、角色、职位、文件夹、文档等接口
+ */
+
 
 // ==================== 认证相关接口 ====================
 
+import request, { type ApiResponse } from '@/utils/request'
 /**
  * 用户注册
  */
@@ -13,7 +22,7 @@ export const register = (data: {
   avatar_url?: string
   skills?: string[]
   mooto?: string
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: '/auth/register',
     method: 'post',
@@ -28,7 +37,7 @@ export const login = (data: {
   phone?: string
   email?: string
   password: string
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: '/auth/login',
     method: 'post',
@@ -39,7 +48,7 @@ export const login = (data: {
 /**
  * 获取当前用户信息
  */
-export const getCurrentUser = () => {
+export const getCurrentUser = (): Promise<ApiResponse> => {
   return request({
     url: '/auth/me',
     method: 'get'
@@ -52,7 +61,7 @@ export const getCurrentUser = () => {
 export const changePassword = (data: {
   current_password: string
   new_password: string
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: '/auth/change-password',
     method: 'post',
@@ -65,7 +74,7 @@ export const changePassword = (data: {
 /**
  * 获取所有用户
  */
-export const getUsers = () => {
+export const getUsers = (): Promise<ApiResponse> => {
   return request({
     url: '/users',
     method: 'get'
@@ -75,7 +84,7 @@ export const getUsers = () => {
 /**
  * 获取单个用户
  */
-export const getUserById = (id: number) => {
+export const getUserById = (id: number): Promise<ApiResponse> => {
   return request({
     url: `/users/${id}`,
     method: 'get'
@@ -93,7 +102,7 @@ export const createUser = (data: {
   avatar_url?: string
   skills?: string[]
   mooto?: string
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: '/users',
     method: 'post',
@@ -111,7 +120,7 @@ export const updateUser = (id: number, data: {
   avatar_url?: string
   skills?: string[]
   mooto?: string
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: `/users/${id}`,
     method: 'put',
@@ -122,7 +131,7 @@ export const updateUser = (id: number, data: {
 /**
  * 删除用户
  */
-export const deleteUser = (id: number) => {
+export const deleteUser = (id: number): Promise<ApiResponse> => {
   return request({
     url: `/users/${id}`,
     method: 'delete'
