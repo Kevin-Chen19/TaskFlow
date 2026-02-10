@@ -151,6 +151,27 @@ export const getProjects = () => {
 }
 
 /**
+ * 获取用户创建的项目
+ */
+export const getProjectsByOwner = (ownerId: number) => {
+  return request({
+    url: '/projects',
+    method: 'get',
+    params: { owner_id: ownerId }
+  })
+}
+
+/**
+ * 获取用户加入的项目
+ */
+export const getProjectsByMember = (userId: number) => {
+  return request({
+    url: `/projects/user/${userId}/joined`,
+    method: 'get'
+  })
+}
+
+/**
  * 获取单个项目
  */
 export const getProjectById = (id: number) => {

@@ -238,6 +238,7 @@ import Velocity from "@/components/velocity.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useUserStore } from "@/stores/userStore";
 import { ElMessageBox, ElMessage } from "element-plus";
+import { getProjectsByOwner, getProjectsByMember } from "@/api";
 import { Plus } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
 import { useI18n } from "vue-i18n";
@@ -362,17 +363,44 @@ const JoinProjects = reactive<Project[]>([]);
 const avator = ref('');
 const avatorFile = ref<File | null>(null);
 const defaultPic = ref(defaultAvatarImg)
+
+// 加载用户项目数据
+const loadUserProjects = async () => {
+  try {
+    const userId = parseInt(userStore.user.userId);
+
+    // 获取用户创建的项目
+    const myRes = await getProjectsByOwner(userId);
+    if (myRes.success && myRes.data) {
+      MyProjects.push(...myRes.data.map((item: any) => ({
+        id: String(item.id),
+        creator: String(item.owner_id),
+        projectName: item.name,
+        description: item.description || '',
+        percentage: item.progress || 0,
+        joinUser: []
+      })));
+    }
+
+    // 获取用户加入的项目
+    const joinRes = await getProjectsByMember(userId);
+    if (joinRes.success && joinRes.data) {
+      JoinProjects.push(...joinRes.data.map((item: any) => ({
+        id: String(item.id),
+        creator: String(item.owner_id),
+        projectName: item.name,
+        description: item.description || '',
+        percentage: item.progress || 0,
+        joinUser: []
+      })));
+    }
+  } catch (error) {
+    console.error('加载项目数据失败:', error);
+  }
+};
+
 onMounted(() => {
-  MyProjects.push(
-    ...allProjects.filter((item) => item.creator === userStore.user.userId),
-  );
-  JoinProjects.push(
-    ...allProjects.filter(
-      (item) =>
-        item.joinUser.includes(userStore.user.userId) &&
-        item.creator !== userStore.user.userId,
-    ),
-  );
+  loadUserProjects();
 });
 const changeShow = (type: string, pageNum: number, action: string) => {
   if (type === "my") {

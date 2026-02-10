@@ -28,9 +28,18 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const result = await query(
-      'SELECT * FROM projects ORDER BY created_at DESC'
-    );
+    const { owner_id } = req.query;
+    let queryText = 'SELECT * FROM projects';
+    let params = [];
+
+    if (owner_id) {
+      queryText += ' WHERE owner_id = $1 ORDER BY created_at DESC';
+      params.push(owner_id);
+    } else {
+      queryText += ' ORDER BY created_at DESC';
+    }
+
+    const result = await query(queryText, params);
     res.json({
       success: true,
       data: result.rows,
@@ -291,6 +300,56 @@ router.delete('/:id', async (req, res, next) => {
     }
 
     res.json({ success: true, message: '项目删除成功' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/projects/user/{userId}/joined:
+ *   get:
+ *     summary: 获取用户加入的项目
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 用户ID
+ *     responses:
+ *       200:
+ *         description: 成功返回加入的项目列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Project'
+ *                     count:
+ *                       type: integer
+ */
+router.get('/user/:userId/joined', async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    // 使用 PostgreSQL 的数组包含操作符 @= 检查 assignee_ids 是否包含 userId
+    const result = await query(
+      `SELECT * FROM projects
+       WHERE $1 = ANY(assignee_ids) AND owner_id != $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rowCount
+    });
   } catch (error) {
     next(error);
   }
