@@ -100,7 +100,7 @@
       >
         <el-table-column :label="$t('taskPage.TASKNAME')" width="310">
           <template #default="scope">
-            <div class="rowName">{{ scope.row.taskName }}</div>
+            <div class="rowName">{{ scope.row.title }}</div>
           </template>
         </el-table-column>
         <el-table-column
@@ -111,26 +111,26 @@
         >
           <template #default="scope">
             <div class="rowPriority" :class="tagStyles(scope.row.priority)">
-              {{ scope.row.priority }}
+              {{ showPriority(scope.row.priority) }}
             </div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('taskPage.CREATOR')" width="220">
           <template #default="scope">
-            <div>{{ findUser(scope.row.createUser) }}</div>
+            <div>{{ findUser(scope.row.creator_id) }}</div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('taskPage.ASSIGNEE')" width="220">
           <template #default="scope">
-            <div v-for="item in scope.row.assignee.slice(0, 2)">
+            <div v-for="item in scope.row.assignee_ids.slice(0, 2)">
               {{ findUser(item) }}
             </div>
-            <div v-if="scope.row.assignee.length > 2">...</div>
+            <div v-if="scope.row.assignee_ids.length > 2">...</div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('taskPage.TIMELINE')" width="250">
           <template #default="scope">
-            <div>{{ scope.row.createLine }}——{{ scope.row.dueLine }}</div>
+            <div>{{ getData(scope.row.start_date) }}——{{ getData(scope.row.due_date) }}</div>
           </template>
         </el-table-column>
         <el-table-column
@@ -142,7 +142,7 @@
           <template #default="scope">
             <el-progress
               :color="customColorMethod"
-              :percentage="scope.row.percentage"
+              :percentage="scope.row.progress"
             />
           </template>
         </el-table-column>
@@ -195,8 +195,8 @@
     align-center
   >
   <template #header>
-    <div class="topTitle">{{ $t('taskPage.createdOn') }} {{ MessageTask.createLine }}</div>
-    <div class="taskName">{{ MessageTask.taskName }}</div>
+    <div class="topTitle">{{ $t('taskPage.createdOn') }} {{ getData(MessageTask.created_at) }}</div>
+    <div class="taskName">{{ MessageTask.title }}</div>
     <div style="width: 100%; height: 1px; background: #f3f4f4;"></div>
   </template>
   <div class="contentBox">
@@ -209,15 +209,15 @@
         <div style="color:black;">{{ $t('taskPage.taskProgress') }}</div>
         <div v-if="ifCreator">{{ $t('taskPage.dragToUpdate') }}</div>
       </div>
-      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.percentage}}%</div>
+      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.progress}}%</div>
     </div>
     <el-progress
       v-if="!ifAssignee && !ifCreator"
       :color="customColorMethod"
-      :percentage="MessageTask.percentage"
+      :percentage="MessageTask.progress"
       :show-text="false"
     />
-    <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.percentage" />
+    <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.progress" />
     <div class="bottomTip">
       <div>{{ $t('taskPage.notStarted') }}</div>
       <div>{{ $t('taskPage.Completed') }}</div>
@@ -228,13 +228,13 @@
       <div class="smallTip">{{ $t('taskPage.CREATOR') }}</div>
       <div class="creatorBox">
         <div class="picBox">
-          <img :src="findUserPic(MessageTask.createUser)" alt="用户头像">
+          <img :src="findUserPic(MessageTask.creator_id)" alt="用户头像">
         </div>
-        <div class="nameStyle">{{ findUser(MessageTask.createUser) }}</div>
+        <div class="nameStyle">{{ findUser(MessageTask.creator_id) }}</div>
       </div>
       <div class="smallTip">{{ $t('taskPage.ASSIGNEE') }}</div>
       <div class="assigneeBox">
-        <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee">
+        <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee_ids">
           <div class="picBox">
             <img :src="findUserPic(item)" alt="用户头像"></img>
           </div>
@@ -242,7 +242,7 @@
         </div>
       </div>
       <div class="smallTip">{{ $t('taskPage.PRIORITY') }}</div>
-      <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ MessageTask.priority }}</div>
+      <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ showPriority(MessageTask.priority) }}</div>
       <div class="smallTip">{{ $t('taskPage.TIME') }}</div>
       <div class="timeBox">
         <div class="timePicBox">
@@ -250,7 +250,7 @@
         </div>
         <div class="timeItem">
           <div style="color: #898989; font-size: 0.8rem;">{{ $t('taskPage.dueDate') }}</div>
-          <div>{{ MessageTask.dueLine }}</div>
+          <div>{{ getData(MessageTask.due_date) }}</div>
         </div>
       </div>
     </div>
@@ -273,6 +273,7 @@ import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { useI18n } from "vue-i18n";
+import { getTasks } from "@/api"
 const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -289,14 +290,14 @@ const ProgressValue = ref<[number, number]>([50, 100]);
 const TimeLineValue = ref<Date[] | "">("");
 const MessageTask = reactive({
   id: "",
-  taskName: "",
+  title: "",
   description: "",
-  priority: "",
-  createLine: "",
-  dueLine: "",
-  createUser: "",
-  assignee: [] as string[],
-  percentage: 0
+  priority: 0,
+  created_at: "",
+  due_date: "",
+  creator_id: 0,
+  assignee_ids: [] as number[],
+  progress: 0
 });
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
 const customColor = ref("#409eff");
@@ -345,11 +346,11 @@ const options = [
 ];
 //判断是否是任务创建者
 const ifCreator = computed(() => {
-  return MessageTask.createUser === userStore.user.userId;
+  return MessageTask.creator_id === userStore.user.userId;
 })
 //判断是否是任务负责人
 const ifAssignee = computed(() => {
-  return MessageTask.assignee.includes(userStore.user.userId);
+  return MessageTask.assignee_ids.includes(userStore.user.userId);
 })
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
@@ -360,17 +361,15 @@ const customColorMethod = (percentage: number) => {
   }
   return "#67c23a";
 };
-const tagStyles = (tag: string) => {
-  if (tag === "Critical") {
+const tagStyles = (tag: number) => {
+  if (tag === 3) {
     return "CriticalStyle";
-  } else if (tag === "High") {
+  } else if (tag === 2) {
     return "HighStyle";
-  } else if (tag === "Medium") {
+  } else if (tag === 1) {
     return "MediumStyle";
-  } else if (tag === "Low") {
+  } else if (tag === 0) {
     return "LowStyle";
-  } else {
-    return "NegligibleStyle";
   }
 };
 const allTasks = reactive<Task[]>([
@@ -543,20 +542,20 @@ const allTasks = reactive<Task[]>([
 const showTasks = reactive<Task[]>([]);
 const tasks = reactive<Task[]>([]);
 interface Task {
-  id: string;
-  taskName: string;
+  id: number;
+  title: string;
   description: string;
-  priority: string;
-  createLine: string;
-  dueLine: string;
-  createUser: string;
-  assignee: string[];
+  priority: number;
+  created_at: string;
+  due_date: string;
+  creator_id: string;
+  assignee: number[];
   percentage: number;
 }
-const findUser = (userId: string) => {
+const findUser = (userId: number) => {
   return userStore.usersTable.find((user) => user.userId === userId)?.name;
 };
-const findUserPic = (userId: string) => {
+const findUserPic = (userId: number) => {
     return userStore.usersTable.find((user) => user.userId === userId)?.pic;
 }
 
@@ -622,10 +621,45 @@ const submitEdit = () => {
   }
   centerDialogVisible.value = false;
 }
+//获取项目的全部任务
+const getAllTasks = async() => {
+  try{
+    const res = await getTasks({
+  project_id: otherStore.currentProjectId
+});
+    if(res.success){
+      allTasks.splice(0, allTasks.length, ...res.data);
+    }
+  }catch(e){
+    console.log('获取任务失败', e);
+  }
+}
+const getData = (dataLine: string) => {
+  return dataLine.split('T')[0]
+}
+const showPriority = (priority: number) => {
+  switch(priority){
+    case 0:
+      return 'Low';
+    case 1:
+      return 'Medium';
+    case 2:
+      return 'High';
+    case 3:
+      return 'Critical';
+    default:
+      return '';
+  }
+}
 onMounted(() => {
+  //获取项目的全部任务
+  getAllTasks().then(() => {
+  console.log(allTasks);
   showTasks.push(...allTasks.slice(0, 9));
   tasks.push(...allTasks);
   total.value = Math.ceil(tasks.length / 9);
+  })
+
 });
 const handlePageChange = (page: number) => {
   pageNumber.value = page;

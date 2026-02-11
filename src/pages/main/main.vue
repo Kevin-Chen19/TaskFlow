@@ -201,10 +201,12 @@ import NotificationsCardComponent from "@/components/notificationsCard.vue";
 import TourComponents from "@/components/TourComponents.vue";
 import { useNotificationStore, type notificationItem } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
+import { useOtherStore } from "@/stores/otherStore";
 import { Close } from "@element-plus/icons-vue";
 import i18n from "@/language";
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
+const otherStore = useOtherStore();
 const which = ref("dashboard");
 const languagePopoverRef = ref();
 const showNotifications = ref(false);
@@ -261,8 +263,9 @@ const ifHasUnread = computed(() => {
       return item.status === "未读";
     });
   });
-});
+}); 
 onMounted(() => {
+  userStore.getProjectMember(otherStore.currentProjectId);
   getNotifications();
 });
 const signOut = () => {

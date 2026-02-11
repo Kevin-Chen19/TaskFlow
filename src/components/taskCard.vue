@@ -2,7 +2,7 @@
   <div class="line"></div>
   <div class="formBox">
     <el-input
-      v-model="formData.taskName"
+      v-model="formData.title"
       class="custom-input"
       :placeholder="$t('taskCard.TaskName')"
     />
@@ -79,7 +79,7 @@
               <div class="postion">{{ item.postion }}</div>
               <div class="progress">
                 <el-progress
-                  :percentage="item.percentage"
+                  :percentage="item.progress"
                   :color="customColorMethod"
                   stroke-width="13"
                 />
@@ -98,15 +98,15 @@ import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 
 interface Task {
-  id: string;
+  id: number;
   taskName: string;
   description: string;
-  priority: string;
-  createLine: string;
-  dueLine: string;
-  createUser: string;
-  assignee: string[];
-  percentage: number;
+  priority: number;
+  created_at: string;
+  due_date: string;
+  creator_id: number;
+  assignee_ids: number[];
+  progress: number;
 }
 
 const props = defineProps<{
@@ -121,14 +121,20 @@ interface UserItem {
 }
 
 interface FormData {
-  taskName: string;
+  id: string;
+  title: string;
   description: string;
-  priority: string;
+  priority: string | number;
   createLine: string;
   dueLine: string;
   createUser: string;
   assignee: string[];
   percentage: number;
+  start_date?: string;
+  due_date?: string;
+  creator_id?: number;
+  assignee_ids?: (string | number)[];
+  progress?: number;
 }
 
 const userStore = useUserStore();
@@ -136,9 +142,10 @@ const otherStore = useOtherStore();
 const searchValue = ref("");
 const showTable = reactive<UserItem[]>([]);
 const formData = reactive<FormData>({
-  taskName: "",
+  id: "",
+  title: "",
   description: "",
-  priority: "",
+  priority: 1,
   createLine: "",
   dueLine: "",
   createUser: "",
@@ -148,7 +155,15 @@ const formData = reactive<FormData>({
 //监听 props.task 变化,同步到 formData
 watch(() => props.task, (newTask) => {
   if (newTask && otherStore.$state.ifEditTask) {
-    Object.assign(formData, newTask);
+    formData.id = newTask.id || "";
+    formData.title = newTask.title || "";
+    formData.description = newTask.description || "";
+    formData.priority = newTask.priority || 1;
+    formData.createLine = newTask.created_at || "";
+    formData.dueLine = newTask.due_date || "";
+    formData.createUser = newTask.creator_id || "";
+    formData.assignee = newTask.assignee ? newTask.assignee : [];
+    formData.percentage = newTask.progress || 0;
   }
 }, { immediate: true });
 
@@ -159,12 +174,13 @@ onMounted(() => {
 onUnmounted(() => {
   //退出时清空表单全部数据
   showTable.splice(0, showTable.length);
-  formData.taskName = "";
+  formData.title = "";
   formData.description = "";
-  formData.priority = "";
-  formData.createLine = "";
-  formData.dueLine = "";
-  formData.assignee = [];
+  formData.priority = 0;
+  formData.create_at = "";
+  formData.due_date = "";
+  formData.progress = 0;
+  formData.assignee_ids = [];
   console.log("清空了");
 });
 // 暴露方法和数据给父组件
@@ -173,27 +189,27 @@ defineExpose({
 });
 const prioritys = [
   {
-    value: "Critical",
+    value: 3,
     label: "Critical",
     color: "rgb(215, 4, 4)",
   },
   {
-    value: "High",
+    value: 2,
     label: "High",
     color: "rgba(235, 54, 54, 0.722)",
   },
   {
-    value: "Medium",
+    value: 1,
     label: "Medium",
     color: "orange",
   },
   {
-    value: "Low",
+    value: 0,
     label: "Low",
     color: "rgb(48, 219, 48)",
   },
   {
-    value: "Negligible",
+    value: -1,
     label: "Negligible",
     color: "rgb(170, 169, 169)",
   },
@@ -215,6 +231,24 @@ const changeGot = (userId: string) => {
   } else {
     formData.assignee.splice(index, 1);
   }
+};
+
+// 优先级文本转换为数字
+const priorityValueMap: Record<string, number> = {
+  'Critical': 3,
+  'High': 2,
+  'Medium': 1,
+  'Low': 0,
+  'Negligible': -1
+};
+
+// 数字转换为优先级文本
+const priorityTextMap: Record<number, string> = {
+  3: 'Critical',
+  2: 'High',
+  1: 'Medium',
+  0: 'Low',
+  '-1': 'Negligible'
 };
 const toFind = () => {
   console.log(searchValue.value);
