@@ -43,7 +43,7 @@
       <div>
       <div class="inputName">{{ $t('taskCard.DUELINE') }}</div>
         <el-date-picker
-          v-model="formData.dueLine"
+          v-model="formData.due_date"
           type="date"
           :placeholder="$t('taskCard.PickADay')"
           style="width: 18rem"
@@ -64,7 +64,7 @@
       <div class="team_item" v-for="item in showTable" :key="item.userId">
         <div class="noteSelect" @click="changeGot(item.userId)">
           <img
-            v-if="formData.assignee.includes(item.userId)"
+            v-if="formData.assignee_ids.includes(item.userId)"
             src="@/assets/icons/通过.png"
             alt="通过图标"
           />
@@ -124,17 +124,13 @@ interface FormData {
   id: string;
   title: string;
   description: string;
-  priority: string | number;
-  createLine: string;
-  dueLine: string;
-  createUser: string;
-  assignee: string[];
-  percentage: number;
+  priority:number;
+  created_at: string;
   start_date?: string;
-  due_date?: string;
-  creator_id?: number;
-  assignee_ids?: (string | number)[];
-  progress?: number;
+  due_date: string;
+  creator_id: number;
+  assignee_ids: number[];
+  progress: number;
 }
 
 const userStore = useUserStore();
@@ -146,24 +142,16 @@ const formData = reactive<FormData>({
   title: "",
   description: "",
   priority: 1,
-  createLine: "",
-  dueLine: "",
-  createUser: "",
-  assignee: [],
-  percentage: 0,
+  created_at: "",
+  due_date: "",
+  creator_id: "",
+  assignee_ids: [],
+  progress: 0,
 });
 //监听 props.task 变化,同步到 formData
 watch(() => props.task, (newTask) => {
   if (newTask && otherStore.$state.ifEditTask) {
-    formData.id = newTask.id || "";
-    formData.title = newTask.title || "";
-    formData.description = newTask.description || "";
-    formData.priority = newTask.priority || 1;
-    formData.createLine = newTask.created_at || "";
-    formData.dueLine = newTask.due_date || "";
-    formData.createUser = newTask.creator_id || "";
-    formData.assignee = newTask.assignee ? newTask.assignee : [];
-    formData.percentage = newTask.progress || 0;
+    Object.assign(formData, newTask);
   }
 }, { immediate: true });
 
@@ -177,7 +165,7 @@ onUnmounted(() => {
   formData.title = "";
   formData.description = "";
   formData.priority = 0;
-  formData.create_at = "";
+  formData.created_at = "";
   formData.due_date = "";
   formData.progress = 0;
   formData.assignee_ids = [];
@@ -208,11 +196,6 @@ const prioritys = [
     label: "Low",
     color: "rgb(48, 219, 48)",
   },
-  {
-    value: -1,
-    label: "Negligible",
-    color: "rgb(170, 169, 169)",
-  },
 ];
 const customColor = ref("#409eff");
 const customColorMethod = (percentage: number) => {
@@ -225,11 +208,11 @@ const customColorMethod = (percentage: number) => {
   return "#67c23a";
 };
 const changeGot = (userId: string) => {
-  const index = formData.assignee.indexOf(userId);
+  const index = formData.assignee_ids.indexOf(userId);
   if (index === -1) {
-    formData.assignee.push(userId);
+    formData.assignee_ids.push(userId);
   } else {
-    formData.assignee.splice(index, 1);
+    formData.assignee_ids.splice(index, 1);
   }
 };
 
@@ -238,8 +221,7 @@ const priorityValueMap: Record<string, number> = {
   'Critical': 3,
   'High': 2,
   'Medium': 1,
-  'Low': 0,
-  'Negligible': -1
+  'Low': 0
 };
 
 // 数字转换为优先级文本
@@ -247,9 +229,9 @@ const priorityTextMap: Record<number, string> = {
   3: 'Critical',
   2: 'High',
   1: 'Medium',
-  0: 'Low',
-  '-1': 'Negligible'
+  0: 'Low'
 };
+//根据名字或职位搜索
 const toFind = () => {
   console.log(searchValue.value);
   if (searchValue.value === "") {

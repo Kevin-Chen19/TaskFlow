@@ -97,7 +97,7 @@
         <div class="NoteBox TeamBox">
           <span class="noteStyle">{{ $t("Dashboard.memberProgress") }}</span>
           <div class="noteItemBox teamBox">
-            <div class="noteItem" v-for="item in users" :key="item.name">
+            <div class="noteItem" v-for="item in userStore.usersTable" :key="item.name">
               <div class="userPic">
                 <img :src="item.pic" alt="用户头像" />
               </div>
@@ -293,32 +293,6 @@ const customColorMethod = (percentage: number) => {
   }
   return "#67c23a";
 };
-const users = [
-  {
-    name: "Kevin",
-    postion: "Frontend Lead",
-    percentage: 60,
-    pic: user1,
-  },
-  {
-    name: "Sarah Jenkins",
-    postion: "Backend Lead",
-    percentage: 30,
-    pic: user2,
-  },
-  {
-    name: "David Kim",
-    postion: "UI Designer",
-    percentage: 90,
-    pic: user3,
-  },
-  {
-    name: "Mike Ross",
-    postion: "DevOps",
-    percentage: 50,
-    pic: user4,
-  },
-];
 // 删除笔记
 const deleteNotes = async(id: number, index: number) => {
   try{

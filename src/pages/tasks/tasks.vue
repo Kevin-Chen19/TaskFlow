@@ -130,7 +130,7 @@
         </el-table-column>
         <el-table-column :label="$t('taskPage.TIMELINE')" width="250">
           <template #default="scope">
-            <div>{{ getData(scope.row.start_date) }}——{{ getData(scope.row.due_date) }}</div>
+            <div>{{ getData(scope.row.created_at) }}——{{ getData(scope.row.due_date) }}</div>
           </template>
         </el-table-column>
         <el-table-column
@@ -255,7 +255,6 @@
       </div>
     </div>
   </div>
-
   <template #footer>
     <div class="footerBox">
       <div v-if="ifCreator" class="editBtn" @click="EditMessage">{{ $t('Edit') }}</div>
@@ -273,7 +272,7 @@ import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { useI18n } from "vue-i18n";
-import { getTasks } from "@/api"
+import { getTasks, updateTask, createTask, deleteTask } from "@/api"
 const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -549,8 +548,8 @@ interface Task {
   created_at: string;
   due_date: string;
   creator_id: string;
-  assignee: number[];
-  percentage: number;
+  assignee_ids: number[];
+  progress: number;
 }
 const findUser = (userId: number) => {
   return userStore.usersTable.find((user) => user.userId === userId)?.name;
@@ -558,7 +557,7 @@ const findUser = (userId: number) => {
 const findUserPic = (userId: number) => {
     return userStore.usersTable.find((user) => user.userId === userId)?.pic;
 }
-
+ 
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -570,25 +569,28 @@ const openNewTaskDialog = () => {
   otherStore.$patch({ ifEditTask: false });
   centerDialogVisible.value = true;
 };
-const handleSubmit = () => {
+//新增任务
+const handleSubmit = async() => {
   try {
     // 访问子组件暴露的数据
     const componentData = JSON.parse(
       JSON.stringify(taskCardRef.value?.formData),
     ); // 深拷贝
-    componentData.createLine = formatDate(new Date());
-    componentData.dueLine = formatDate(new Date(componentData.dueLine));
-    componentData.createUser = userStore.user.userId;
-    //设置id为时间戳加随机数
-    componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
-    allTasks.push(componentData);
-    tasks.push(componentData);
-    ElMessage({
-      message: t('addSuccessfully'),
-      type: "success",
-    });
+    componentData.due_date = formatDate(new Date(componentData.due_date));
+    componentData.creator_id = userStore.user.userId;
+    componentData.project_id = otherStore.currentProjectId;
+    //发送网络请求添加新任务
+    const res = await createTask(componentData);
+    if(res.success){
+      allTasks.push(componentData);
+      tasks.push(componentData);
+      ElMessage({
+        message: t('addSuccessfully'),
+        type: "success",
+      });
+    }
   } catch (error) {
-    console.error("获取数据失败:", error);
+    console.error("新增任务失败:", error);
     ElMessage({
       message: t('addFailed'),
       type: "error",
@@ -596,22 +598,35 @@ const handleSubmit = () => {
   }
   centerDialogVisible.value = false;
 };
-const submitEdit = () => {
+//编辑任务
+const submitEdit = async() => {
     try {
     // 访问子组件暴露的数据
     const componentData = JSON.parse(
       JSON.stringify(taskCardRef.value?.formData),
     ); // 深拷贝
-    componentData.dueLine = formatDate(new Date(componentData.dueLine));
-    componentData.createUser = userStore.user.userId;
-     const index = allTasks.findIndex((task) => task.id === MessageTask.id);
-    allTasks[index] = { ...componentData };
-    //刷新数据
-    resetTableData();
+    componentData.due_date = formatDate(new Date(componentData.due_date));
+    componentData.creator_id = userStore.user.userId;
+    console.log(componentData);
+    //发生网络请求修改任务
+    const res = await updateTask(componentData.id, {
+      title: componentData.title,
+      description: componentData.description,
+      priority: componentData.priority,
+      due_date: componentData.due_date,
+      assignee_ids: componentData.assignee_ids,
+      progress: componentData.progress,
+    })
+    if(res.success){
+      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+      allTasks[index] = { ...componentData };
+      //刷新数据
+      resetTableData();
       ElMessage({
         message: t('updatedSuccess'),
         type: "success",
       });
+    }
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
@@ -768,8 +783,10 @@ const handleDelete = () => {
       type: 'warning',
     }
   )
-    .then(() => {
-      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+    .then(async() => {
+      const res = await deleteTask(MessageTask.id);
+      if(res.success){
+        const index = allTasks.findIndex((task) => task.id === MessageTask.id);
       if (index !== -1) {
         allTasks.splice(index, 1);
       }
@@ -784,6 +801,7 @@ const handleDelete = () => {
         type: 'success',
         message: t('deleteSuccess'),
       })
+      }
     })
     .catch(() => {
       ElMessage({
@@ -845,13 +863,23 @@ const EditMessage = () => {
   MessageDialogVisible.value = false;
   centerDialogVisible.value = true;
 }
-const SaveMessage = () => {
+const SaveMessage = async() => {
   //修改AllTasks中的数据
-  const index = allTasks.findIndex((task) => task.id === MessageTask.id);
-  //使用深拷贝的方式修改
-  allTasks[index] = { ...MessageTask };
-  //刷新数据
-  resetTableData();
+  const res = await updateTask(MessageTask.id, {
+      title: MessageTask.title,
+      description: MessageTask.description,
+      priority: MessageTask.priority,
+      due_date: MessageTask.due_date,
+      assignee_ids: MessageTask.assignee_ids,
+      progress: MessageTask.progress,
+    });
+    if(res.success){
+      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+      //使用深拷贝的方式修改
+      allTasks[index] = { ...MessageTask };
+      //刷新数据
+      resetTableData();
+    }
   MessageDialogVisible.value = false;
 }
 </script>
