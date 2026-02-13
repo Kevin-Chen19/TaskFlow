@@ -1031,10 +1031,6 @@ const SaveMessage = async() => {
   background-color: rgba(161, 217, 133, 0.782);
   color: green;
 }
-.NegligibleStyle {
-  background-color: #d7d8da;
-  color: #666;
-}
 .filterBox {
   box-sizing: border-box;
   margin-top: 1rem;

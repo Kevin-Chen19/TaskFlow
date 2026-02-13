@@ -80,11 +80,10 @@
                         collapse-tags-tooltip
                         class="filter-select"
                       >
-                        <el-option label="Critical" value="Critical"></el-option>
-                        <el-option label="High" value="High"></el-option>
-                        <el-option label="Medium" value="Medium"></el-option>
-                        <el-option label="Low" value="Low"></el-option>
-                        <el-option label="Negligible" value="Negligible"></el-option>
+                        <el-option label="Critical" value="3"></el-option>
+                        <el-option label="High" value="2"></el-option>
+                        <el-option label="Medium" value="1"></el-option>
+                        <el-option label="Low" value="0"></el-option>
                       </el-select>
                     </div>
                     <div style="width: 100%;
@@ -183,7 +182,7 @@
                   >
                     {{ getUserInitials(task.assignees[0]) }}
                   </div>
-                  <span class="task-title">{{ task.taskName }}</span>
+                  <span class="task-title">{{ task.title }}</span>
                 </div>
               </div>
             </div>
@@ -199,8 +198,8 @@
     align-center
   >
   <template #header>
-    <div class="topTitle">{{$t('taskPage.createdOn')}} {{ MessageTask.createLine }}</div>
-    <div class="taskName">{{ MessageTask.taskName }}</div>
+    <div class="topTitle">{{$t('taskPage.createdOn')}} {{ getData(MessageTask.created_at) }}</div>
+    <div class="taskName">{{ MessageTask.title }}</div>
     <div style="width: 100%; height: 1px; background: #f3f4f4;"></div>
   </template>
   <div class="contentBox">
@@ -213,15 +212,15 @@
         <div style="color:black;">{{$t('taskPage.taskProgress')}}</div>
         <div v-if="ifCreator">{{$t('taskPage.dragToUpdate')}}</div>
       </div>
-      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.percentage}}%</div>
+      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.progress}}%</div>
     </div>
     <el-progress
       v-if="!ifAssignee && !ifCreator"
       :color="customColorMethod"
-      :percentage="MessageTask.percentage"
+      :percentage="MessageTask.progress"
       :show-text="false"
     />
-    <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.percentage" />
+    <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.progress" />
     <div class="bottomTip">
       <div>{{$t('taskPage.notStarted')}}</div>
       <div>{{$t('taskPage.Completed')}}</div>
@@ -232,13 +231,13 @@
       <div class="smallTip">{{$t('taskPage.CREATOR')}}</div>
       <div class="creatorBox">
         <div class="picBox">
-          <img :src="findUserPic(MessageTask.createUser)" alt="用户头像">
+          <img :src="findUserPic(MessageTask.creator_id)" alt="用户头像">
         </div>
-        <div class="nameStyle">{{ findUser(MessageTask.createUser) }}</div>
+        <div class="nameStyle">{{ findUser(MessageTask.creator_id) }}</div>
       </div>
       <div class="smallTip">{{$t('taskPage.ASSIGNEE')}}</div>
       <div class="assigneeBox">
-        <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee">
+        <div class="creatorBox assigneeItem" v-for="item in MessageTask.assignee_ids">
           <div class="picBox">
             <img :src="findUserPic(item)" alt="用户头像"></img>
           </div>
@@ -246,7 +245,7 @@
         </div>
       </div>
       <div class="smallTip">{{$t('taskPage.PRIORITY')}}</div>
-      <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ MessageTask.priority }}</div>
+      <div class="priorityBox" :class="tagStyles( MessageTask.priority )">{{ showPriority(MessageTask.priority) }}</div>
       <div class="smallTip">{{$t('taskCard.DUELINE')}}</div>
       <div class="timeBox">
         <div class="timePicBox">
@@ -254,7 +253,7 @@
         </div>
         <div class="timeItem">
           <div style="color: #898989; font-size: 0.8rem;">{{$t('taskPage.dueDate')}}</div>
-          <div>{{ MessageTask.dueLine }}</div>
+          <div>{{ getData(MessageTask.due_date) }}</div>
         </div>
       </div>
     </div>
@@ -302,6 +301,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { ElSelect, ElOption } from "element-plus";
 import TaskCard from "@/components/taskCard.vue";
+import { getTasks, updateTask, createTask, deleteTask } from "@/api"
 const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -311,23 +311,65 @@ const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MessageDialogVisible = ref(false);
 const centerDialogVisible = ref(false);
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  priority: number;
+  created_at: string;
+  due_date: string;
+  creator_id: string;
+  assignee_ids: number[];
+  progress: number;
+}
 const MessageTask = reactive({
-  id: "",
-  taskName: "",
+  id: 1,
+  title: "",
   description: "",
-  priority: "",
-  createLine: "",
-  dueLine: "",
-  createUser: "",
-  assignee: [] as string[],
+  priority: 0,
+  created_at: "",
+  due_date: "",
+  creator_id: 1,
+  assignee_ids: [] as number[],
   percentage: 0
 });
+const getData = (dataLine: string) => {
+  return dataLine.split('T')[0]
+}
+const showPriority = (priority: number) => {
+  switch(priority){
+    case 0:
+      return 'Low';
+    case 1:
+      return 'Medium';
+    case 2:
+      return 'High';
+    case 3:
+      return 'Critical';
+    default:
+      return '';
+  }
+}
+const allTasks = reactive<Task[]>([]);
+//获取项目的全部任务
+const getAllTasks = async() => {
+  try{
+    const res = await getTasks({
+  project_id: otherStore.currentProjectId
+});
+    if(res.success){
+      allTasks.splice(0, allTasks.length, ...res.data);
+    }
+  }catch(e){
+    console.log('获取任务失败', e);
+  }
+}
 // 筛选条件
 const filters = ref({
-  assignee: [] as string[],
-  creator: [] as string[],
+  assignee: [] as number[],
+  creator: [] as number[],
   status: [] as string[],
-  priority: [] as string[],
+  priority: [] as number[],
 });
 // 所有用户列表
 const allUsers = computed(() => {
@@ -336,11 +378,11 @@ const allUsers = computed(() => {
 
 //判断是否是任务创建者
 const ifCreator = computed(() => {
-  return MessageTask.createUser === userStore.user.userId;
+  return MessageTask.creator_id === userStore.user.userId;
 })
 //判断是否是任务负责人
 const ifAssignee = computed(() => {
-  return MessageTask.assignee.includes(userStore.user.userId);
+  return MessageTask.assignee_ids.includes(userStore.user.userId);
 })
 const EditMessage = () => {
   // 使用 $patch 安全更新
@@ -348,16 +390,21 @@ const EditMessage = () => {
   MessageDialogVisible.value = false;
   centerDialogVisible.value = true;
 }
-const SaveMessage = () => {
-  // 保存任务进度
-  const task = tasksStore.allTasks.find((task) => task.id === MessageTask.id);
-  if (task) {
-    task.percentage = MessageTask.percentage;
-    ElMessage({
-      message: t('updatedSuccess'),
-      type: 'success',
+const SaveMessage = async() => {
+  //修改AllTasks中的数据
+  const res = await updateTask(MessageTask.id, {
+      title: MessageTask.title,
+      description: MessageTask.description,
+      priority: MessageTask.priority,
+      due_date: MessageTask.due_date,
+      assignee_ids: MessageTask.assignee_ids,
+      progress: MessageTask.progress,
     });
-  }
+    if(res.success){
+      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+      //使用深拷贝的方式修改
+      allTasks[index] = { ...MessageTask };
+    }
   MessageDialogVisible.value = false;
 }
 const handleSubmit = () => {
@@ -372,11 +419,9 @@ const handleSubmit = () => {
       return;
     }
     const componentData = JSON.parse(JSON.stringify(formData)); // 深拷贝
-    componentData.createLine = formatDate(new Date());
-    componentData.dueLine = formatDate(new Date(componentData.dueLine));
-    componentData.createUser = userStore.user.userId;
-    //设置id为时间戳加随机数
-    componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    componentData.created_at = formatDate(new Date());
+    componentData.due_date = formatDate(new Date(componentData.due_date));
+    componentData.creator_id = userStore.user.userId;
     tasksStore.allTasks.push(componentData);
     ElMessage({
       message: t('addSuccessfully'),
@@ -391,26 +436,33 @@ const handleSubmit = () => {
   }
   centerDialogVisible.value = false;
 };
-const submitEdit = () => {
+//编辑任务
+const submitEdit = async() => {
     try {
     // 访问子组件暴露的数据
-    const formData = taskCardRef.value?.formData;
-    if (!formData) {
+    const componentData = JSON.parse(
+      JSON.stringify(taskCardRef.value?.formData),
+    ); // 深拷贝
+    componentData.due_date = formatDate(new Date(componentData.due_date));
+    componentData.creator_id = userStore.user.userId;
+    console.log(componentData);
+    //发生网络请求修改任务
+    const res = await updateTask(componentData.id, {
+      title: componentData.title,
+      description: componentData.description,
+      priority: componentData.priority,
+      due_date: componentData.due_date,
+      assignee_ids: componentData.assignee_ids,
+      progress: componentData.progress,
+    })
+    if(res.success){
+      const index = allTasks.findIndex((task) => task.id === MessageTask.id);
+      allTasks[index] = { ...componentData };
       ElMessage({
-        message: t('updateFailed'),
-        type: "error",
+        message: t('updatedSuccess'),
+        type: "success",
       });
-      return;
     }
-    const componentData = JSON.parse(JSON.stringify(formData)); // 深拷贝
-    componentData.dueLine = formatDate(new Date(componentData.dueLine));
-    componentData.createUser = userStore.user.userId;
-     const index = tasksStore.allTasks.findIndex((task) => task.id === MessageTask.id);
-    tasksStore.allTasks[index] = { ...componentData };
-    ElMessage({
-      message: t('updatedSuccess'),
-      type: "success",
-    });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
@@ -431,21 +483,28 @@ const handleDelete = () => {
       type: 'warning',
     }
   )
-    .then(() => {
-      const index = tasksStore.allTasks.findIndex((task) => task.id === MessageTask.id);
+    .then(async() => {
+      const res = await deleteTask(MessageTask.id);
+      if(res.success){
+        const index = allTasks.findIndex((task) => task.id === MessageTask.id);
       if (index !== -1) {
-        tasksStore.allTasks.splice(index, 1);
+        allTasks.splice(index, 1);
+      }
+      const taskIndex = tasks.findIndex((task) => task.id === MessageTask.id);
+      if (taskIndex !== -1) {
+        tasks.splice(taskIndex, 1);
       }
       MessageDialogVisible.value = false;
       ElMessage({
         type: 'success',
         message: t('deleteSuccess'),
       })
+      }
     })
     .catch(() => {
       ElMessage({
         type: 'info',
-        message:  t('deleteCanceled'),
+        message: t('deleteCanceled'),
       })
     })
 };
@@ -458,17 +517,15 @@ const customColorMethod = (percentage: number) => {
   }
   return "#67c23a";
 };
-const tagStyles = (tag: string) => {
-  if (tag === "Critical") {
+const tagStyles = (tag: number) => {
+  if (tag === 3) {
     return "CriticalStyle";
-  } else if (tag === "High") {
+  } else if (tag === 2) {
     return "HighStyle";
-  } else if (tag === "Medium") {
+  } else if (tag === 1) {
     return "MediumStyle";
-  } else if (tag === "Low") {
+  } else if (tag === 0) {
     return "LowStyle";
-  } else {
-    return "NegligibleStyle";
   }
 };
 const findUserPic = (userId: string) => {
@@ -483,8 +540,6 @@ const formatDate = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
-
-
 
 // 判断两个日期是否相同
 const isSameDay = (date1: Date, date2: Date): boolean => {
@@ -580,12 +635,12 @@ const goToToday = () => {
 
 // 转换任务数据格式
 const getNormalizedTasks = computed(() => {
-  return tasksStore.allTasks.map((task) => ({
+  return allTasks.map((task) => ({
     ...task,
-    startDate: new Date(task.createLine),
-    endDate: new Date(task.dueLine),
+    startDate: new Date(task.created_at),
+    endDate: new Date(task.due_date),
     status: getTaskStatus(task),
-    assignees: task.assignee,
+    assignees: task.assignee_ids,
   }));
 });
 const selectStaus = (status: string) => {
@@ -601,12 +656,12 @@ const getFilteredTasks = computed(() => {
 
   if (filters.value.assignee.length > 0) {
     tasks = tasks.filter((task) =>
-      task.assignee.some((a: string) => filters.value.assignee.includes(a))
+      task.assignee_ids.some((a: number) => filters.value.assignee.includes(a))
     );
   }
 
   if (filters.value.creator.length > 0) {
-    tasks = tasks.filter((task) => filters.value.creator.includes(task.createUser));
+    tasks = tasks.filter((task) => filters.value.creator.includes(task.creator_id));
   }
 
   if (filters.value.status.length > 0) {
@@ -614,20 +669,20 @@ const getFilteredTasks = computed(() => {
   }
 
   if (filters.value.priority.length > 0) {
-    tasks = tasks.filter((task) => filters.value.priority.includes(task.priority));
+    tasks = tasks.filter((task) => filters.value.priority.includes(String(task.priority)));
   }
-
+  console.log(filters.value.priority);
   return tasks;
 });
 
 // 根据百分比和截止日期确定任务状态
 const getTaskStatus = (task: Task): string => {
-  if (task.percentage === 100) return "Completed";
+  if (task.progress === 100) return "Completed";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(task.dueLine);
+  const dueDate = new Date(task.due_date);
   dueDate.setHours(0, 0, 0, 0);
-  if (dueDate < today && task.percentage < 100) return "Overdue";
+  if (dueDate < today && task.progress < 100) return "Overdue";
   return "InProgress";
 };
 
@@ -812,6 +867,7 @@ const clearFilters = () => {
 };
 
 onMounted(() => {
+  getAllTasks();
   //默认展示全部任务
   filters.value.status.push('InProgress');
   filters.value.status.push('Completed');
@@ -1172,7 +1228,21 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
+.CriticalStyle {
+  background-color: #e40606b4;
+}
+.HighStyle {
+  background-color: #f7b8b8;
+  color: red;
+}
+.MediumStyle {
+  background-color: #ede25f;
+  color: #666;
+}
+.LowStyle {
+  background-color: rgba(161, 217, 133, 0.782);
+  color: green;
+}
 
 .cancelBtn {
   height: 3rem;
