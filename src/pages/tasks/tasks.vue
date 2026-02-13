@@ -61,9 +61,9 @@
       >
         <el-option
           v-for="item in PriorityOptions"
-          :key="item"
-          :label="item"
-          :value="item"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
         />
       </el-select>
       <el-input
@@ -316,7 +316,24 @@ const marks = reactive<Marks>({
   },
   100: "100%",
 });
-const PriorityOptions = ["Critical", "High", "Medium", "Low", "Negligible"];
+const PriorityOptions = [
+  {
+    label: "Low",
+    value: 0
+  },
+  {
+    label: "Medium",
+    value: 1
+  },
+  {
+    label: "High",
+    value: 2
+  },
+  {
+    label: "Critical",
+    value: 3
+  }
+];
 const options = [
   {
     value: "Creator",
@@ -681,6 +698,7 @@ const handlePageChange = (page: number) => {
   showTasks.splice(0, showTasks.length);
   showTasks.push(...tasks.slice((page - 1) * 9, page * 9));
 };
+//筛选函数
 const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
   if (!ifSort) {
     ifAll.value = !ifAll.value;
@@ -694,7 +712,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
     } else {
       tasks.splice(0, tasks.length);
       tasks.push(
-        ...allTasks.filter((task) => task.assignee.includes(labelValue)),
+        ...allTasks.filter((task) => task.assignee_ids.includes(labelValue)),
       );
       showTasks.splice(0, showTasks.length);
       showTasks.push(...tasks.slice(0, 9));
@@ -706,7 +724,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
         resetTableData();
       }else{
         tasks.splice(0, tasks.length);
-        tasks.push(...allTasks.filter((task) => MembersValue.value.includes(task.createUser)));
+        tasks.push(...allTasks.filter((task) => MembersValue.value.includes(task.creator_id)));
         reshowTableData();
       }
     }else if (filterLabel.value === "Assignee"){  //按指派人筛选
@@ -715,7 +733,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
       }else{
         tasks.splice(0, tasks.length);
         tasks.push(...allTasks.filter((task) => 
-          task.assignee.some(assignee => MembersValue.value.includes(assignee))
+          task.assignee_ids.some(assignee => MembersValue.value.includes(assignee))
         ));
         reshowTableData();
       }
@@ -724,7 +742,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
         resetTableData();
       }else{
         tasks.splice(0, tasks.length);
-        tasks.push(...allTasks.filter((task) => task.taskName.includes(TaskNameValue.value)));
+        tasks.push(...allTasks.filter((task) => task.title.includes(TaskNameValue.value)));
         reshowTableData();
       }
     } else if (filterLabel.value === "Priority"){ //按任务优先级筛选
@@ -741,7 +759,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
       if(Array.isArray(TimeLineValue.value) && TimeLineValue.value.length >= 2) {
         tasks.splice(0, tasks.length);
         tasks.push(...allTasks.filter((task) =>
-          task.dueLine >= formatDate(new Date(TimeLineValue.value[0]!)) && task.dueLine <= formatDate(new Date(TimeLineValue.value[1]!))
+          task.due_date >= formatDate(new Date(TimeLineValue.value[0]!)) && task.due_date <= formatDate(new Date(TimeLineValue.value[1]!))
         ));
         reshowTableData();
       } else {
@@ -750,7 +768,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
     } else if (filterLabel.value === "Progress"){
       tasks.splice(0, tasks.length);
       tasks.push(...allTasks.filter((task) => 
-        task.percentage >= ProgressValue.value[0] && task.percentage <= ProgressValue.value[1]
+        task.progress >= ProgressValue.value[0] && task.progress <= ProgressValue.value[1]
       ));
       reshowTableData();
     }
