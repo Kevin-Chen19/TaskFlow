@@ -298,5 +298,12 @@ export default {
   "Project Manager": "Project Manager",
   Participants: "Participants",
   Viewer: "Viewer",
+  Sun: 'Sun',
+  Mon: 'Mon',
+  Tue: 'Tue',
+  Wed: 'Wed',
+  Thu: 'Thu',
+  Fri: 'Fri',
+  Sat: 'Sat',
   title: "testi18n...",
 };

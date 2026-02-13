@@ -297,5 +297,12 @@ export default {
   "Project Manager": "项目经理",
   Participants: "参与者",
   Viewer: "观察者",
+  Sun: '周日',
+  Mon: '周一',
+  Tue: '周二',
+  Wed: '周三',
+  Thu: '周四',
+  Fri: '周五',
+  Sat: '周六',
   title: "测试国际化",
 };
