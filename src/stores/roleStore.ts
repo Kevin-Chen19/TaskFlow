@@ -188,28 +188,7 @@ export const useRoleStore = defineStore('role', () => {
     ],
   },
 ]);
-const allpositions = reactive([
-  {
-    positionName: "Front-end Developer",
-    positionMess: "Responsible for implementing visual elements that users see and interact with.Requires expertise in Vue3.",
-    count: 2 
-  },
-   {
-    positionName: "Backend Engineer",
-    positionMess: "Focuses on server-side logic,definition and maintenance of the central database,and ensuring high performance and responsiveness.",
-    count: 3 
-  },
-   {
-    positionName: "QA Tester",
-    positionMess: "Executes test cases to diagnose issues and bugs,verifies fixes,and ensures product quality standards are met.",
-    count: 2 
-  },
-   {
-    positionName: "UI Designer",
-    positionMess: "Designs user interfaces for web and mobile applications,creating intuitive and visually appealing user experiences.",
-    count: 1 
-  }
-])
+const allpositions = reactive([])
 
 return { allRoles, allpositions}
 })

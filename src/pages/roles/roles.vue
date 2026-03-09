@@ -1,12 +1,10 @@
 <!--优化点：根据中英文修改输入框的不同输入长度限制-->
 <template>
   <div class="bigBox">
-    <div class="bigTitle" style="">{{ $t('roles.RolePosition') }}</div>
-    <span class="smallText">
-      {{$t('roles.Manageaccess')}}</span
-    >
+    <div class="bigTitle" style="">{{ $t("roles.RolePosition") }}</div>
+    <span class="smallText"> {{ $t("roles.Manageaccess") }}</span>
     <br />
-    <span class="smallText"> {{$t('roles.teammembers')}}</span>
+    <span class="smallText"> {{ $t("roles.teammembers") }}</span>
     <div class="Line_two bottomLine">
       <div class="changeBox">
         <div
@@ -14,25 +12,33 @@
           @click="chooseWhich = 0"
           :class="chooseWhich == 0 ? 'chooseItem' : ''"
         >
-          {{$t('roles.PermissionRoles')}}
+          {{ $t("roles.PermissionRoles") }}
         </div>
         <div
           class="changeItem"
           @click="chooseWhich = 1"
           :class="chooseWhich == 1 ? 'chooseItem' : ''"
         >
-          {{$t('roles.PositionTitles')}}
+          {{ $t("roles.PositionTitles") }}
         </div>
       </div>
-      <div v-if="chooseWhich == 0" class="addBtn" @click="addOne('Role')">+ {{$t('roles.AddNewRole')}}</div>
-      <div v-if="chooseWhich == 1" class="addBtn" @click="addOne('Position')">+ {{$t('roles.AddNewPosition')}}</div>
+      <div v-if="chooseWhich == 0" class="addBtn" @click="addOne('Role')">
+        + {{ $t("roles.AddNewRole") }}
+      </div>
+      <div v-if="chooseWhich == 1" class="addBtn" @click="addOne('Position')">
+        + {{ $t("roles.AddNewPosition") }}
+      </div>
     </div>
     <div v-if="chooseWhich == 0" class="teamBox">
-      <div class="RoleItem" v-for="(item, index) in roleStore.allRoles" :key="index">
+      <div
+        class="RoleItem"
+        v-for="(item, index) in roleStore.allRoles"
+        :key="index"
+      >
         <div class="roleTitle">{{ $t(item.roleName) }}</div>
         <div class="roleMess">{{ item.roleMess }}</div>
         <div class="switchBigBox">
-          <div class="roleItem_Kind">{{$t('roles.PROJECTACCESS')}}</div>
+          <div class="roleItem_Kind">{{ $t("roles.PROJECTACCESS") }}</div>
           <div
             class="switchBox"
             v-for="(lowItem, index) in item.tasksData"
@@ -44,7 +50,7 @@
               style="--el-switch-on-color: #2eb867"
             />
           </div>
-          <div class="roleItem_Kind">{{$t('roles.TEAMPEOPLE')}}</div>
+          <div class="roleItem_Kind">{{ $t("roles.TEAMPEOPLE") }}</div>
           <div
             class="switchBox"
             v-for="(lowItem, index) in item.membersData"
@@ -56,7 +62,7 @@
               style="--el-switch-on-color: #2eb867"
             />
           </div>
-          <div class="roleItem_Kind">{{$t('roles.COLLABORATION')}}</div>
+          <div class="roleItem_Kind">{{ $t("roles.COLLABORATION") }}</div>
           <div
             class="switchBox"
             v-for="(lowItem, index) in item.documentsData"
@@ -71,7 +77,7 @@
         </div>
       </div>
     </div>
-    <div v-if="chooseWhich == 1" class="teamBox" style="gap:0;">
+    <div v-if="chooseWhich == 1" class="teamBox" style="gap: 0">
       <FileCard
         v-for="item in roleStore.allpositions"
         :key="item.positionName"
@@ -89,16 +95,16 @@
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">{{ $t('roles.RoleName') }}</div>
+    <div class="inputName">{{ $t("roles.RoleName") }}</div>
     <el-input
       v-model="newRoleData.roleName"
       :placeholder="$t('pleaseEnterContent')"
       class="content-input"
     ></el-input>
-     <div class="inputName">{{ $t('roles.RoleDescription') }}</div>
+    <div class="inputName">{{ $t("roles.RoleDescription") }}</div>
     <el-input
       v-model="newRoleData.roleDescription"
-      style="width: 100%;"
+      style="width: 100%"
       maxlength="20"
       :placeholder="$t('pleaseEnterContent')"
       show-word-limit
@@ -109,10 +115,10 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="rolesDialogVisible = false" class="cancelBtn">
-          {{ $t('cancel') }}
+          {{ $t("cancel") }}
         </el-button>
         <el-button type="primary" @click="addSubmit('Role')" class="confirmBtn">
-          {{ $t('roles.AddRole') }}
+          {{ $t("roles.AddRole") }}
         </el-button>
       </div>
     </template>
@@ -124,16 +130,16 @@
     align-center
   >
     <div class="line"></div>
-    <div class="inputName">{{ $t('roles.PositionName') }}</div>
+    <div class="inputName">{{ $t("roles.PositionName") }}</div>
     <el-input
       v-model="newPositionData.positionName"
       :placeholder="$t('pleaseEnterContent')"
       class="content-input"
     ></el-input>
-     <div class="inputName">{{ $t('roles.PositionDescription') }}</div>
+    <div class="inputName">{{ $t("roles.PositionDescription") }}</div>
     <el-input
       v-model="newPositionData.positionDescription"
-      style="width: 100%;"
+      style="width: 100%"
       maxlength="20"
       :placeholder="$t('pleaseEnterContent')"
       show-word-limit
@@ -144,33 +150,40 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="positionsDialogVisible = false" class="cancelBtn">
-          {{ $t('cancel') }}
+          {{ $t("cancel") }}
         </el-button>
-        <el-button type="primary" @click="addSubmit('Position')" class="confirmBtn">
-          {{ $t('roles.AddPosition') }}
+        <el-button
+          type="primary"
+          @click="addSubmit('Position')"
+          class="confirmBtn"
+        >
+          {{ $t("roles.AddPosition") }}
         </el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import FileCard from "@/components/fileCard.vue";
 import { useRoleStore } from "@/stores/roleStore";
+import { useOtherStore } from "@/stores/otherStore";
+import { getProjectPositions , createProjectPosition } from "@/api";
 const roleStore = useRoleStore();
+const otherStore = useOtherStore();
 const chooseWhich = ref(0);
 const rolesDialogVisible = ref(false);
 const positionsDialogVisible = ref(false);
 const newRoleData = reactive({
   roleName: "",
-  roleDescription:""
-})
+  roleDescription: "",
+});
 const newPositionData = reactive({
   positionName: "",
-  positionDescription:""
-})
-const addOne = (kind: string) =>{
-  if(kind === "Role"){
+  positionDescription: "",
+});
+const addOne = (kind: string) => {
+  if (kind === "Role") {
     newRoleData.roleName = "";
     newRoleData.roleDescription = "";
     rolesDialogVisible.value = true;
@@ -179,9 +192,9 @@ const addOne = (kind: string) =>{
     newPositionData.positionDescription = "";
     positionsDialogVisible.value = true;
   }
-}
-const addSubmit = (kind:string) => {
-  if(kind === "Role"){
+};
+const addSubmit = (kind: string) => {
+  if (kind === "Role") {
     roleStore.allRoles.unshift({
       roleName: newRoleData.roleName,
       roleMess: newRoleData.roleDescription,
@@ -244,15 +257,53 @@ const addSubmit = (kind:string) => {
       ],
     });
     rolesDialogVisible.value = false;
-  }else{
-    roleStore.allpositions.unshift({
-      positionName: newPositionData.positionName,
-      positionMess: newPositionData.positionDescription,
-      count: 0 
-    })
+  } else {
+    addPosition();
     positionsDialogVisible.value = false;
   }
+};
+// 加载项目职位数据
+const loadPositions = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    const positionRes = await getProjectPositions({
+      project_id: projectId,
+    });
+    if (positionRes.success && positionRes.data) {
+      roleStore.allpositions.push(...positionRes.data.map((item: any) => ({
+        positionName: item.positionname,
+        positionMess: item.description,
+        count: 0
+      })));
+      console.log(roleStore.allpositions);
+    }
+  } catch (error) {
+    console.error("加载职位数据失败:", error);
+  }
+};
+// 新增项目职位
+const addPosition = async () => {
+   try {
+    const projectId = otherStore.currentProjectId;
+    const addRes = await createProjectPosition({
+      project_id: projectId,
+      positionname: newPositionData.positionName,
+      description: newPositionData.positionDescription
+    });
+    if (addRes.success && addRes.data) {
+        roleStore.allpositions.unshift({
+        positionName: newPositionData.positionName,
+        positionMess: newPositionData.positionDescription,
+        count: 0,
+      });
+    }
+  } catch (error) {
+    console.error("新增职位失败:", error);
+  }
 }
+onMounted(() => {
+  loadPositions();
+});
 </script>
 <style scoped lang="scss">
 .changeBox {
@@ -344,7 +395,7 @@ const addSubmit = (kind:string) => {
   border: 1px solid #ccc;
   box-shadow: none;
 }
-:deep(.el-textarea__inner:focus-within){
+:deep(.el-textarea__inner:focus-within) {
   border: 1px solid black !important;
   box-shadow: none;
 }
@@ -352,7 +403,7 @@ const addSubmit = (kind:string) => {
   font-weight: 500;
   font-size: 1rem;
 }
-:deep(.el-input__wrapper:focus-within){
+:deep(.el-input__wrapper:focus-within) {
   border: 1px solid black;
 }
 .cancelBtn {
@@ -377,7 +428,7 @@ const addSubmit = (kind:string) => {
   border-radius: 0.5rem;
   padding: 0 1.5rem;
 }
-.confirmBtn:hover{
+.confirmBtn:hover {
   background-color: #029140;
 }
 </style>
