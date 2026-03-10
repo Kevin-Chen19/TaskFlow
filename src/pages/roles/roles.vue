@@ -32,46 +32,59 @@
     <div v-if="chooseWhich == 0" class="teamBox">
       <div
         class="RoleItem"
-        v-for="(item, index) in roleStore.allRoles"
-        :key="index"
+        v-for="(item, index) in translatedRoles"
+        :key="item.id || index"
       >
-        <div class="roleTitle">{{ $t(item.roleName) }}</div>
+        <div class="roleHeader">
+          <div class="roleTitle">{{ item.roleName }}</div>
+          <div class="roleActions">
+            <el-icon @click="addOne('Role', roleStore.allRoles[index])" class="actionIcon">
+              <Edit />
+            </el-icon>
+            <el-icon @click="deleteRole(roleStore.allRoles[index])" class="actionIcon deleteIcon">
+              <Delete />
+            </el-icon>
+          </div>
+        </div>
         <div class="roleMess">{{ item.roleMess }}</div>
         <div class="switchBigBox">
           <div class="roleItem_Kind">{{ $t("roles.PROJECTACCESS") }}</div>
           <div
             class="switchBox"
-            v-for="(lowItem, index) in item.tasksData"
-            :key="index"
+            v-for="(lowItem, subIndex) in item.tasksData"
+            :key="subIndex"
           >
             <div>{{ lowItem.label }}</div>
             <el-switch
-              v-model="lowItem.value"
+              v-model="roleStore.allRoles[index].tasksData[subIndex].value"
               style="--el-switch-on-color: #2eb867"
+              @change="() => updatePermission(roleStore.allRoles[index], index)"
             />
           </div>
           <div class="roleItem_Kind">{{ $t("roles.TEAMPEOPLE") }}</div>
           <div
             class="switchBox"
-            v-for="(lowItem, index) in item.membersData"
-            :key="index"
+            v-for="(lowItem, subIndex) in item.membersData"
+            :key="subIndex"
           >
             <div>{{ lowItem.label }}</div>
             <el-switch
-              v-model="lowItem.value"
+              v-model="roleStore.allRoles[index].membersData[subIndex].value"
               style="--el-switch-on-color: #2eb867"
+              @change="() => updatePermission(roleStore.allRoles[index], index)"
             />
           </div>
           <div class="roleItem_Kind">{{ $t("roles.COLLABORATION") }}</div>
           <div
             class="switchBox"
-            v-for="(lowItem, index) in item.documentsData"
-            :key="index"
+            v-for="(lowItem, subIndex) in item.documentsData"
+            :key="subIndex"
           >
             <div>{{ lowItem.label }}</div>
             <el-switch
-              v-model="lowItem.value"
+              v-model="roleStore.allRoles[index].documentsData[subIndex].value"
               style="--el-switch-on-color: #2eb867"
+              @change="() => updatePermission(roleStore.allRoles[index], index)"
             />
           </div>
         </div>
@@ -80,11 +93,12 @@
     <div v-if="chooseWhich == 1" class="teamBox" style="gap: 0">
       <FileCard
         v-for="item in roleStore.allpositions"
-        :key="item.positionName"
+        :key="item.id || item.positionName"
         :ifFolder="false"
         :fileName="item.positionName"
         :fileTime="item.positionMess"
         :fileSize="item.count + $t('roles.members')"
+        @delete="deletePosition(item)"
       />
     </div>
   </div>
@@ -164,28 +178,106 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
+import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
+import { Edit, Delete } from "@element-plus/icons-vue";
 import FileCard from "@/components/fileCard.vue";
-import { useRoleStore } from "@/stores/roleStore";
+import { useRoleStore, type RoleItem } from "@/stores/roleStore";
 import { useOtherStore } from "@/stores/otherStore";
-import { getProjectPositions , createProjectPosition } from "@/api";
+import { getProjectPositions, createProjectPosition, deleteProjectPosition } from "@/api";
+import i18n from '@/language';
+import { debounce } from 'lodash-es';
+const t = i18n.global.t
 const roleStore = useRoleStore();
 const otherStore = useOtherStore();
 const chooseWhich = ref(0);
 const rolesDialogVisible = ref(false);
 const positionsDialogVisible = ref(false);
+const editMode = ref(false);
+const currentEditRoleId = ref<number | null>(null);
+
+// 存储每个角色正在更新的权限索引，用于显示加载状态
+const updatingPermissions = ref<Map<number, {index: number, type: string}>>(new Map());
+
+// 计算属性：动态翻译角色数据，确保语言切换时自动更新
+const translatedRoles = computed(() => {
+  return roleStore.allRoles.map(role => ({
+    ...role,
+    roleName: role.roleName.startsWith('roleStore.') ? t(role.roleName) : role.roleName,
+    tasksData: role.tasksData.map(item => ({
+      label: item.label.startsWith('roleStore.') ? t(item.label) : t(`roleStore.${item.label}`),
+      value: item.value
+    })),
+    membersData: role.membersData.map(item => ({
+      label: item.label.startsWith('roleStore.') ? t(item.label) : t(`roleStore.${item.label}`),
+      value: item.value
+    })),
+    documentsData: role.documentsData.map(item => ({
+      label: item.label.startsWith('roleStore.') ? t(item.label) : t(`roleStore.${item.label}`),
+      value: item.value
+    }))
+  }));
+});
+
 const newRoleData = reactive({
   roleName: "",
   roleDescription: "",
 });
+
 const newPositionData = reactive({
   positionName: "",
   positionDescription: "",
 });
-const addOne = (kind: string) => {
+
+// 防抖的权限更新函数
+const debouncedUpdateRole = debounce(async (roleId: number, role: RoleItem) => {
+  try {
+    const result = await roleStore.updateRoleSettings(roleId, role);
+    if (result.success) {
+      ElMessage.success('权限更新成功');
+    } else {
+      ElMessage.error(result.message || '权限更新失败');
+    }
+  } catch (error) {
+    console.error('更新权限失败:', error);
+    ElMessage.error('权限更新失败');
+  }
+}, 1500);
+
+// 更新权限设置
+const updatePermission = async (role: RoleItem, index: number) => {
+  if (!role.id) return;
+
+  try {
+    // 调用 store 方法更新权限
+    const result = await roleStore.updateRoleSettings(role.id, role);
+    if (result.success) {
+      // 不显示成功消息，避免频繁提示
+    } else {
+      ElMessage.error(result.message || '权限更新失败');
+    }
+  } catch (error) {
+    console.error('更新权限失败:', error);
+    ElMessage.error('权限更新失败');
+  }
+};
+
+// 打开角色对话框（新增或编辑）
+const addOne = (kind: string, role?: RoleItem) => {
   if (kind === "Role") {
-    newRoleData.roleName = "";
-    newRoleData.roleDescription = "";
+    if (role && role.id) {
+      // 编辑模式
+      editMode.value = true;
+      currentEditRoleId.value = role.id || null;
+      newRoleData.roleName = role.roleName;
+      newRoleData.roleDescription = role.roleMess;
+    } else {
+      // 新增模式
+      editMode.value = false;
+      currentEditRoleId.value = null;
+      newRoleData.roleName = "";
+      newRoleData.roleDescription = "";
+    }
     rolesDialogVisible.value = true;
   } else {
     newPositionData.positionName = "";
@@ -193,75 +285,107 @@ const addOne = (kind: string) => {
     positionsDialogVisible.value = true;
   }
 };
-const addSubmit = (kind: string) => {
+
+// 提交角色（新增或编辑）
+const addSubmit = async (kind: string) => {
   if (kind === "Role") {
-    roleStore.allRoles.unshift({
+    if (!newRoleData.roleName) {
+      ElMessage.warning('请输入角色名称');
+      return;
+    }
+
+    const roleData: RoleItem = {
       roleName: newRoleData.roleName,
       roleMess: newRoleData.roleDescription,
-      //任务权限
       tasksData: [
-        {
-          label: "Create Tasks",
-          value: false,
-        },
-        {
-          label: "Delete Tasks",
-          value: false,
-        },
-        {
-          label: "Edit All Tasks",
-          value: false,
-        },
-        {
-          label: "Edit Own Tasks",
-          value: false,
-        },
-        {
-          label: "Edit Time Line",
-          value: false,
-        },
+        { label: 'CreateTasks', value: false },
+        { label: 'DeleteTasks', value: false },
+        { label: 'EditAllTasks', value: false },
+        { label: 'EditOwnTasks', value: false },
+        { label: 'EditProjectMilestones', value: false },
       ],
-      //成员权限
       membersData: [
-        {
-          label: "Invite Members",
-          value: false,
-        },
-        {
-          label: "Delete Members",
-          value: false,
-        },
-        {
-          label: "Manage Roles",
-          value: false,
-        },
-        {
-          label: "Manage Positions",
-          value: false,
-        },
+        { label: 'InviteMembers', value: false },
+        { label: 'DeleteMembers', value: false },
+        { label: 'ManageRoles', value: false },
+        { label: 'ManagePositions', value: false },
       ],
-      //协作权限(文件权限默认创建者有删除的权限,回收站同理)
       documentsData: [
-        {
-          label: "Create Documents",
-          value: false,
-        },
-        {
-          label: "Delete All Documents",
-          value: false,
-        },
-        {
-          label: "Chat",
-          value: false,
-        },
+        { label: 'CreateDocuments', value: false },
+        { label: 'DeleteAllDocuments', value: false },
+        { label: 'Chat', value: false },
       ],
-    });
-    rolesDialogVisible.value = false;
+    };
+
+    const projectId = otherStore.currentProjectId;
+    let result;
+
+    if (editMode.value && currentEditRoleId.value) {
+      // 编辑角色
+      result = await roleStore.updateRole(currentEditRoleId.value, roleData);
+      if (result.success) {
+        ElMessage.success('角色更新成功');
+      } else {
+        ElMessage.error(result.message || '角色更新失败');
+      }
+    } else {
+      // 新增角色
+      result = await roleStore.createRole(projectId, roleData);
+      if (result.success) {
+        ElMessage.success('角色创建成功');
+      } else {
+        ElMessage.error(result.message || '角色创建失败');
+      }
+    }
+
+    if (result.success) {
+      rolesDialogVisible.value = false;
+    }
   } else {
-    addPosition();
+    await addPosition();
     positionsDialogVisible.value = false;
   }
 };
+
+// 删除角色
+const deleteRole = async (role: RoleItem) => {
+  if (!role.id) return;
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除角色 "${role.roleName}" 吗？`,
+      '删除角色',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    const result = await roleStore.deleteRole(role.id);
+    if (result.success) {
+      ElMessage.success('角色删除成功');
+    } else {
+      ElMessage.error(result.message || '角色删除失败');
+    }
+  } catch (error) {
+    // 用户取消删除
+    if (error !== 'cancel') {
+      console.error('删除角色失败:', error);
+    }
+  }
+};
+
+// 加载项目角色数据
+const loadRoles = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    await roleStore.loadRoles(projectId);
+  } catch (error) {
+    console.error("加载角色数据失败:", error);
+  }
+};
+
 // 加载项目职位数据
 const loadPositions = async () => {
   try {
@@ -270,20 +394,24 @@ const loadPositions = async () => {
       project_id: projectId,
     });
     if (positionRes.success && positionRes.data) {
-      roleStore.allpositions.push(...positionRes.data.map((item: any) => ({
-        positionName: item.positionname,
-        positionMess: item.description,
-        count: 0
-      })));
+      roleStore.allpositions.splice(0, roleStore.allpositions.length,
+        ...positionRes.data.map((item: any) => ({
+          id: item.id,
+          positionName: item.positionname,
+          positionMess: item.description,
+          count: 0
+        }))
+      );
       console.log(roleStore.allpositions);
     }
   } catch (error) {
     console.error("加载职位数据失败:", error);
   }
 };
+
 // 新增项目职位
 const addPosition = async () => {
-   try {
+  try {
     const projectId = otherStore.currentProjectId;
     const addRes = await createProjectPosition({
       project_id: projectId,
@@ -291,17 +419,56 @@ const addPosition = async () => {
       description: newPositionData.positionDescription
     });
     if (addRes.success && addRes.data) {
-        roleStore.allpositions.unshift({
+      roleStore.allpositions.unshift({
+        id: addRes.data.id,
         positionName: newPositionData.positionName,
         positionMess: newPositionData.positionDescription,
         count: 0,
       });
+      ElMessage.success('职位创建成功');
+    } else {
+      ElMessage.error('职位创建失败');
     }
   } catch (error) {
     console.error("新增职位失败:", error);
+    ElMessage.error('职位创建失败');
   }
-}
+};
+
+// 删除项目职位
+const deletePosition = async (position: any) => {
+  if (!position.id) return;
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除职位 "${position.positionName}" 吗？`,
+      '删除职位',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    const res = await deleteProjectPosition(position.id);
+    if (res.success) {
+      const index = roleStore.allpositions.findIndex(p => p.id === position.id);
+      if (index !== -1) {
+        roleStore.allpositions.splice(index, 1);
+      }
+      ElMessage.success('职位删除成功');
+    } else {
+      ElMessage.error('职位删除失败');
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除职位失败:", error);
+    }
+  }
+};
+
 onMounted(() => {
+  loadRoles();
   loadPositions();
 });
 </script>
@@ -351,9 +518,30 @@ onMounted(() => {
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
   padding: 1rem;
 }
+.roleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .roleTitle {
   font-size: 1.2rem;
   font-weight: 600;
+}
+.roleActions {
+  display: flex;
+  gap: 0.5rem;
+}
+.actionIcon {
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #666;
+  transition: color 0.2s;
+}
+.actionIcon:hover {
+  color: #2eb867;
+}
+.deleteIcon:hover {
+  color: #f56c6c;
 }
 .roleMess {
   width: 100%;

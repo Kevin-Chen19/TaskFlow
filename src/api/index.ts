@@ -486,6 +486,16 @@ export const getProjectRoles = (params?: {
 }
 
 /**
+ * 获取单个项目角色
+ */
+export const getProjectRoleById = (id: number) => {
+  return request({
+    url: `/project-roles/${id}`,
+    method: 'get'
+  })
+}
+
+/**
  * 创建项目角色
  */
 export const createProjectRole = (data: {
@@ -493,7 +503,7 @@ export const createProjectRole = (data: {
   rolename: string
   description?: string
   settings?: any
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: '/project-roles',
     method: 'post',
@@ -508,7 +518,7 @@ export const updateProjectRole = (id: number, data: {
   rolename?: string
   description?: string
   settings?: any
-}) => {
+}): Promise<ApiResponse> => {
   return request({
     url: `/project-roles/${id}`,
     method: 'put',
@@ -519,7 +529,7 @@ export const updateProjectRole = (id: number, data: {
 /**
  * 删除项目角色
  */
-export const deleteProjectRole = (id: number) => {
+export const deleteProjectRole = (id: number): Promise<ApiResponse> => {
   return request({
     url: `/project-roles/${id}`,
     method: 'delete'
