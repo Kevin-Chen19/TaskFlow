@@ -32,6 +32,12 @@ request.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // 如果是 FormData，删除默认的 Content-Type，让 axios 自动设置正确的 boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
+
     return config
   },
   (error) => {

@@ -104,8 +104,11 @@ CREATE TABLE IF NOT EXISTS project_documents (
   id SERIAL PRIMARY KEY,
   project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
   parent_folder_id INTEGER REFERENCES project_folders(id) ON DELETE CASCADE,
-  name VARCHAR(50) NOT NULL,
+  name VARCHAR(255) NOT NULL,
   path TEXT,
+  file_url TEXT,
+  file_type VARCHAR(50),
+  file_size BIGINT,
   creator_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP

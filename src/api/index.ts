@@ -662,6 +662,17 @@ export const getProjectDocuments = (params?: {
 }
 
 /**
+ * 上传文档文件
+ */
+export const uploadProjectDocument = (formData: FormData) => {
+  return request({
+    url: '/project-documents/upload',
+    method: 'post',
+    data: formData
+  })
+}
+
+/**
  * 创建文档
  */
 export const createProjectDocument = (data: {

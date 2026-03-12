@@ -1,5 +1,7 @@
 import express from 'express';
 import { query } from '../config/database.js';
+import upload from '../utils/upload.js';
+import path from 'path';
 
 const router = express.Router();
 
@@ -51,6 +53,125 @@ router.get('/', async (req, res, next) => {
       count: result.rowCount
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/project-documents/upload:
+ *   post:
+ *     summary: 上传文档文件
+ *     tags: [Project Documents]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *               - project_id
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               project_id:
+ *                 type: integer
+ *               parent_folder_id:
+ *                 type: integer
+ *               creator_id:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: 上传成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.post('/upload', upload.single('file'), async (req, res, next) => {
+  try {
+    console.log('=== 文件上传请求 ===');
+    console.log('req.file:', req.file);
+    console.log('req.body:', req.body);
+
+    if (!req.file) {
+      console.log('错误：没有上传文件');
+      return res.status(400).json({
+        success: false,
+        message: '请选择要上传的文件'
+      });
+    }
+
+    const { project_id, parent_folder_id, creator_id } = req.body;
+    console.log('解析的参数:', { project_id, parent_folder_id, creator_id });
+
+    if (!project_id) {
+      console.log('错误：缺少项目ID');
+      return res.status(400).json({
+        success: false,
+        message: '项目ID为必填项'
+      });
+    }
+
+    // 处理文件名编码（解决中文乱码）
+    let originalName = req.file.originalname;
+    console.log('原始文件名:', originalName);
+
+    // 尝试解码可能的 Latin-1 编码
+    try {
+      // 测试是否是乱码（包含非可打印字符）
+      const isCorrupted = originalName.split('').some(char => char.charCodeAt(0) > 127 && /[^\u4e00-\u9fa5]/.test(char));
+      if (isCorrupted) {
+        // 尝试用 Latin-1 重新编码再 UTF-8 解码
+        const latin1Buffer = Buffer.from(originalName, 'latin1');
+        const utf8String = latin1Buffer.toString('utf8');
+        console.log('解码后的文件名:', utf8String);
+        originalName = utf8String;
+      }
+    } catch (error) {
+      console.log('文件名解码失败，使用原始文件名');
+    }
+
+    // 获取文件扩展名
+    const fileExt = path.extname(originalName).slice(1);
+
+    // 构建文件URL
+    const fileUrl = `/uploads/${req.file.filename}`;
+
+    console.log('准备插入数据库:', {
+      project_id: parseInt(project_id),
+      parent_folder_id: parent_folder_id ? parseInt(parent_folder_id) : null,
+      name: originalName,
+      fileUrl,
+      fileExt,
+      fileSize: req.file.size
+    });
+
+    const result = await query(
+      'INSERT INTO project_documents (project_id, parent_folder_id, name, path, file_url, file_type, file_size, creator_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [
+        parseInt(project_id),
+        parent_folder_id ? parseInt(parent_folder_id) : null,
+        originalName,
+        req.file.path,
+        fileUrl,
+        fileExt,
+        req.file.size,
+        creator_id ? parseInt(creator_id) : null
+      ]
+    );
+
+    console.log('数据库插入成功:', result.rows[0]);
+
+    res.status(201).json({
+      success: true,
+      message: '文件上传成功',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('文件上传失败:', error);
     next(error);
   }
 });
