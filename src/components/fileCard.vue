@@ -36,6 +36,15 @@
             </template>
           </el-dropdown>
         </div>
+        <!-- 非文件夹类型的编辑和删除按钮 -->
+        <div v-if="!props.ifFolder" class="actionButtons">
+          <el-icon @click="handleEdit" class="actionIcon">
+            <Edit />
+          </el-icon>
+          <el-icon @click="handleDelete" class="actionIcon deleteIcon">
+            <Delete />
+          </el-icon>
+        </div>
         <div class="fileMessRight">
           <div class="fileSmallSty">{{ computedFileMaker }}</div>
           <div
@@ -63,6 +72,7 @@ import BackendIcon from "@/assets/icons/数据库.png";
 import TestIcon from "@/assets/icons/Debug.png";
 import DesignIcon from "@/assets/icons/调色板.png";
 import OtherJobIcon from "@/assets/icons/职位.png";
+import { Edit, Delete } from '@element-plus/icons-vue';
 // 定义组件属性
 const props = defineProps({
   //定义组件类型
@@ -138,9 +148,21 @@ const computedFileIcon = computed(() => {
 // 定义组件事件
 const emit = defineEmits<{
   command: [command: string];
+  edit: [];
+  delete: [];
 }>();
 const handleCommand = (command: string) => {
   emit("command", command);
+};
+
+// 处理编辑事件
+const handleEdit = () => {
+  emit("edit");
+};
+
+// 处理删除事件
+const handleDelete = () => {
+  emit("delete");
 };
 </script>
 <style scoped lang="scss">
@@ -223,5 +245,21 @@ const handleCommand = (command: string) => {
       width: 100%;
     }
   }
+}
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+.actionIcon {
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #666;
+  transition: color 0.2s;
+}
+.actionIcon:hover {
+  color: #2eb867;
+}
+.deleteIcon:hover {
+  color: #f56c6c;
 }
 </style>

@@ -98,6 +98,7 @@
         :fileName="item.positionName"
         :fileTime="item.positionMess"
         :fileSize="item.count + $t('roles.members')"
+        @edit="editPosition(item)"
         @delete="deletePosition(item)"
       />
     </div>
@@ -139,7 +140,7 @@
   </el-dialog>
   <el-dialog
     v-model="positionsDialogVisible"
-    :title="$t('roles.AddNewPosition')"
+    :title="editMode && currentEditPositionId ? $t('roles.EditPosition') : $t('roles.AddNewPosition')"
     width="600"
     align-center
   >
@@ -184,7 +185,7 @@ import { Edit, Delete } from "@element-plus/icons-vue";
 import FileCard from "@/components/fileCard.vue";
 import { useRoleStore, type RoleItem } from "@/stores/roleStore";
 import { useOtherStore } from "@/stores/otherStore";
-import { getProjectPositions, createProjectPosition, deleteProjectPosition } from "@/api";
+import { getProjectPositions, createProjectPosition, updateProjectPosition, deleteProjectPosition } from "@/api";
 import i18n from '@/language';
 import { debounce } from 'lodash-es';
 const t = i18n.global.t
@@ -195,6 +196,7 @@ const rolesDialogVisible = ref(false);
 const positionsDialogVisible = ref(false);
 const editMode = ref(false);
 const currentEditRoleId = ref<number | null>(null);
+const currentEditPositionId = ref<number | null>(null);
 
 // 存储每个角色正在更新的权限索引，用于显示加载状态
 const updatingPermissions = ref<Map<number, {index: number, type: string}>>(new Map());
@@ -269,19 +271,37 @@ const addOne = (kind: string, role?: RoleItem) => {
       // 编辑模式
       editMode.value = true;
       currentEditRoleId.value = role.id || null;
+      currentEditPositionId.value = null;
       newRoleData.roleName = role.roleName;
       newRoleData.roleDescription = role.roleMess;
     } else {
       // 新增模式
       editMode.value = false;
       currentEditRoleId.value = null;
+      currentEditPositionId.value = null;
       newRoleData.roleName = "";
       newRoleData.roleDescription = "";
     }
     rolesDialogVisible.value = true;
   } else {
+    // 新增职位
+    editMode.value = false;
+    currentEditRoleId.value = null;
+    currentEditPositionId.value = null;
     newPositionData.positionName = "";
     newPositionData.positionDescription = "";
+    positionsDialogVisible.value = true;
+  }
+};
+
+// 编辑职位
+const editPosition = (position: any) => {
+  if (position.id) {
+    editMode.value = true;
+    currentEditPositionId.value = position.id;
+    currentEditRoleId.value = null;
+    newPositionData.positionName = position.positionName;
+    newPositionData.positionDescription = position.positionMess;
     positionsDialogVisible.value = true;
   }
 };
@@ -409,29 +429,53 @@ const loadPositions = async () => {
   }
 };
 
-// 新增项目职位
+// 新增或编辑项目职位
 const addPosition = async () => {
   try {
     const projectId = otherStore.currentProjectId;
-    const addRes = await createProjectPosition({
-      project_id: projectId,
-      positionname: newPositionData.positionName,
-      description: newPositionData.positionDescription
-    });
-    if (addRes.success && addRes.data) {
-      roleStore.allpositions.unshift({
-        id: addRes.data.id,
-        positionName: newPositionData.positionName,
-        positionMess: newPositionData.positionDescription,
-        count: 0,
+
+    if (editMode.value && currentEditPositionId.value) {
+      // 编辑职位
+      const updateRes = await updateProjectPosition(currentEditPositionId.value, {
+        positionname: newPositionData.positionName,
+        description: newPositionData.positionDescription
       });
-      ElMessage.success('职位创建成功');
+      if (updateRes.success) {
+        const index = roleStore.allpositions.findIndex(p => p.id === currentEditPositionId.value);
+        if (index !== -1) {
+          roleStore.allpositions[index] = {
+            id: currentEditPositionId.value,
+            positionName: newPositionData.positionName,
+            positionMess: newPositionData.positionDescription,
+            count: roleStore.allpositions[index].count
+          };
+        }
+        ElMessage.success('职位更新成功');
+      } else {
+        ElMessage.error('职位更新失败');
+      }
     } else {
-      ElMessage.error('职位创建失败');
+      // 新增职位
+      const addRes = await createProjectPosition({
+        project_id: projectId,
+        positionname: newPositionData.positionName,
+        description: newPositionData.positionDescription
+      });
+      if (addRes.success && addRes.data) {
+        roleStore.allpositions.unshift({
+          id: addRes.data.id,
+          positionName: newPositionData.positionName,
+          positionMess: newPositionData.positionDescription,
+          count: 0,
+        });
+        ElMessage.success('职位创建成功');
+      } else {
+        ElMessage.error('职位创建失败');
+      }
     }
   } catch (error) {
-    console.error("新增职位失败:", error);
-    ElMessage.error('职位创建失败');
+    console.error("职位操作失败:", error);
+    ElMessage.error(editMode.value ? '职位更新失败' : '职位创建失败');
   }
 };
 
