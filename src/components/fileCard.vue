@@ -112,38 +112,46 @@ const computedFileName = computed(() => props.fileName || "");
 const computedFileTime = computed(() => props.fileTime || "");
 const computedFileMaker = computed(() => props.fileMaker || "");
 const computedFileSize = computed(() => props.fileSize || "");
+// 文件类型图标映射
+const FILE_TYPE_ICONS: Record<string, string> = {
+  ".docx": DocIcon,
+  ".ppt": PptIcon,
+  ".pdf": PdfIcon,
+  ".png": ImgIcon,
+  ".jpg": ImgIcon,
+  ".jpeg": ImgIcon,
+  ".xlsx": XlsxIcon,
+};
+
+// 职位类型图标映射
+const JOB_TYPE_ICONS: Record<string, string> = {
+  "Front-end": FrontIcon,
+  "Backend": BackendIcon,
+  "Tester": TestIcon,
+  "Designer": DesignIcon,
+};
+
 const computedFileIcon = computed(() => {
-  if (props.ifFolder) {
-    if (props.fileName.endsWith(".docx")) {
-      return DocIcon;
-    } else if (props.fileName.endsWith(".ppt")) {
-      return PptIcon;
-    } else if (props.fileName.endsWith(".pdf")) {
-      return PdfIcon;
-    } else if (
-      props.fileName.endsWith(".png") ||
-      props.fileName.endsWith(".jpg") ||
-      props.fileName.endsWith(".jpeg")
-    ) {
-      return ImgIcon;
-    } else if (props.fileName.endsWith(".xlsx")) {
-      return XlsxIcon;
-    } else {
-      return floderIcon;
-    }
-  } else {
-    if (props.fileName.includes("Front-end")) {
-      return FrontIcon;
-    } else if (props.fileName.includes("Backend")) {
-      return BackendIcon;
-    } else if (props.fileName.includes("Tester")) {
-      return TestIcon;
-    } else if (props.fileName.includes("Designer")) {
-      return DesignIcon;
-    } else {
-      return OtherJobIcon;
+  const fileName = props.fileName;
+
+  // 边界检查：文件名为空时返回默认图标
+  if (!fileName) {
+    return props.ifFolder ? floderIcon : OtherJobIcon;
+  }
+
+  // ifFolder 为 false 时显示文件图标
+  if (!props.ifFolder) {
+    const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+    return FILE_TYPE_ICONS[ext] || floderIcon;
+  }
+
+  // ifFolder 为 true 时显示职位图标
+  for (const [keyword, icon] of Object.entries(JOB_TYPE_ICONS)) {
+    if (fileName.includes(keyword)) {
+      return icon;
     }
   }
+  return OtherJobIcon;
 });
 // 定义组件事件
 const emit = defineEmits<{
