@@ -72,25 +72,14 @@
         :key="item.id"
       >
         <CardTamp
-          v-if="item.children"
-          :ifFolder="true"
+          :ifFolder="!!item.children"
           :bodyContent="item.fileName"
-          :footerContent="String(item.children.length) + $t('projects.files')"
+          :footerContent="getFooterContent(item)"
           :topRightImg="'菜单.png'"
           :ifBin="item.ifInBin"
-          @click="enterFolder(item)"
+          @click="item.children ? enterFolder(item) : null"
           @command="(command) => handleCommand(item, command)"
         ></CardTamp>
-        <FileCard
-          v-else
-          :ifFolder="false"
-          :fileName="item.fileName"
-          :fileTime="item.fileTime"
-          :fileMaker="item.fileMaker"
-          :fileSize="item.fileSize"
-          @edit="() => handleFileAction(item, 'edit')"
-          @delete="() => handleFileAction(item, 'delete')"
-        ></FileCard>
       </div>
       <div
         class="createFolderBox"
@@ -227,30 +216,24 @@ import CardTamp from "@/components/cardTamp.vue";
 import { useI18n } from "vue-i18n";
 import FileCard from "@/components/fileCard.vue";
 import MentionsCard from "@/components/mentionsCard.vue";
-import floderIcon from "@/assets/icons/文件夹.png";
 import { UploadFilled } from "@element-plus/icons-vue";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { useFileStore } from "@/stores/fileStore";
 import { useOtherStore } from "@/stores/otherStore";
-import type { FileItem } from "@/stores/fileStore";
+import type {
+  TreeInstance,
+} from "element-plus";
+import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Search } from "@element-plus/icons-vue";
 
 const userStore = useUserStore();
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const fileStore = useFileStore();
 const otherStore = useOtherStore();
-import type {
-  RenderContentContext,
-  RenderContentFunction,
-  TreeInstance,
-} from "element-plus";
-import { ref, reactive, onMounted, computed, watch } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { Search } from "@element-plus/icons-vue";
-type Node = RenderContentContext["node"];
-type Data = RenderContentContext["data"];
-let id = 1000;
+
 const renameDialogVisible = ref(false);
 const notificationDialogVisible = ref(false);
 const uploadDialogVisible = ref(false);
@@ -272,9 +255,14 @@ const mentionsDate = reactive({
 
 // 使用 fileStore 的数据
 const showFloders = computed(() => fileStore.showFloders)
-const saveFloders = computed(() => fileStore.saveFloders)
-const binFloders = computed(() => fileStore.binFloders)
 const folderPath = computed(() => fileStore.folderPath)
+
+// 获取当前文件夹 ID（用于上传和创建文件夹）
+const currentFolderId = computed(() => {
+  return folderPath.value.length > 0
+    ? folderPath.value[folderPath.value.length - 1]
+    : null
+})
 
 // 初始化
 onMounted(() => {
@@ -290,132 +278,8 @@ watch(() => otherStore.currentProjectId, (newProjectId) => {
     fileStore.loadProjectFiles(newProjectId)
   }
 })
-const AllFiles: filesTree[] = [
-  {
-    fileName: "Product Mockups",
-    ifInBin: false,
-    id: "123",
-    children: [
-      {
-        fileName: "Product Design",
-        ifInBin: false,
-        id: "124",
-        children: [
-          {
-            fileName: "项目章程1.pdf",
-            fileTime: "2026-01-21 17:39",
-            fileMaker: "Peter",
-            fileSize: "2.5MB",
-            ifInBin: false,
-            id: "125",
-          },
-          {
-            fileName: "UI设计稿1.png",
-            fileTime: "2026-01-18 14:19",
-            fileMaker: "Bob",
-            fileSize: "7.5MB",
-            ifInBin: true,
-            id: "126",
-          },
-        ],
-      },
-      {
-        fileName: "项目计划.docx",
-        fileTime: "2026-01-18 14:19",
-        fileMaker: "Kevin",
-        fileSize: "2.5MB",
-        ifInBin: false,
-        id: "127",
-      },
-      {
-        fileName: "路演.ppt",
-        fileTime: "2026-01-19 15:39",
-        fileMaker: "Kevin",
-        fileSize: "21.5MB",
-        ifInBin: false,
-        id: "128",
-      },
-      {
-        fileName: "财务报表.xlsx",
-        fileTime: "2026-01-20 16:39",
-        fileMaker: "Alice",
-        fileSize: "1.5MB",
-        ifInBin: false,
-        id: "129",
-      },
-    ],
-  },
-  {
-    fileName: "Product Design",
-    ifInBin: false,
-    id: "113",
-    children: [
-      {
-        fileName: "项目章程2.pdf",
-        fileTime: "2026-01-21 17:39",
-        fileMaker: "Peter",
-        fileSize: "2.5MB",
-        ifInBin: false,
-        id: "133",
-      },
-      {
-        fileName: "UI设计稿2.png",
-        fileTime: "2026-01-18 14:19",
-        fileMaker: "Bob",
-        fileSize: "7.5MB",
-        ifInBin: false,
-        id: "143",
-      },
-    ],
-  },
-  {
-    fileName: "项目客户",
-    ifInBin: true,
-    id: "153",
-    children: [
-      {
-        fileName: "项目章程3.pdf",
-        fileTime: "2026-01-21 17:39",
-        fileMaker: "Peter",
-        fileSize: "2.5MB",
-        ifInBin: true,
-        id: "163",
-      },
-      {
-        fileName: "UI设计稿3.png",
-        fileTime: "2026-01-18 14:19",
-        fileMaker: "Bob",
-        fileSize: "7.5MB",
-        ifInBin: true,
-        id: "173",
-      },
-    ],
-  },
-  {
-    fileName: "UI设计稿4.png",
-    fileTime: "2026-01-18 14:19",
-    fileMaker: "Bob",
-    fileSize: "7.5MB",
-    ifInBin: true,
-    id: "183",
-  },
-  {
-    fileName: "项目章程4.pdf",
-    fileTime: "2026-01-21 17:39",
-    fileMaker: "Peter",
-    fileSize: "2.5MB",
-    ifInBin: false,
-    id: "193",
-  },
-  {
-    fileName: "项目计划2.docx",
-    fileTime: "2026-01-18 14:19",
-    fileMaker: "Kevin",
-    fileSize: "2.5MB",
-    ifInBin: false,
-    id: "023",
-  },
-];
+
+// 文件树接口定义
 interface filesTree {
   fileName: string;
   fileTime?: string;
@@ -425,13 +289,6 @@ interface filesTree {
   ifInBin: boolean;
   id: string;
 }
-const defaultProps = {
-  children: "children",
-  label: "fileName",
-};
-const handleNodeClick = (data: any) => {
-  console.log(data);
-};
 
 // 进入文件夹
 const enterFolder = (item: any) => {
@@ -462,7 +319,7 @@ const showBinFolders = () => {
   ifShowCreateBox.value = !ifBin.value
   fileStore.toggleBin(ifBin.value)
   // 清空路径
-  fileStore.folderPath.splice(0, fileStore.folderPath.length)
+  fileStore.folderPath = []
 }
 
 // 打开上传对话框
@@ -497,11 +354,6 @@ const submitUpload = async () => {
     return
   }
 
-  // 获取当前文件夹ID
-  const currentFolderId = folderPath.value.length > 0
-    ? folderPath.value[folderPath.value.length - 1]
-    : null
-
   try {
     for (const file of fileList.value) {
       // el-upload 的 fileList 中文件对象结构：{ name, size, percentage, status, uid, raw: File }
@@ -512,7 +364,7 @@ const submitUpload = async () => {
         continue
       }
 
-      const result = await fileStore.uploadFile(projectId, fileToUpload, currentFolderId)
+      const result = await fileStore.uploadFile(projectId, fileToUpload, currentFolderId.value)
       if (!result.success) {
         ElMessage.error(`${file.name} 上传失败`)
       }
@@ -530,8 +382,9 @@ const handleCommand = async (file: any, command: string) => {
 
   if (command === "rename") {
     newName.value = file.fileName;
-    const parts = newName.value.split(".");
-    houzhui.value = parts.length > 1 ? parts[1] || "" : "";
+    // 使用 lastIndexOf 正确获取文件扩展名（处理文件名中包含多个点的情况）
+    const lastDotIndex = newName.value.lastIndexOf(".");
+    houzhui.value = lastDotIndex > -1 ? newName.value.substring(lastDotIndex + 1) : "";
     currentFileId.value = file.id;
     renameDialogVisible.value = true;
   } else if (command === "delete") {
@@ -545,7 +398,7 @@ const handleCommand = async (file: any, command: string) => {
   } else if (command === "notify") {
     mentionsDate.fileName = file.fileName;
     notificationDialogVisible.value = true;
-  } else if (command === "drop") {
+  } else if (command === "deletePermanently") {
     // 彻底删除
     try {
       await ElMessageBox.confirm('确定要彻底删除该文件吗？此操作不可恢复', '提示', {
@@ -569,8 +422,9 @@ const handleCommand = async (file: any, command: string) => {
 const handleFileAction = async (file: any, action: string) => {
   if (action === 'edit') {
     newName.value = file.fileName
-    const parts = newName.value.split(".")
-    houzhui.value = parts.length > 1 ? parts[1] || "" : ""
+    // 使用 lastIndexOf 正确获取文件扩展名
+    const lastDotIndex = newName.value.lastIndexOf(".")
+    houzhui.value = lastDotIndex > -1 ? newName.value.substring(lastDotIndex + 1) : ""
     currentFileId.value = file.id
     renameDialogVisible.value = true
   } else if (action === 'delete') {
@@ -644,16 +498,11 @@ const submitName = async () => {
 
 // 新建文件夹
 const createFolder = async () => {
-  // 获取当前文件夹ID
-  const currentFolderId = folderPath.value.length > 0
-    ? folderPath.value[folderPath.value.length - 1]
-    : null
-
   // 生成唯一的文件夹名称
   let folderName = "新建文件夹";
   let counter = 1;
-  const targetFiles = currentFolderId
-    ? fileStore.findFileById(fileStore.allFiles, currentFolderId)?.children
+  const targetFiles = currentFolderId.value
+    ? fileStore.findFileById(fileStore.allFiles, currentFolderId.value)?.children
     : fileStore.allFiles
 
   while (targetFiles?.some((item) => item.fileName === folderName && !!item.children)) {
@@ -667,7 +516,7 @@ const createFolder = async () => {
     return
   }
 
-  const result = await fileStore.createFolder(projectId, folderName, currentFolderId)
+  const result = await fileStore.createFolder(projectId, folderName, currentFolderId.value)
   if (result.success) {
     ElMessage.success('文件夹创建成功')
   } else {
@@ -677,7 +526,8 @@ const createFolder = async () => {
 const sendNotification = () => {
   console.log(mentionsDate);
   notificationStore.notifications.unshift({
-    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    // 使用 slice() 替代已弃用的 substr()
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
     name: mentionsDate.fileName + "提醒",
     time: formatDate(new Date()),
     status: "未读",
@@ -692,7 +542,7 @@ const sendNotification = () => {
 };
 const clearmentionsDate = () => {
   mentionsDate.note = "";
-  mentionsDate.members.splice(0, mentionsDate.members.length);
+  mentionsDate.members = [];
   mentionsDate.fileName = "";
   console.log(mentionsDate);
 };
@@ -706,6 +556,33 @@ const formatDate = (date: Date): string => {
   const minutes = String(date.getMinutes()).padStart(2, "0");
   const seconds = String(date.getSeconds()).padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+// 格式化后端返回的时间字符串为 yyyy-MM-dd HH:mm
+const formatFileTime = (timeStr?: string): string => {
+  if (!timeStr) return "";
+  try {
+    const date = new Date(timeStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}: ${hours}:${minutes}`;
+  } catch (error) {
+    return timeStr;
+  }
+};
+
+// 获取底部显示内容
+const getFooterContent = (item: any): string => {
+  if (item.children) {
+    // 文件夹显示子文件数量
+    return String(item.children.length) + t('projects.files');
+  } else {
+    // 单个文件显示上传时间
+    return formatFileTime(item.fileTime);
+  }
 };
 </script>
 <style scoped lang="scss">

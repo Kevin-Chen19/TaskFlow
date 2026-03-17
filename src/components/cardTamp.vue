@@ -2,23 +2,23 @@
   <div class="card-container" @click="handleClick">
     <!-- 顶部区域 -->
     <slot name="header">
-      <div class="cardTop">
-        <div class="cardTop_left" :style="{ backgroundColor: topLeftBgColor }">
+      <div class="card-top">
+        <div class="card-top_left" :style="{ backgroundColor: topLeftBgColor }">
           <img
             :src="computedTopLeftImg"
             alt="左侧图标"
           />
         </div>
-        <div class="cardTop_right" v-if="props.topRightImg">
+        <div class="card-top_right">
           <el-dropdown trigger="click" @command="handleCommand">
-            <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
+            <img :src="computedTopRightImg" alt="菜单图标" @click.stop>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="rename">{{ $t('projects.rename') }}</el-dropdown-item>
-                <el-dropdown-item v-if="!props.ifBin" command="delete">{{ $t('fileCard.moveToBin') }}</el-dropdown-item>
-                <el-dropdown-item v-if="props.ifBin" command="drop">{{ $t('fileCard.delete') }}</el-dropdown-item>
-                <el-dropdown-item command="download">{{ $t('fileCard.download') }}</el-dropdown-item>
-                <el-dropdown-item command="notify">{{ $t('fileCard.remindMembers') }}</el-dropdown-item>
+                <el-dropdown-item command="rename">{{ t('projects.rename') }}</el-dropdown-item>
+                <el-dropdown-item v-if="!props.ifBin" command="delete">{{ t('fileCard.moveToBin') }}</el-dropdown-item>
+                <el-dropdown-item v-if="props.ifBin" command="deletePermanently">{{ t('fileCard.delete') }}</el-dropdown-item>
+                <el-dropdown-item command="download">{{ t('fileCard.download') }}</el-dropdown-item>
+                <el-dropdown-item command="notify">{{ t('fileCard.remindMembers') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -28,14 +28,14 @@
 
     <!-- 中间内容区域 -->
     <slot name="body">
-      <div :class="props.ifFolder ? 'floderStyle' : 'cardBody'">
+      <div class="floderStyle">
         {{ bodyContents }}
       </div>
     </slot>
 
     <!-- 底部区域 -->
     <slot name="footer">
-      <div :class="props.ifFolder ? 'floderFooter' : 'cardFooter'">
+      <div class="floderFooter">
         {{ footerContents }}
       </div>
     </slot>
@@ -43,6 +43,7 @@
 </template>
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import defaultTimeIcon from "@/assets/icons/时间.png";
 import defaultMenuIcon from "@/assets/icons/菜单.png";
 import floderIcon from "@/assets/icons/文件夹.png";
@@ -51,6 +52,8 @@ import PdfIcon from '@/assets/icons/pdf.png';
 import PptIcon from '@/assets/icons/ppt.png';
 import ImgIcon from '@/assets/icons/img.png';
 import XlsxIcon from '@/assets/icons/xlsx.png';
+
+const { t } = useI18n();
 
 // 定义组件属性
 const props = defineProps({
@@ -109,10 +112,17 @@ const topLeftBgColor = computed(() => props.topLeftBgc || "#faf5ff");
 const bodyContents = computed(()=> props.bodyContent || "Total Hours")
 const footerContents = computed(()=> props.footerContent || "120.5h")
 const computedTopLeftImg = computed(() => {
-  if(props.topLeftImg ){
+  // 如果传入了自定义图标，直接使用
+  if (props.topLeftImg) {
     return props.topLeftImg;
   }
+  // 否则根据文件名判断图标
   const content = props.bodyContent;
+  // 如果是文件夹（ifFolder 为 true）或者没有扩展名，使用文件夹图标
+  if (props.ifFolder || !content) {
+    return floderIcon;
+  }
+  // 文件类型图标映射
   if (content.endsWith(".docx")) {
     return DocIcon;
   } else if (content.endsWith(".ppt")) {
@@ -123,7 +133,8 @@ const computedTopLeftImg = computed(() => {
     return ImgIcon;
   } else if (content.endsWith(".xlsx")) {
     return XlsxIcon;
-  }else{
+  } else {
+    // 默认返回文件夹图标（用于未知文件类型）
     return floderIcon;
   }
 });
@@ -134,12 +145,12 @@ const handleCommand = (command: string) => {
 </script>
 
 <style scoped lang="scss">
-.cardTop {
+.card-top {
   width: 100%;
   display: flex;
   justify-content: space-between;
 }
-.cardTop_left {
+.card-top_left {
   width: 2.5rem;
   height: 2.5rem;
   display: flex;
@@ -150,7 +161,7 @@ const handleCommand = (command: string) => {
     width: 70%;
   }
 }
-.cardTop_right {
+.card-top_right {
   width: 1.5rem;
   height: 1.5rem;
   img {
