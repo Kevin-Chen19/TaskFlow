@@ -95,6 +95,7 @@
         v-for="item in roleStore.allpositions"
         :key="item.id || item.positionName"
         :ifFolder="false"
+        :ifJob="true"
         :fileName="item.positionName"
         :fileTime="item.positionMess"
         :fileSize="item.count + $t('roles.members')"

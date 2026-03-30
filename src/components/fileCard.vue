@@ -1,5 +1,5 @@
 <template>
-  <div class="fileBigBox" :style="{ height: computedHeight }">
+  <div class="fileBigBox">
     <div class="kindPic" :style="{ backgroundColor: topLeftBgColor }">
       <img :src="computedFileIcon" alt="左侧图标" />
     </div>
@@ -10,10 +10,9 @@
       </div>
       <div
         class="rightBox"
-        :style="!props.ifFolder ? { justifyContent: 'end' } : {}"
       >
-        <div v-if="props.ifFolder" class="rightPic">
-          <el-dropdown trigger="click" @command="handleCommand">
+        <div class="rightPic">
+          <el-dropdown v-if="!props.ifJob" trigger="click" @command="handleCommand">
             <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop />
             <template #dropdown>
               <el-dropdown-menu>
@@ -36,20 +35,10 @@
             </template>
           </el-dropdown>
         </div>
-        <!-- 非文件夹类型的编辑和删除按钮 -->
-        <div v-if="!props.ifFolder" class="actionButtons">
-          <el-icon @click="handleEdit" class="actionIcon">
-            <Edit />
-          </el-icon>
-          <el-icon @click="handleDelete" class="actionIcon deleteIcon">
-            <Delete />
-          </el-icon>
-        </div>
         <div class="fileMessRight">
           <div class="fileSmallSty">{{ computedFileMaker }}</div>
           <div
             class="fileSmallSty"
-            :class="props.ifFolder ? '' : 'positionStyle'"
           >
             {{ computedFileSize }}
           </div>
@@ -72,13 +61,16 @@ import BackendIcon from "@/assets/icons/数据库.png";
 import TestIcon from "@/assets/icons/Debug.png";
 import DesignIcon from "@/assets/icons/调色板.png";
 import OtherJobIcon from "@/assets/icons/职位.png";
-import { Edit, Delete } from '@element-plus/icons-vue';
 // 定义组件属性
 const props = defineProps({
   //定义组件类型
   ifFolder: {
     type: Boolean,
     default: true,
+  },
+  ifJob: {
+    type: Boolean,
+    default: false,
   },
   ifBin: {
     type: Boolean,
@@ -106,7 +98,6 @@ const props = defineProps({
     default: "",
   },
 });
-const computedHeight = computed(() => (props.ifFolder ? "4rem" : "5rem"));
 const topLeftBgColor = computed(() => props.topLeftBgc || "#faf5ff");
 const computedFileName = computed(() => props.fileName || "");
 const computedFileTime = computed(() => props.fileTime || "");
@@ -133,24 +124,23 @@ const JOB_TYPE_ICONS: Record<string, string> = {
 
 const computedFileIcon = computed(() => {
   const fileName = props.fileName;
-
-  // 边界检查：文件名为空时返回默认图标
-  if (!fileName) {
-    return props.ifFolder ? floderIcon : OtherJobIcon;
+  if(props.ifFolder){
+    return floderIcon;
   }
-
   // ifFolder 为 false 时显示文件图标
-  if (!props.ifFolder) {
+  if (!props.ifFolder && !props.ifJob) {
     const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
     return FILE_TYPE_ICONS[ext] || floderIcon;
   }
 
   // ifFolder 为 true 时显示职位图标
+  if(props.ifJob){
   for (const [keyword, icon] of Object.entries(JOB_TYPE_ICONS)) {
     if (fileName.includes(keyword)) {
       return icon;
     }
   }
+}
   return OtherJobIcon;
 });
 // 定义组件事件
@@ -161,16 +151,6 @@ const emit = defineEmits<{
 }>();
 const handleCommand = (command: string) => {
   emit("command", command);
-};
-
-// 处理编辑事件
-const handleEdit = () => {
-  emit("edit");
-};
-
-// 处理删除事件
-const handleDelete = () => {
-  emit("delete");
 };
 </script>
 <style scoped lang="scss">

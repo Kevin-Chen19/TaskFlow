@@ -105,13 +105,11 @@
               :ifBin="data.ifInBin"
               :fileName="data.fileName"
               :fileTime="
-                data.children ? data.children.length + $t('projects.files') : data.fileTime
+                data.children ? data.children.length + $t('projects.files') : formatFileTime(data.fileTime)
               "
               :fileMaker="data.fileMaker"
               :fileSize="data.fileSize"
-              @command="!!data.children ? (command) => handleCommand(data, command) : undefined"
-              @edit="!data.children ? () => handleFileAction(data, 'edit') : undefined"
-              @delete="!data.children ? () => handleFileAction(data, 'delete') : undefined"
+              @command="(command) => handleCommand(data, command)"
             >
             </FileCard>
           </div>
@@ -568,7 +566,7 @@ const formatFileTime = (timeStr?: string): string => {
     const day = String(date.getDate()).padStart(2, "0");
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}: ${hours}:${minutes}`;
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   } catch (error) {
     return timeStr;
   }

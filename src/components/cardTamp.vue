@@ -11,7 +11,7 @@
         </div>
         <div class="card-top_right">
           <el-dropdown trigger="click" @command="handleCommand">
-            <img :src="computedTopRightImg" alt="菜单图标" @click.stop>
+             <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="rename">{{ t('projects.rename') }}</el-dropdown-item>
@@ -44,7 +44,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import defaultTimeIcon from "@/assets/icons/时间.png";
 import defaultMenuIcon from "@/assets/icons/菜单.png";
 import floderIcon from "@/assets/icons/文件夹.png";
 import DocIcon from '@/assets/icons/Doc.png';
