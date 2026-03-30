@@ -200,9 +200,11 @@ export default {
     RoleName: 'Role Name',
     RoleDescription: 'Role Description',
     AddRole: 'Add Role',
+    EditRole: 'Edit Role',
     PositionName: 'Position Name',
     PositionDescription: 'Position Description',
     AddPosition: 'Add Position',
+    EditPosition: 'Edit Position',
   },
   roleStore:{
     CreateTasks: 'Create Tasks',

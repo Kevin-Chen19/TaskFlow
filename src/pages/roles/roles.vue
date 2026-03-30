@@ -106,7 +106,7 @@
   </div>
   <el-dialog
     v-model="rolesDialogVisible"
-    :title="$t('roles.AddNewRole')"
+    :title="editMode && currentEditRoleId ? $t('roles.EditRole') : $t('roles.AddNewRole')"
     width="600"
     align-center
   >
@@ -134,7 +134,7 @@
           {{ $t("cancel") }}
         </el-button>
         <el-button type="primary" @click="addSubmit('Role')" class="confirmBtn">
-          {{ $t("roles.AddRole") }}
+          {{ editMode && currentEditRoleId ? $t("save") : $t("roles.AddRole") }}
         </el-button>
       </div>
     </template>
@@ -173,7 +173,7 @@
           @click="addSubmit('Position')"
           class="confirmBtn"
         >
-          {{ $t("roles.AddPosition") }}
+          {{ editMode && currentEditPositionId ? $t("save") : $t("roles.AddPosition") }}
         </el-button>
       </div>
     </template>

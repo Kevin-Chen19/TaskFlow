@@ -8,11 +8,9 @@
         <div class="fileNameSty">{{ computedFileName }}</div>
         <div class="fileSmallSty">{{ computedFileTime }}</div>
       </div>
-      <div
-        class="rightBox"
-      >
-        <div class="rightPic">
-          <el-dropdown v-if="!props.ifJob" trigger="click" @command="handleCommand">
+      <div class="rightBox">
+        <div class="rightPic" v-if="!props.ifJob">
+          <el-dropdown trigger="click" @command="handleCommand">
             <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop />
             <template #dropdown>
               <el-dropdown-menu>
@@ -35,11 +33,20 @@
             </template>
           </el-dropdown>
         </div>
+        <div
+          v-if="props.ifJob"
+          style="display: flex; gap: 0.5rem;"
+        >
+          <el-icon class="actionIcon" @click.stop="handleEdit">
+            <Edit />
+          </el-icon>
+          <el-icon class="actionIcon deleteIcon" @click.stop="handleDelete">
+            <Delete />
+          </el-icon>
+        </div>
         <div class="fileMessRight">
           <div class="fileSmallSty">{{ computedFileMaker }}</div>
-          <div
-            class="fileSmallSty"
-          >
+          <div class="fileSmallSty">
             {{ computedFileSize }}
           </div>
         </div>
@@ -55,6 +62,7 @@ import PdfIcon from "@/assets/icons/pdf.png";
 import PptIcon from "@/assets/icons/ppt.png";
 import ImgIcon from "@/assets/icons/img.png";
 import XlsxIcon from "@/assets/icons/xlsx.png";
+import { Edit, Delete } from "@element-plus/icons-vue";
 //职位相关图标
 import FrontIcon from "@/assets/icons/前端.png";
 import BackendIcon from "@/assets/icons/数据库.png";
@@ -117,14 +125,14 @@ const FILE_TYPE_ICONS: Record<string, string> = {
 // 职位类型图标映射
 const JOB_TYPE_ICONS: Record<string, string> = {
   "Front-end": FrontIcon,
-  "Backend": BackendIcon,
-  "Tester": TestIcon,
-  "Designer": DesignIcon,
+  Backend: BackendIcon,
+  Tester: TestIcon,
+  Designer: DesignIcon,
 };
 
 const computedFileIcon = computed(() => {
   const fileName = props.fileName;
-  if(props.ifFolder){
+  if (props.ifFolder) {
     return floderIcon;
   }
   // ifFolder 为 false 时显示文件图标
@@ -134,13 +142,13 @@ const computedFileIcon = computed(() => {
   }
 
   // ifFolder 为 true 时显示职位图标
-  if(props.ifJob){
-  for (const [keyword, icon] of Object.entries(JOB_TYPE_ICONS)) {
-    if (fileName.includes(keyword)) {
-      return icon;
+  if (props.ifJob) {
+    for (const [keyword, icon] of Object.entries(JOB_TYPE_ICONS)) {
+      if (fileName.includes(keyword)) {
+        return icon;
+      }
     }
   }
-}
   return OtherJobIcon;
 });
 // 定义组件事件
@@ -151,6 +159,16 @@ const emit = defineEmits<{
 }>();
 const handleCommand = (command: string) => {
   emit("command", command);
+};
+
+// 处理编辑事件
+const handleEdit = () => {
+  emit("edit");
+};
+
+// 处理删除事件
+const handleDelete = () => {
+  emit("delete");
 };
 </script>
 <style scoped lang="scss">
