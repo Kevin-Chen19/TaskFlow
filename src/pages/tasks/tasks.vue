@@ -599,8 +599,10 @@ const handleSubmit = async() => {
     //发送网络请求添加新任务
     const res = await createTask(componentData);
     if(res.success){
-      allTasks.push(componentData);
-      tasks.push(componentData);
+      // 重新获取所有任务数据，确保数据一致性
+      await getAllTasks();
+      // 更新显示的任务列表
+      resetTableData();
       ElMessage({
         message: t('addSuccessfully'),
         type: "success",
