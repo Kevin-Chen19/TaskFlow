@@ -173,10 +173,12 @@
 <script setup lang="ts">
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore, type UserItem } from "@/stores/userStore";
+import { useOtherStore } from "@/stores/otherStore";
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
+const otherStore = useOtherStore();
 const searchValue = ref("");
 const showDrawer = ref(false);
 const inviteDialogVisible = ref(false);
@@ -289,9 +291,28 @@ const toFind = () => {
 const submitInvite = () => {
   inviteDialogVisible.value = false;
 }
+
+// 加载项目成员数据
+const loadProjectMembers = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    if (!projectId) {
+      console.warn('当前没有选择项目');
+      return;
+    }
+
+    await userStore.getProjectMember(projectId);
+
+    // 将 userStore.usersTable 中的数据复制到 showUsers
+    showUsers.splice(0, showUsers.length, ...userStore.usersTable);
+  } catch (error) {
+    console.error('加载项目成员失败:', error);
+  }
+}
+
 onMounted(() => {
   window.addEventListener("resize", handleResize);
-  showUsers.push(...userStore.usersTable);
+  loadProjectMembers();
 });
 
 onUnmounted(() => {

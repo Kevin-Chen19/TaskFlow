@@ -26,14 +26,62 @@ const router = express.Router();
 router.get('/project/:projectId', async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const result = await query(
+
+    // 首先获取项目信息，获取 owner_id
+    const projectResult = await query(
+      'SELECT owner_id FROM projects WHERE id = $1',
+      [projectId]
+    );
+
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '项目不存在'
+      });
+    }
+
+    const ownerId = projectResult.rows[0].owner_id;
+
+    // 获取项目成员信息
+    const membersResult = await query(
       'SELECT pm.*, u.fullname, u.email, u.avatar_url FROM project_members pm LEFT JOIN users u ON pm.user_id = u.id WHERE pm.project_id = $1 ORDER BY pm.id',
       [projectId]
     );
+
+    // 检查 owner_id 是否已经在成员列表中
+    const hasOwner = membersResult.rows.some((member) => member.user_id === ownerId);
+
+    let allMembers = [...membersResult.rows];
+
+    // 如果 owner 不在成员列表中，添加 owner 到成员列表
+    if (ownerId && !hasOwner) {
+      // 获取 owner 的用户信息
+      const ownerResult = await query(
+        'SELECT id as user_id, fullname, email, avatar_url FROM users WHERE id = $1',
+        [ownerId]
+      );
+
+      if (ownerResult.rows.length > 0) {
+        const ownerMember = {
+          id: 0, // 临时ID
+          project_id: parseInt(projectId),
+          user_id: ownerId,
+          role: 'owner',
+          position: '项目负责人',
+          is_active: true,
+          fullname: ownerResult.rows[0].fullname,
+          email: ownerResult.rows[0].email,
+          avatar_url: ownerResult.rows[0].avatar_url
+        };
+        // 将 owner 添加到列表开头
+        allMembers.unshift(ownerMember);
+      }
+    }
+
     res.json({
       success: true,
-      data: result.rows,
-      count: result.rowCount
+      data: allMembers,
+      count: allMembers.length
     });
   } catch (error) {
     next(error);
