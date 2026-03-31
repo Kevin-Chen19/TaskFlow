@@ -372,4 +372,116 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tasks/summary/{projectId}:
+ *   get:
+ *     summary: 获取项目任务统计信息
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 项目ID
+ *     responses:
+ *       200:
+ *         description: 成功返回项目统计信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         total_tasks:
+ *                           type: integer
+ *                           description: 总任务数
+ *                         completed_tasks:
+ *                           type: integer
+ *                           description: 已完成任务数
+ *                         warning_tasks:
+ *                           type: integer
+ *                           description: 预警任务数（3天内到期且未完成）
+ *                         expired_tasks:
+ *                           type: integer
+ *                           description: 逾期任务数
+ *                         project_hours:
+ *                           type: number
+ *                           description: 项目总工时
+ *       404:
+ *         description: 项目不存在
+ */
+router.get("/summary/:projectId", async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+
+    // 验证项目是否存在
+    const projectResult = await query(
+      "SELECT total_hours FROM projects WHERE id = $1",
+      [projectId]
+    );
+
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "项目不存在"
+      });
+    }
+
+    const projectHours = projectResult.rows[0].total_hours || 0;
+
+    // 获取总任务数和已完成任务数
+    const taskStatsResult = await query(
+      `SELECT
+        COUNT(*) as total_tasks,
+        COUNT(CASE WHEN progress = 100 THEN 1 END) as completed_tasks
+       FROM tasks
+       WHERE project_id = $1`,
+      [projectId]
+    );
+
+    // 获取预警任务数（3天内到期且未完成）
+    const warningResult = await query(
+      `SELECT COUNT(*) as count
+       FROM tasks
+       WHERE project_id = $1
+         AND progress < 100
+         AND due_date IS NOT NULL
+         AND due_date BETWEEN NOW() AND NOW() + INTERVAL '3 days'`,
+      [projectId]
+    );
+
+    // 获取逾期任务数（已过期且未完成）
+    const expiredResult = await query(
+      `SELECT COUNT(*) as count
+       FROM tasks
+       WHERE project_id = $1
+         AND progress < 100
+         AND due_date IS NOT NULL
+         AND due_date < NOW()`,
+      [projectId]
+    );
+
+    const data = {
+      total_tasks: parseInt(taskStatsResult.rows[0].total_tasks) || 0,
+      completed_tasks: parseInt(taskStatsResult.rows[0].completed_tasks) || 0,
+      warning_tasks: parseInt(warningResult.rows[0].count) || 0,
+      expired_tasks: parseInt(expiredResult.rows[0].count) || 0,
+      project_hours: parseFloat(projectHours) || 0
+    };
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

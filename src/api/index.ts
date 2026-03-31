@@ -318,6 +318,16 @@ export const deleteTask = (id: number) => {
   })
 }
 
+/**
+ * 获取项目任务统计信息
+ */
+export const getProjectStats = (projectId: number): Promise<ApiResponse> => {
+  return request({
+    url: `/tasks/summary/${projectId}`,
+    method: 'get'
+  })
+}
+
 // ==================== 通知相关接口 ====================
 
 /**

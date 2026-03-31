@@ -12,7 +12,7 @@
         <CardTamp
           :topLeftImg="TimeIcon"
           :bodyContent="$t('Dashboard.totalHours')"
-          footerContent="100.5h"
+          :footerContent="`${projectStats.total_hours}h`"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -20,7 +20,7 @@
           :topLeftImg="taskIcon"
           topLeftBgc="rgba(167, 234, 167, 0.777)"
           :bodyContent="$t('Dashboard.tasksProgress')"
-          footerContent="23/100"
+          :footerContent="`${projectStats.completed_tasks}/${projectStats.total_tasks}`"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -28,7 +28,7 @@
           :topLeftImg="WarningIcon"
           topLeftBgc="#f5e5d3a5"
           :bodyContent="$t('Dashboard.earlyWarning')"
-          footerContent="3"
+          :footerContent="String(projectStats.warning_tasks)"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -36,7 +36,7 @@
           :topLeftImg="ExpiredIcon"
           topLeftBgc="rgba(227, 158, 158, 0.739)"
           :bodyContent="$t('Dashboard.expiredTasks')"
-          footerContent="0"
+          :footerContent="String(projectStats.expired_tasks)"
         ></CardTamp>
       </div>
     </div>
@@ -223,7 +223,7 @@ import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
 import { ElMessage } from "element-plus";
-import {getNotes, createNote, updateNote, deleteNote} from "@/api";
+import {getNotes, createNote, updateNote, deleteNote, getProjectStats} from "@/api";
 const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
@@ -236,6 +236,15 @@ const { t } = useI18n();
 const milestoneData = reactive({
   content: "",
   dueLine: "",
+});
+
+// 项目统计数据
+const projectStats = reactive({
+  total_hours: 0,
+  total_tasks: 0,
+  completed_tasks: 0,
+  warning_tasks: 0,
+  expired_tasks: 0
 });
 
 interface ActivityType {
@@ -557,10 +566,34 @@ const changeNoteStatus = async(id: number, index:number) => {
     console.log('笔记更新失败', e);
   }
 }
+
+// 加载项目统计数据
+const loadProjectStats = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    if (!projectId) {
+      console.warn('当前没有选择项目');
+      return;
+    }
+
+    const res = await getProjectStats(projectId);
+    if (res.success && res.data) {
+      projectStats.total_hours = res.data.project_hours;
+      projectStats.total_tasks = res.data.total_tasks;
+      projectStats.completed_tasks = res.data.completed_tasks;
+      projectStats.warning_tasks = res.data.warning_tasks;
+      projectStats.expired_tasks = res.data.expired_tasks;
+    }
+  } catch (error) {
+    console.error('加载项目统计数据失败:', error);
+  }
+}
+
 // 组件挂载时初始化显示属性
 onMounted(() => {
   getActivityDisplayProps();
   getNote();
+  loadProjectStats();
 });
 </script>
 <style scoped lang="scss">
