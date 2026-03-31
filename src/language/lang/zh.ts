@@ -18,6 +18,9 @@ export default {
     haveanaccount: "我已经有一个账号？",
     Signin: "登录",
     Forgotpassword: "忘记密码？",
+    FullName: '全名',
+    Email: '邮箱地址',
+    ConfirmPassword: '确认密码',
   },
   Dashboard: {
     dashboard: "项目总览",

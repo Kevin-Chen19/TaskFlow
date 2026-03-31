@@ -7,7 +7,7 @@
             <img :src="userStore.user.pic" alt="用户头像" />
           </div>
         </div>
-        <div class="editBox" @click="dialogFormVisible = true">
+        <div class="editBox" @click="openEditDialog">
           <img src="@/assets/icons/编辑.png" alt="编辑图标" />
         </div>
       </div>
@@ -189,9 +189,9 @@
       <div class="userPicBox">
         <el-upload
           class="upload-demo"
-          action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
           :show-file-list="false"
-          :on-change="handleChange"
+          :on-change="handleAvatarChange"
+          :before-upload="beforeAvatarUpload"
           :auto-upload="false"
         >
           <div class="Avatar">
@@ -203,7 +203,7 @@
       <div class="smallTips">{{ $t('me.JPGorPNG') }}</div>
       <div class="formBox">
         <div class="labelName">{{ $t('me.FullName') }}</div>
-        <el-input v-model="userForm.fullname"></el-input>
+        <el-input v-model="userForm.fullname" :placeholder="$t('pleaseEnterContent')"></el-input>
         <div class="labelName">{{ $t('me.Position') }}</div>
         <el-input v-model="userStore.user.postion" disabled></el-input>
         <div class="labelName">{{ $t('me.SkillTags') }}</div>
@@ -216,9 +216,9 @@
               aria-label="Please click the Enter key after input"
             />
         <div class="labelName">{{ $t('me.EmailAddress') }}</div>
-        <el-input v-model="userForm.email"></el-input>
+        <el-input v-model="userForm.email" :placeholder="$t('pleaseEnterContent')"></el-input>
         <div class="labelName">{{ $t('team.SIGNATURE') }}</div>
-        <el-input v-model="userForm.mooto"></el-input>
+        <el-input v-model="userForm.signature" :placeholder="$t('pleaseEnterContent')"></el-input>
       </div>
     </div>
     <template #footer>
@@ -238,18 +238,29 @@ import Velocity from "@/components/velocity.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useUserStore } from "@/stores/userStore";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { getProjectsByOwner, getProjectsByMember } from "@/api";
+import { getProjectsByOwner, getProjectsByMember, uploadAvatar } from "@/api";
 import { Plus } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
+const userStore = useUserStore();
+
+// 用户编辑表单数据
 const userForm = reactive({
   fullname: "",
-  skills: [],
+  skills: [] as string[],
   email: "",
-  motto: "",
+  signature: "",
 });
-const userStore = useUserStore();
+
+// 初始化表单数据为当前用户信息
+const initUserForm = () => {
+  userForm.fullname = userStore.user.name;
+  userForm.skills = [...userStore.user.tags];
+  userForm.email = userStore.user.email;
+  userForm.signature = userStore.user.signature;
+};
+
 import avatarImg from "@/assets/pics/用户头像.jpg";
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
 
@@ -336,10 +347,33 @@ const changeShow = (type: string, pageNum: number, action: string) => {
     JoinPageNum.value = pageNum;
   }
 };
-const handleChange = async (file: any) => {
-  avator.value = URL.createObjectURL(file.raw)
-  avatorFile.value = file.raw
-  console.log(avatorFile.value , avator.value )
+
+// 头像文件选择变更并上传
+const handleAvatarChange = async (file: any) => {
+  // 预览选中的头像
+  avator.value = URL.createObjectURL(file.raw);
+  avatorFile.value = file.raw;
+
+  // 上传头像到服务器
+  try {
+    ElMessage.info('正在上传头像...');
+
+    const res: any = await uploadAvatar(userStore.user.userId, file.raw);
+
+    if (res.success && res.data) {
+      // 更新头像显示
+      avator.value = res.data.avatar_url;
+      avatorFile.value = file.raw;
+
+      // 更新本地 store 中的头像
+      userStore.user.pic = res.data.avatar_url;
+
+      ElMessage.success('头像上传成功');
+    }
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    ElMessage.error('头像上传失败');
+  }
 }
 const open = (name: string) => {
  ElMessageBox.confirm(t('me.Areyousureto') + ` ${name}?`, t('me.SwitchProject'), {
@@ -347,6 +381,13 @@ const open = (name: string) => {
     cancelButtonText: t('cancel'),
     type: 'warning'
   })
+};
+
+// 打开编辑对话框,初始化表单数据
+const openEditDialog = () => {
+  initUserForm();
+  avator.value = userStore.user.pic;
+  dialogFormVisible.value = true;
 };
 const handleAvatarSuccess: UploadProps['onSuccess'] = (
   response,
@@ -365,14 +406,49 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
   }
   return true
 }
-const saveProfile = async() => {
-  if(avator.value !== ''){
-    userStore.user.pic = avator.value;
+const saveProfile = async () => {
+  try {
+    // 如果有新的头像文件,先上传头像
+    if (avatorFile.value && avator.value !== userStore.user.pic) {
+      ElMessage.info('正在上传头像...');
+
+      const avatarRes: any = await uploadAvatar(userStore.user.userId, avatorFile.value);
+
+      if (avatarRes.success && avatarRes.data) {
+        avator.value = avatarRes.data.avatar_url;
+      }
+    }
+
+    // 准备要提交的数据
+    const updateData: any = {
+      fullname: userForm.fullname,
+      email: userForm.email,
+      skills: userForm.skills,
+      mooto: userForm.signature,
+    };
+
+    // 如果有新头像 URL,添加到更新数据中
+    if (avator.value && avator.value !== userStore.user.pic) {
+      updateData.avatar_url = avator.value;
+    }
+
+    const userId = userStore.user.userId;
+    console.log("保存用户信息:", userId, updateData);
+
+    const res: any = await userStore.updateUserdata(userId, updateData);
+
+    if (res && res.success) {
+      ElMessage.success(t('me.SaveChanges') + ' ' + t('success'));
+      dialogFormVisible.value = false;
+
+      // 清空头像文件引用
+      avatorFile.value = null;
+    }
+  } catch (error) {
+    console.error('保存失败:', error);
+    ElMessage.error(t('me.SaveChanges') + ' ' + t('failed'));
   }
-  const userId = parseInt(userStore.user.userId);
-  await userStore.updateUserdata(userId, userForm);
-  dialogFormVisible.value = false;
-}
+};
 </script>
 <style scoped lang="scss">
 .bigBox1 {

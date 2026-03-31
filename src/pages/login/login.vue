@@ -168,10 +168,12 @@ import type { FormInstance, FormRules } from "element-plus";
 import { useLoginStore } from "../../stores/loginStore";
 import { useRouter } from "vue-router";
 import { ElMessage } from 'element-plus';
+import { useUserStore } from "../../stores/userStore";
 
 const { t } = useI18n();
 const router = useRouter();
 const loginStore = useLoginStore();
+const userStore = useUserStore();
 const ruleFormRef = ref<FormInstance>();
 const loading = ref(false);
 
@@ -308,6 +310,8 @@ const submitForm = async (formEl: FormInstance | undefined) => {
             password: ruleForm.password,
           });
           ElMessage.success('登录成功');
+          // 同步用户数据到 userStore
+          userStore.initUser();
           router.push('/dashboard');
         }
       } catch (error) {

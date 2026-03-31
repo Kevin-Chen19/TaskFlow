@@ -18,6 +18,9 @@ export default {
     haveanaccount: 'I already have an account?',
     Signin: 'Sign in',
     Forgotpassword: 'Forgot password?',
+    FullName: 'FullName',
+    Email: 'Email',
+    ConfirmPassword: 'Confirm Password',
   },
   Dashboard: {
     dashboard: "Project Overview",

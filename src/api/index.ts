@@ -129,6 +129,23 @@ export const updateUser = (id: number, data: {
 }
 
 /**
+ * 上传用户头像
+ */
+export const uploadAvatar = (id: number, file: File): Promise<ApiResponse> => {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  return request({
+    url: `/users/${id}/avatar`,
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
  * 删除用户
  */
 export const deleteUser = (id: number): Promise<ApiResponse> => {

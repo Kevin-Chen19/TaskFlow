@@ -1,5 +1,6 @@
 import express from 'express';
 import { query } from '../config/database.js';
+import upload from '../utils/upload.js';
 
 const router = express.Router();
 
@@ -84,9 +85,15 @@ router.get('/:id', async (req, res, next) => {
       });
     }
 
+    // 如果 avatar_url 存在且是相对路径，拼接完整 URL
+    const userData = result.rows[0];
+    if (userData.avatar_url && !userData.avatar_url.startsWith('http')) {
+      userData.avatar_url = `${req.protocol}://${req.get('host')}${userData.avatar_url}`;
+    }
+
     res.json({
       success: true,
-      data: result.rows[0]
+      data: userData
     });
   } catch (error) {
     next(error);
@@ -277,10 +284,16 @@ router.put('/:id', async (req, res, next) => {
       });
     }
 
+    // 如果 avatar_url 存在且是相对路径，拼接完整 URL
+    const userData = result.rows[0];
+    if (userData.avatar_url && !userData.avatar_url.startsWith('http')) {
+      userData.avatar_url = `${req.protocol}://${req.get('host')}${userData.avatar_url}`;
+    }
+
     res.json({
       success: true,
       message: '用户更新成功',
-      data: result.rows[0]
+      data: userData
     });
   } catch (error) {
     next(error);
@@ -330,6 +343,117 @@ router.delete('/:id', async (req, res, next) => {
       message: '用户删除成功'
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}/avatar:
+ *   post:
+ *     summary: 上传用户头像
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 用户ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - avatar
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: 头像图片文件 (支持 JPG, PNG, GIF, WebP, 最大 5MB)
+ *     responses:
+ *       200:
+ *         description: 头像上传成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         avatar_url:
+ *                           type: string
+ *                           example: "/uploads/1234567890-123456789.jpg"
+ *       400:
+ *         description: 文件格式或大小不符合要求
+ *       404:
+ *         description: 用户不存在
+ */
+router.post('/:id/avatar', upload.single('avatar'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 检查文件是否存在
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: '请选择头像文件'
+      });
+    }
+
+    // 检查文件类型
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: '只支持 JPG、PNG、GIF、WebP 格式的图片'
+      });
+    }
+
+    // 检查文件大小 (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (req.file.size > maxSize) {
+      return res.status(400).json({
+        success: false,
+        message: '图片大小不能超过 5MB'
+      });
+    }
+
+    // 构建头像 URL
+    const avatarUrl = `/uploads/${req.file.filename}`;
+
+    // 更新数据库
+    const result = await query(
+      'UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING id, fullname, avatar_url',
+      [avatarUrl, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+
+    // 返回完整的头像 URL (包含服务器地址)
+    const fullAvatarUrl = `${req.protocol}://${req.get('host')}${avatarUrl}`;
+
+    res.json({
+      success: true,
+      message: '头像上传成功',
+      data: {
+        avatar_url: fullAvatarUrl,
+        relative_url: avatarUrl,
+        user: result.rows[0]
+      }
+    });
+  } catch (error) {
+    console.error('头像上传失败:', error);
     next(error);
   }
 });

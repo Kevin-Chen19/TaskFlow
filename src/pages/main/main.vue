@@ -202,6 +202,7 @@ import TourComponents from "@/components/TourComponents.vue";
 import { useNotificationStore, type notificationItem } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
+import { useLoginStore } from "@/stores/loginStore";
 import { Close } from "@element-plus/icons-vue";
 import i18n from "@/language";
 const { t } = useI18n();
@@ -265,11 +266,16 @@ const ifHasUnread = computed(() => {
   });
 }); 
 onMounted(() => {
+  userStore.initUser();
   userStore.getProjectMember(otherStore.currentProjectId);
   getNotifications();
 });
 const signOut = () => {
-  //路由重定向到login界面
+  // 调用 loginStore 的 logout 方法清除登录状态
+  const loginStore = useLoginStore();
+  loginStore.logout();
+
+  // 路由重定向到 login 界面
   router.push({
     path: "/",
   });

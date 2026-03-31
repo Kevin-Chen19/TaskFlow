@@ -130,10 +130,16 @@ router.post('/register', async (req, res, next) => {
       [phone, fullname, email, hashedPassword, avatar_url, skills, mooto || 'I am a mooto']
     );
 
+    // 如果 avatar_url 存在且是相对路径，拼接完整 URL
+    const userData = result.rows[0];
+    if (userData.avatar_url && !userData.avatar_url.startsWith('http')) {
+      userData.avatar_url = `${req.protocol}://${req.get('host')}${userData.avatar_url}`;
+    }
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      data: result.rows[0]
+      data: userData
     });
   } catch (error) {
     next(error);
@@ -234,6 +240,11 @@ router.post('/login', async (req, res, next) => {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
+    // 如果 avatar_url 存在且是相对路径，拼接完整 URL
+    if (userWithoutPassword.avatar_url && !userWithoutPassword.avatar_url.startsWith('http')) {
+      userWithoutPassword.avatar_url = `${req.protocol}://${req.get('host')}${userWithoutPassword.avatar_url}`;
+    }
+
     // Generate JWT token
     const token = generateToken(userWithoutPassword);
 
@@ -289,9 +300,15 @@ router.get('/me', authenticateToken, async (req, res, next) => {
       });
     }
 
+    // 如果 avatar_url 存在且是相对路径，拼接完整 URL
+    const userData = result.rows[0];
+    if (userData.avatar_url && !userData.avatar_url.startsWith('http')) {
+      userData.avatar_url = `${req.protocol}://${req.get('host')}${userData.avatar_url}`;
+    }
+
     res.json({
       success: true,
-      data: result.rows[0]
+      data: userData
     });
   } catch (error) {
     next(error);
