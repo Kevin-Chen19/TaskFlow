@@ -15,7 +15,7 @@
                 >{{ $t('main.currentProject') }}</span
               >
               <span style="color: gray; margin-right: 1rem">/</span>
-              <span style="font-weight: 500">项目管理平台PC端</span>
+              <span style="font-weight: 500">{{ otherStore.currentProjectName || '' }}</span>
             </div>
             <div id="tour2" style="display: flex; align-items: center;gap: 1rem;">
               <el-popover
@@ -205,6 +205,7 @@ import { useOtherStore } from "@/stores/otherStore";
 import { useLoginStore } from "@/stores/loginStore";
 import { Close } from "@element-plus/icons-vue";
 import i18n from "@/language";
+import { getProjectById } from "@/api";
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const otherStore = useOtherStore();
@@ -269,6 +270,7 @@ onMounted(() => {
   userStore.initUser();
   userStore.getProjectMember(otherStore.currentProjectId);
   getNotifications();
+  loadCurrentProjectName();
 });
 const signOut = () => {
   // 调用 loginStore 的 logout 方法清除登录状态
@@ -364,6 +366,20 @@ const showMenu = () => {
 const showTour = ref(true);
 const handleTourFinish = () => {
   showTour.value = false;
+};
+
+// 加载当前项目名称
+const loadCurrentProjectName = async () => {
+  try {
+    if (otherStore.currentProjectId) {
+      const res = await getProjectById(otherStore.currentProjectId);
+      if (res.success && res.data) {
+        otherStore.currentProjectName = res.data.name || '';
+      }
+    }
+  } catch (error) {
+    console.error('加载项目名称失败:', error);
+  }
 };
 </script>
 <style scoped lang="scss">
