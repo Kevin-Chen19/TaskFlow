@@ -58,15 +58,15 @@
             :color="activity.color"
             :size="activity.size"
             :hollow="activity.hollow"
-            :timestamp="getDisplayTimestamp(activity.date)"
+            :timestamp="formatMilestoneDate(activity.date)"
           >
-              <span
+            <span
               style="font-size: larger; cursor: pointer"
               @click="editMilestone(index)"
               >{{ $t("Dashboard.phase") }}{{ index + 1 }}:
               {{ activity.content }}</span
             >
-            <el-icon @click="deleteMilestone(index)" class="delete-icon"
+            <el-icon @click="handleDeleteMilestone(index)" class="delete-icon"
               ><Delete
             /></el-icon>
           </el-timeline-item>
@@ -77,7 +77,13 @@
           <span class="noteStyle">{{ $t("Dashboard.notes") }}</span>
           <div class="noteItemBox">
             <div class="noteItem" v-for="(item, index) in notes" :key="item.id">
-              <div class="noteSelect" @click="changeNoteStatus(item.id, index); item.status = !item.status">
+              <div
+                class="noteSelect"
+                @click="
+                  changeNoteStatus(item.id, index);
+                  item.status = !item.status;
+                "
+              >
                 <img
                   v-if="item.status"
                   src="@/assets/icons/通过.png"
@@ -86,7 +92,9 @@
               </div>
               <div class="item_content">{{ item.description }}</div>
               <div class="delete">
-                <el-icon @click="deleteNotes(item.id, index)"><Delete /></el-icon>
+                <el-icon @click="deleteNotes(item.id, index)"
+                  ><Delete
+                /></el-icon>
               </div>
             </div>
           </div>
@@ -97,7 +105,11 @@
         <div class="NoteBox TeamBox">
           <span class="noteStyle">{{ $t("Dashboard.memberProgress") }}</span>
           <div class="noteItemBox teamBox">
-            <div class="noteItem" v-for="item in userStore.usersTable" :key="item.name">
+            <div
+              class="noteItem"
+              v-for="item in userStore.usersTable"
+              :key="item.name"
+            >
               <div class="userPic">
                 <img :src="item.pic" alt="用户头像" />
               </div>
@@ -182,7 +194,6 @@
       v-model="milestoneData.content"
       :placeholder="$t('pleaseEnterContent')"
       class="content-input"
-      @change="submitNote"
     ></el-input>
     <div class="inputName">{{ $t("DUELINE") }}</div>
     <div class="dateLine-input">
@@ -218,12 +229,22 @@ import user1 from "@/assets/pics/用户头像.jpg";
 import user2 from "@/assets/pics/用户2.jpg";
 import user3 from "@/assets/pics/用户3.jpg";
 import user4 from "@/assets/pics/用户4.jpg";
-import {useOtherStore} from "@/stores/otherStore";
+import { useOtherStore } from "@/stores/otherStore";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
 import { ElMessage } from "element-plus";
-import {getNotes, createNote, updateNote, deleteNote, getProjectStats} from "@/api";
+import {
+  getNotes,
+  createNote,
+  updateNote,
+  deleteNote,
+  getProjectStats,
+  getMilestones,
+  createMilestone,
+  updateMilestone,
+  deleteMilestone,
+} from "@/api";
 const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
@@ -244,10 +265,11 @@ const projectStats = reactive({
   total_tasks: 0,
   completed_tasks: 0,
   warning_tasks: 0,
-  expired_tasks: 0
+  expired_tasks: 0,
 });
 
 interface ActivityType {
+  id?: number;
   content: string;
   date: string;
   color?: string;
@@ -258,39 +280,8 @@ interface ActivityType {
   timestamp?: string;
 }
 
-const activities = reactive<ActivityType[]>([
-  {
-    content: "Discovery & Strategy",
-    date: "2026-01-15",
-    size: "large",
-  },
-  {
-    content: "UI/UX Design",
-    date: "2026-01-19",
-    size: "large",
-  },
-  {
-    content: "Development",
-    date: "2026-02-10",
-    size: "large",
-  },
-  {
-    content: "Testing",
-    date: "2026-02-26",
-    size: "large",
-  },
-  {
-    content: "Deployment",
-    date: "2026-02-29",
-    size: "large",
-  },
-  {
-    content: "Maintenance",
-    date: "2026-03-10",
-    size: "large",
-  },
-]);
-const notes = reactive([]);
+const activities = reactive<ActivityType[]>([]);
+const notes = reactive<any[]>([]);
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
     return "#909399";
@@ -301,15 +292,15 @@ const customColorMethod = (percentage: number) => {
   return "#67c23a";
 };
 // 删除笔记
-const deleteNotes = async(id: number, index: number) => {
-  try{
+const deleteNotes = async (id: number, index: number) => {
+  try {
     const res = await deleteNote(id);
-    if(res.success){
+    if (res.success) {
       notes.splice(index, 1);
       //不需要发送不必要请求
       //getNotes();
     }
-  }catch(e){
+  } catch (e) {
     console.error("删除笔记失败:", e);
   }
 };
@@ -322,6 +313,23 @@ const formatDate = (date: Date | string): string => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+// 格式化里程碑日期显示
+const formatMilestoneDate = (date: string): string => {
+  const formattedDate = formatDate(date);
+  const milestoneDate = new Date(date);
+  const today = new Date();
+  // 设置当天时间为0点进行日期比较
+  today.setHours(0, 0, 0, 0);
+  const compareDate = new Date(milestoneDate);
+  compareDate.setHours(0, 0, 0, 0);
+  
+  if (compareDate < today) {
+    return `已完成于：${formattedDate}`;
+  } else {
+    return `计划于：${formattedDate}`;
+  }
+};
 const handleSubmit = () => {
   try {
     // 访问子组件暴露的数据
@@ -333,13 +341,13 @@ const handleSubmit = () => {
     //设置id为时间戳加随机数
     componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
     ElMessage({
-      message: t('Dashboard.CreateProjectSuccess'),
+      message: t("Dashboard.CreateProjectSuccess"),
       type: "success",
     });
   } catch (error) {
     console.error("获取数据失败:", error);
     ElMessage({
-      message: t('Dashboard.CreateProjectFailed'),
+      message: t("Dashboard.CreateProjectFailed"),
       type: "error",
     });
   }
@@ -355,17 +363,17 @@ const openNewProjectDialog = () => {
 };
 const submitNote = async () => {
   console.log(noteContent);
-  try{
+  try {
     const res = await createNote({
-      project_id:otherStore.currentProjectId,
-      creator_id:userStore.user.userId,
+      project_id: otherStore.currentProjectId,
+      creator_id: userStore.user.userId,
       description: noteContent.value,
-      status: false
-    })
+      status: false,
+    });
     //重新获取笔记列表
     getNote();
   } catch (e) {
-    console.log('创建笔记失败',e);
+    console.log("创建笔记失败", e);
   } finally {
     console.log(notes);
     noteContent.value = "";
@@ -388,21 +396,42 @@ const editMilestone = (index: number) => {
   isEditingMilestone.value = true;
   editingMilestoneIndex.value = index;
   // 填充表单
-  milestoneData.content = activities[index].content || '';
-  milestoneData.dueLine = activities[index].date || '';
+  milestoneData.content = activities[index].content || "";
+  milestoneData.dueLine = activities[index].date || "";
   TimeLineDialogVisible.value = true;
 };
 
 // 删除里程碑
-const deleteMilestone = (index: number) => {
-  activities.splice(index, 1);
-  // 重新计算显示属性
-  getActivityDisplayProps();
+const handleDeleteMilestone = async (index: number) => {
+  const milestone = activities[index];
+  if (!milestone || !milestone.id) {
+    // 如果没有 id，从本地数组删除（用于未保存的临时数据）
+    activities.splice(index, 1);
+    getActivityDisplayProps();
+    ElMessage({
+      message: t("deleteSuccess"),
+      type: "success",
+    });
+    return;
+  }
 
-  ElMessage({
-    message: t("deleteSuccess"),
-    type: "success",
-  });
+  try {
+    const res = await deleteMilestone(milestone.id);
+    if (res.success) {
+      activities.splice(index, 1);
+      getActivityDisplayProps();
+      ElMessage({
+        message: t("deleteSuccess"),
+        type: "success",
+      });
+    }
+  } catch (error) {
+    console.error("删除里程碑失败:", error);
+    ElMessage({
+      message: t("deleteFailed"),
+      type: "error",
+    });
+  }
 };
 
 // 取消里程碑对话框
@@ -427,7 +456,7 @@ const getDisplayTimestamp = (date: string): string => {
   if (diffDays < 0) {
     return t("Dashboard.completedOn") + `${date}`;
   } else {
-    return t("Dashboard.scheduledOn") +  `${date}`;
+    return t("Dashboard.scheduledOn") + `${date}`;
   }
 };
 
@@ -467,68 +496,87 @@ const getActivityDisplayProps = () => {
 };
 
 // 保存里程碑
-const saveMilestone = () => {
+const saveMilestone = async () => {
   if (!milestoneData.content || !milestoneData.dueLine) {
     ElMessage({
-      message: t('pleaseFillAll'),
+      message: t("pleaseFillAll"),
       type: "warning",
     });
     return;
   }
 
-  const updatedMilestone = {
-    content: milestoneData.content,
-    date: formatDate(milestoneData.dueLine),
-    size: "large",
-  };
+  const formattedDate = formatDate(milestoneData.dueLine);
 
   if (isEditingMilestone.value && editingMilestoneIndex.value !== -1) {
     // 编辑模式：更新现有里程碑
-    const originalIndex = editingMilestoneIndex.value;
-
-    // 移除旧的里程碑
-    activities.splice(originalIndex, 1);
-
-    // 找到插入位置（按日期排序）
-    let insertIndex = activities.length;
-    for (let i = 0; i < activities.length; i++) {
-      const activityDate = activities[i]?.date;
-      if (activityDate && new Date(updatedMilestone.date) < new Date(activityDate)) {
-        insertIndex = i;
-        break;
+    const milestone = activities[editingMilestoneIndex.value];
+    if (milestone && milestone.id) {
+      // 有 id，调用后端 API 更新
+      try {
+        const res = await updateMilestone(milestone.id, {
+          content: milestoneData.content,
+          due_date: formattedDate,
+        });
+        if (res.success) {
+          milestone.content = milestoneData.content;
+          milestone.date = formattedDate;
+          // 重新排序
+          activities.sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+          );
+          // 重新计算显示属性
+          getActivityDisplayProps();
+          ElMessage({
+            message: t("updatedSuccess"),
+            type: "success",
+          });
+        }
+      } catch (error) {
+        console.error("更新里程碑失败:", error);
+        ElMessage({
+          message: t("updateFailed"),
+          type: "error",
+        });
+        return;
       }
     }
-
-    // 在合适的位置插入
-    activities.splice(insertIndex, 0, updatedMilestone);
-
-    ElMessage({
-      message: t('updatedSuccess'),
-      type: "success",
-    });
   } else {
-    // 新增模式：添加新里程碑
-    // 找到插入位置（按日期排序）
-    let insertIndex = activities.length;
-    for (let i = 0; i < activities.length; i++) {
-      const activityDate = activities[i]?.date;
-      if (activityDate && new Date(updatedMilestone.date) < new Date(activityDate)) {
-        insertIndex = i;
-        break;
+    // 新增模式：创建新里程碑
+    try {
+      const res = await createMilestone({
+        project_id: otherStore.currentProjectId,
+        content: milestoneData.content,
+        due_date: formattedDate,
+      });
+      if (res.success && res.data) {
+        // 添加新里程碑到数组
+        const newMilestone = {
+          id: res.data.id,
+          content: milestoneData.content,
+          date: formattedDate,
+          size: "large",
+        };
+        activities.push(newMilestone);
+        // 按日期排序
+        activities.sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
+        // 重新计算显示属性
+        getActivityDisplayProps();
+        ElMessage({
+          message: t("addSuccessfully"),
+          type: "success",
+        });
       }
+    } catch (error) {
+      console.error("创建里程碑失败:", error);
+      ElMessage({
+        message: t("addFailed"),
+        type: "error",
+      });
+      return;
     }
-
-    // 在合适的位置插入
-    activities.splice(insertIndex, 0, updatedMilestone);
-
-    ElMessage({
-      message: t('addSuccessfully'),
-      type: "success",
-    });
   }
-
-  // 重新计算显示属性
-  getActivityDisplayProps();
 
   // 清空表单并关闭对话框
   milestoneData.content = "";
@@ -537,40 +585,66 @@ const saveMilestone = () => {
   editingMilestoneIndex.value = -1;
   TimeLineDialogVisible.value = false;
 };
-const getNote = async() => {
-  try{
+const getNote = async () => {
+  try {
     const res = await getNotes({
-      project_id:otherStore.currentProjectId,
-      creator_id:userStore.user.userId
-    })
-    notes.splice(0,notes.length,...res.data);
+      project_id: otherStore.currentProjectId,
+      creator_id: userStore.user.userId,
+    });
+    notes.splice(0, notes.length, ...res.data);
     console.log(res);
-  } catch(e){
-    console.log('获取笔记失败', e);
+  } catch (e) {
+    console.log("获取笔记失败", e);
   }
-}
-const changeNoteStatus = async(id: number, index:number) => {
-  try{
-    const stu = notes[index].status
-    const res = await updateNote(id,{
-      status: !stu
-    })
-    if(res.success){
-      notes[index].status = !stu
+};
+const changeNoteStatus = async (id: number, index: number) => {
+  try {
+    const stu = notes[index].status;
+    const res = await updateNote(id, {
+      status: !stu,
+    });
+    if (res.success) {
+      notes[index].status = !stu;
       //无需多余网络请求
       //getNote()
     }
-  }catch(e){
-    console.log('笔记更新失败', e);
+  } catch (e) {
+    console.log("笔记更新失败", e);
   }
-}
+};
+
+// 加载里程碑数据
+const loadMilestones = async () => {
+  try {
+    const res = await getMilestones({
+      project_id: otherStore.currentProjectId,
+    });
+    if (res.success && res.data) {
+      // 将后端数据转换为前端格式
+      activities.splice(
+        0,
+        activities.length,
+        ...res.data.map((item: any) => ({
+          id: item.id,
+          content: item.content,
+          date: formatDate(item.due_date),
+          size: "large",
+        })),
+      );
+      // 重新计算显示属性
+      getActivityDisplayProps();
+    }
+  } catch (error) {
+    console.error("加载里程碑数据失败:", error);
+  }
+};
 
 // 加载项目统计数据
 const loadProjectStats = async () => {
   try {
     const projectId = otherStore.currentProjectId;
     if (!projectId) {
-      console.warn('当前没有选择项目');
+      console.warn("当前没有选择项目");
       return;
     }
 
@@ -583,22 +657,27 @@ const loadProjectStats = async () => {
       projectStats.expired_tasks = res.data.expired_tasks;
     }
   } catch (error) {
-    console.error('加载项目统计数据失败:', error);
+    console.error("加载项目统计数据失败:", error);
   }
-}
+};
 
 // 组件挂载时初始化显示属性
 onMounted(() => {
-  getActivityDisplayProps();
-  // 等待 userStore 初始化完成后再获取便签
+  // 等待 userStore 初始化完成后再获取数据
+  const initData = () => {
+    loadMilestones(); // 加载里程碑数据
+    getNote(); // 获取便签
+    loadProjectStats(); // 加载项目统计
+  };
+
   if (userStore.user.userId) {
-    getNote();
+    initData();
   } else {
     // 如果 userId 还未初始化，延迟调用
     const checkUserId = setInterval(() => {
       if (userStore.user.userId) {
         clearInterval(checkUserId);
-        getNote();
+        initData();
       }
     }, 100);
     // 设置超时保护，最多等待 3 秒
@@ -606,7 +685,6 @@ onMounted(() => {
       clearInterval(checkUserId);
     }, 3000);
   }
-  loadProjectStats();
 });
 </script>
 <style scoped lang="scss">

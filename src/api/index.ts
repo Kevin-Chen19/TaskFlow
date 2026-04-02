@@ -443,6 +443,60 @@ export const deleteNote = (id: number) => {
   })
 }
 
+// ==================== 里程碑相关接口 ====================
+
+/**
+ * 获取项目里程碑列表
+ */
+export const getMilestones = (params?: {
+  project_id?: number
+}) => {
+  return request({
+    url: '/milestones',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 创建里程碑
+ */
+export const createMilestone = (data: {
+  project_id: number
+  content: string
+  due_date: string
+}) => {
+  return request({
+    url: '/milestones',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新里程碑
+ */
+export const updateMilestone = (id: number, data: {
+  content?: string
+  due_date?: string
+}) => {
+  return request({
+    url: `/milestones/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除里程碑
+ */
+export const deleteMilestone = (id: number) => {
+  return request({
+    url: `/milestones/${id}`,
+    method: 'delete'
+  })
+}
+
 // ==================== 项目成员相关接口 ====================
 
 /**

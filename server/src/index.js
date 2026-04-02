@@ -19,6 +19,7 @@ import projectRolesRoutes from './routes/projectRoles.js';
 import projectPositionsRoutes from './routes/projectPositions.js';
 import projectFoldersRoutes from './routes/projectFolders.js';
 import projectDocumentsRoutes from './routes/projectDocuments.js';
+import milestonesRoutes from './routes/milestones.js';
 
 dotenv.config();
 
@@ -75,6 +76,7 @@ app.use('/api/project-roles', projectRolesRoutes);
 app.use('/api/project-positions', projectPositionsRoutes);
 app.use('/api/project-folders', projectFoldersRoutes);
 app.use('/api/project-documents', projectDocumentsRoutes);
+app.use('/api/milestones', milestonesRoutes);
 
 // 404 处理
 app.use((req, res) => {
