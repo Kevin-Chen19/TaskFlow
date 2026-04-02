@@ -209,6 +209,7 @@ import { getProjectById } from "@/api";
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const otherStore = useOtherStore();
+const loginStore = useLoginStore();
 const which = ref("dashboard");
 const languagePopoverRef = ref();
 const showNotifications = ref(false);
@@ -267,6 +268,9 @@ const ifHasUnread = computed(() => {
   });
 }); 
 onMounted(() => {
+  // 先恢复登录状态，从 localStorage 加载用户信息和 token
+  loginStore.restoreAuth();
+  // 然后初始化 userStore
   userStore.initUser();
   userStore.getProjectMember(otherStore.currentProjectId);
   getNotifications();

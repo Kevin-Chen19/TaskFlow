@@ -291,8 +291,6 @@ const activities = reactive<ActivityType[]>([
   },
 ]);
 const notes = reactive([]);
-const percentage = ref(70);
-const customColor = ref("#409eff");
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
     return "#909399";
@@ -592,7 +590,22 @@ const loadProjectStats = async () => {
 // 组件挂载时初始化显示属性
 onMounted(() => {
   getActivityDisplayProps();
-  getNote();
+  // 等待 userStore 初始化完成后再获取便签
+  if (userStore.user.userId) {
+    getNote();
+  } else {
+    // 如果 userId 还未初始化，延迟调用
+    const checkUserId = setInterval(() => {
+      if (userStore.user.userId) {
+        clearInterval(checkUserId);
+        getNote();
+      }
+    }, 100);
+    // 设置超时保护，最多等待 3 秒
+    setTimeout(() => {
+      clearInterval(checkUserId);
+    }, 3000);
+  }
   loadProjectStats();
 });
 </script>
