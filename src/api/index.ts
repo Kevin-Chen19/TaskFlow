@@ -717,11 +717,51 @@ export const updateProjectFolder = (id: number, data: {
 }
 
 /**
- * 删除文件夹
+ * 删除文件夹（软删除，移至回收站）
  */
 export const deleteProjectFolder = (id: number) => {
   return request({
     url: `/project-folders/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 彻底删除文件夹（从数据库和文件系统删除）
+ */
+export const deleteProjectFolderPermanent = (id: number) => {
+  return request({
+    url: `/project-folders/${id}/permanent`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 移动文件夹到回收站（递归移动所有子文件和子文件夹）
+ */
+export const moveFolderToBin = (id: number) => {
+  return request({
+    url: `/project-folders/${id}/bin`,
+    method: 'put'
+  })
+}
+
+/**
+ * 移动文档到回收站
+ */
+export const moveDocumentToBin = (id: number) => {
+  return request({
+    url: `/project-documents/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 彻底删除文档（从数据库和文件系统删除）
+ */
+export const deleteProjectDocumentPermanent = (id: number) => {
+  return request({
+    url: `/project-documents/${id}/permanent`,
     method: 'delete'
   })
 }

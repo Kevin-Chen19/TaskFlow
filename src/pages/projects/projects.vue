@@ -292,13 +292,13 @@ interface filesTree {
 
 // 进入文件夹
 const enterFolder = (item: any) => {
-  fileStore.enterFolder(item.id)
+  fileStore.enterFolder(item.id, ifBin.value)
 }
 
 // 返回上级文件夹
 const backToParent = () => {
-  fileStore.backToParent()
-}
+  fileStore.backToParent(ifBin.value)
+  }
 
 // 搜索文件
 const searchFiles = () => {
@@ -538,9 +538,12 @@ const createFolder = async () => {
   // 生成唯一的文件夹名称
   let folderName = "新建文件夹";
   let counter = 1;
+
+  // 根据当前是否在回收站模式，决定在哪个文件列表中查找
   const targetFiles = currentFolderId.value
-    ? fileStore.findFileById(fileStore.allFiles, currentFolderId.value)?.children
-    : fileStore.allFiles
+    ? (fileStore.findFileById(fileStore.allFiles, currentFolderId.value)?.children ||
+       fileStore.findFileById(fileStore.binFiles, currentFolderId.value)?.children)
+    : (ifBin.value ? fileStore.binFiles : fileStore.allFiles)
 
   while (targetFiles?.some((item) => item.fileName === folderName && !!item.children)) {
     folderName = `新建文件夹${counter}`;

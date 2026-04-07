@@ -1,11 +1,16 @@
 import { reactive , ref } from 'vue'
 import { defineStore } from 'pinia'
 import JSZip from 'jszip'
+import { useOtherStore } from '@/stores/otherStore'
 import {
   getProjectFolders,
   createProjectFolder,
   updateProjectFolder,
   deleteProjectFolder,
+  deleteProjectFolderPermanent,
+  moveFolderToBin,
+  moveDocumentToBin,
+  deleteProjectDocumentPermanent,
   getProjectDocuments,
   uploadProjectDocument,
   updateProjectDocument,
@@ -29,11 +34,16 @@ export interface FileItem {
 
 export const useFileStore = defineStore('useFileStore', () => {
   const allFiles = reactive<FileItem[]>([])
+  const binFiles = reactive<FileItem[]>([])
   const showFloders = reactive<FileItem[]>([])
   const saveFloders = reactive<FileItem[]>([])
   const binFloders = reactive<FileItem[]>([])
   const folderPath = reactive<string[]>([])
   const loading = ref(false)
+  const otherStore = useOtherStore()
+
+  // 获取当前项目 ID
+  const getCurrentProjectId = () => otherStore.currentProjectId
 
   // 递归查找文件/文件夹
   const findFileById = (files: FileItem[], id: string): FileItem | null => {
@@ -82,11 +92,10 @@ export const useFileStore = defineStore('useFileStore', () => {
       })
       .map((item) => {
         if (item.children && item.children.length > 0) {
-          const filteredChildren = filterFiles(item.children, isBin)
-          if (filteredChildren.length > 0) {
-            return { ...item, children: filteredChildren }
-          }
-          return { ...item, children: undefined }
+          // 回收站模式：显示所有子项（不管 ifInBin 状态）
+          // 正常模式：只显示 ifInBin = false 的子项
+          const childrenToKeep = isBin ? item.children : filterFiles(item.children, isBin)
+          return { ...item, children: childrenToKeep }
         }
         return item
       })
@@ -165,34 +174,37 @@ export const useFileStore = defineStore('useFileStore', () => {
   const loadProjectFiles = async (projectId: number) => {
     loading.value = true
     try {
-      // 加载文件夹
-      const folderRes: any = await getProjectFolders({ project_id: projectId })
-      const docRes: any = await getProjectDocuments({ project_id: projectId })
+      // 加载所有文件夹（包括正常和已删除）
+      const allFolderRes: any = await getProjectFolders({ project_id: projectId, include_deleted: true })
+      // 加载所有文档（包括正常和已删除）
+      const allDocRes: any = await getProjectDocuments({ project_id: projectId, include_deleted: true })
 
-      // 构建文件树
-      const folderMap = new Map<string, FileItem>()
-      const rootFiles: FileItem[] = []
+      // 构建完整的文件树
+      const allFolderMap = new Map<string, FileItem>()
+      const normalRootFiles: FileItem[] = [] // 正常文件的根级
+      const binRootFiles: FileItem[] = [] // 回收站文件的根级
 
-      // 处理文件夹
-      if (folderRes.success && folderRes.data) {
-        folderRes.data.forEach((folder: any) => {
-          folderMap.set(String(folder.id), {
+      // 第一步：处理所有文件夹
+      if (allFolderRes.success && allFolderRes.data) {
+        allFolderRes.data.forEach((folder: any) => {
+          const fileItem: FileItem = {
             id: String(folder.id),
             fileName: folder.name,
             fileTime: folder.created_at,
             fileMaker: '',
             fileSize: '',
-            ifInBin: false,
+            ifInBin: folder.deleted_at !== null,
             creatorId: folder.creator_id,
             parentId: folder.parent_folder_id ? String(folder.parent_folder_id) : null,
             children: []
-          })
+          }
+          allFolderMap.set(String(folder.id), fileItem)
         })
       }
 
-      // 处理文档
-      if (docRes.success && docRes.data) {
-        docRes.data.forEach((doc: any) => {
+      // 第二步：处理所有文档
+      if (allDocRes.success && allDocRes.data) {
+        allDocRes.data.forEach((doc: any) => {
           const fileItem: FileItem = {
             id: String(doc.id),
             fileName: doc.name,
@@ -201,38 +213,66 @@ export const useFileStore = defineStore('useFileStore', () => {
             fileSize: doc.file_size ? formatFileSize(doc.file_size) : '',
             fileType: doc.file_type,
             fileUrl: doc.file_url,
-            ifInBin: false,
+            ifInBin: doc.deleted_at !== null,
             creatorId: doc.creator_id,
             parentId: doc.parent_folder_id ? String(doc.parent_folder_id) : null
           }
 
+          // 添加到父文件夹或根级
           if (doc.parent_folder_id) {
-            const parentFolder = folderMap.get(String(doc.parent_folder_id))
+            const parentFolder = allFolderMap.get(String(doc.parent_folder_id))
             if (parentFolder && parentFolder.children) {
               parentFolder.children.push(fileItem)
+            } else {
+              // 父文件夹不存在，添加到根级
+              if (doc.deleted_at !== null) {
+                binRootFiles.push(fileItem)
+              } else {
+                normalRootFiles.push(fileItem)
+              }
             }
           } else {
-            rootFiles.push(fileItem)
+            // 无父文件夹，添加到根级
+            if (doc.deleted_at !== null) {
+              binRootFiles.push(fileItem)
+            } else {
+              normalRootFiles.push(fileItem)
+            }
           }
         })
       }
 
-      // 构建文件夹树
-      folderMap.forEach((folder) => {
+      // 第三步：构建文件夹层级
+      allFolderMap.forEach((folder) => {
         if (folder.parentId) {
-          const parentFolder = folderMap.get(folder.parentId)
+          const parentFolder = allFolderMap.get(folder.parentId)
           if (parentFolder && parentFolder.children) {
             parentFolder.children.push(folder)
+          } else {
+            // 父文件夹不存在（可能被删除了），添加到对应根级
+            if (folder.ifInBin) {
+              binRootFiles.push(folder)
+            } else {
+              normalRootFiles.push(folder)
+            }
           }
         } else {
-          rootFiles.push(folder)
+          // 根级文件夹
+          if (folder.ifInBin) {
+            binRootFiles.push(folder)
+          } else {
+            normalRootFiles.push(folder)
+          }
         }
       })
 
       // 更新存储
-      allFiles.splice(0, allFiles.length, ...rootFiles)
+      allFiles.splice(0, allFiles.length, ...normalRootFiles)
+      binFiles.splice(0, binFiles.length, ...binRootFiles)
+
+      // 正常文件过滤（应该为空，因为 allFiles 只包含非回收站的）
       const filteredShowFiles = filterFiles(allFiles, false)
-      const filteredBinFiles = collectBinFiles(allFiles)
+      const filteredBinFiles = filterFiles(binFiles, true)
 
       saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
       binFloders.splice(0, binFloders.length, ...filteredBinFiles)
@@ -279,22 +319,32 @@ export const useFileStore = defineStore('useFileStore', () => {
           children: []
         }
 
-        // 添加到目标位置
-        const targetArray = parentId ? findFileById(allFiles, parentId)?.children : allFiles
-        if (targetArray) {
-          targetArray.push(newFolder)
+        // 添加到目标位置（同时在正常文件和回收站文件中查找）
+        let targetArray = parentId ? findFileById(allFiles, parentId)?.children : null
+        if (!targetArray) {
+          targetArray = parentId ? findFileById(binFiles, parentId)?.children : null
         }
+        if (!targetArray) {
+          targetArray = allFiles // 默认添加到根目录
+        }
+        targetArray.push(newFolder)
 
         // 刷新显示
         const filteredShowFiles = filterFiles(allFiles, false)
+        const filteredBinFiles = filterFiles(binFiles, true)
         saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
+        binFloders.splice(0, binFloders.length, ...filteredBinFiles)
 
         if (folderPath.length === 0) {
           showFloders.splice(0, showFloders.length, ...saveFloders)
         } else {
           const currentFolderId = folderPath[folderPath.length - 1]
           if (currentFolderId) {
-            const currentFolder = findFileById(allFiles, currentFolderId)
+            // 同时在 allFiles 和 binFiles 中查找
+            let currentFolder = findFileById(allFiles, currentFolderId)
+            if (!currentFolder) {
+              currentFolder = findFileById(binFiles, currentFolderId)
+            }
             if (currentFolder && currentFolder.children) {
               showFloders.splice(0, showFloders.length, ...currentFolder.children)
             }
@@ -338,22 +388,32 @@ export const useFileStore = defineStore('useFileStore', () => {
           parentId: res.data.parent_folder_id ? String(res.data.parent_folder_id) : null
         }
 
-        // 添加到目标位置
-        const targetArray = parentId ? findFileById(allFiles, parentId)?.children : allFiles
-        if (targetArray) {
-          targetArray.push(newFile)
+        // 添加到目标位置（同时在正常文件和回收站文件中查找）
+        let targetArray = parentId ? findFileById(allFiles, parentId)?.children : null
+        if (!targetArray) {
+          targetArray = parentId ? findFileById(binFiles, parentId)?.children : null
         }
+        if (!targetArray) {
+          targetArray = allFiles // 默认添加到根目录
+        }
+        targetArray.push(newFile)
 
         // 刷新显示
         const filteredShowFiles = filterFiles(allFiles, false)
+        const filteredBinFiles = filterFiles(binFiles, true)
         saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
+        binFloders.splice(0, binFloders.length, ...filteredBinFiles)
 
         if (folderPath.length === 0) {
           showFloders.splice(0, showFloders.length, ...saveFloders)
         } else {
           const currentFolderId = folderPath[folderPath.length - 1]
           if (currentFolderId) {
-            const currentFolder = findFileById(allFiles, currentFolderId)
+            // 同时在 allFiles 和 binFiles 中查找
+            let currentFolder = findFileById(allFiles, currentFolderId)
+            if (!currentFolder) {
+              currentFolder = findFileById(binFiles, currentFolderId)
+            }
             if (currentFolder && currentFolder.children) {
               showFloders.splice(0, showFloders.length, ...currentFolder.children)
             }
@@ -410,32 +470,31 @@ export const useFileStore = defineStore('useFileStore', () => {
         return { success: false, message: '文件不存在' }
       }
 
-      // 递归删除
-      deleteFileRecursively(file, true)
+      const isFolder = !!file.children
 
-      // 更新显示
-      const filteredShowFiles = filterFiles(allFiles, false)
-      const filteredBinFiles = collectBinFiles(allFiles)
-
-      saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
-      binFloders.splice(0, binFloders.length, ...filteredBinFiles)
-
-      if (folderPath.length > 0) {
-        const currentFolderId = folderPath[folderPath.length - 1]
-        if (currentFolderId) {
-          const currentFolder = findFileById(allFiles, currentFolderId)
-          if (currentFolder && currentFolder.children) {
-            showFloders.splice(0, showFloders.length, ...filterFiles(currentFolder.children, false))
-          }
+      // 调用后端 API 更新 deleted_at 字段
+      if (isFolder) {
+        const res: any = await moveFolderToBin(parseInt(id))
+        if (!res.success) {
+          return { success: false, message: res.message || '移至回收站失败' }
         }
       } else {
-        showFloders.splice(0, showFloders.length, ...saveFloders)
+        const res: any = await moveDocumentToBin(parseInt(id))
+        if (!res.success) {
+          return { success: false, message: res.message || '移至回收站失败' }
+        }
+      }
+
+      // 重新加载文件列表
+      const projectId = getCurrentProjectId()
+      if (projectId) {
+        await loadProjectFiles(projectId)
       }
 
       return { success: true }
     } catch (error) {
-      console.error('删除失败:', error)
-      return { success: false, message: '删除失败' }
+      console.error('移至回收站失败:', error)
+      return { success: false, message: '移至回收站失败' }
     }
   }
 
@@ -469,45 +528,35 @@ export const useFileStore = defineStore('useFileStore', () => {
   // 彻底删除
   const deletePermanently = async (id: string) => {
     try {
-      const file = findFileById(allFiles, id)
+      // 同时在正常文件列表和回收站列表中查找
+      let file = findFileById(allFiles, id)
+      if (!file) {
+        file = findFileById(binFiles, id)
+      }
       if (!file) {
         return { success: false, message: '文件不存在' }
       }
 
       const isFolder = !!file.children
 
-      // 调用API删除
+      // 调用后端 API 彻底删除（从数据库和文件系统删除）
       if (isFolder) {
-        const res: any = await deleteProjectFolder(parseInt(id))
+        const res: any = await deleteProjectFolderPermanent(parseInt(id))
         if (!res.success) {
-          return { success: false, message: '删除失败' }
+          return { success: false, message: res.message || '删除失败' }
         }
       } else {
-        const res: any = await deleteProjectDocument(parseInt(id))
+        const res: any = await deleteProjectDocumentPermanent(parseInt(id))
         if (!res.success) {
-          return { success: false, message: '删除失败' }
+          return { success: false, message: res.message || '删除失败' }
         }
       }
 
-      // 从父文件夹移除
-      const parentFolder = findParentFolder(allFiles, id)
-      if (parentFolder && parentFolder.children) {
-        parentFolder.children = parentFolder.children.filter(item => item.id !== id)
-      } else {
-        const index = allFiles.findIndex(item => item.id === id)
-        if (index !== -1) {
-          allFiles.splice(index, 1)
-        }
+      // 重新加载文件列表
+      const projectId = getCurrentProjectId()
+      if (projectId) {
+        await loadProjectFiles(projectId)
       }
-
-      // 更新显示
-      const filteredShowFiles = filterFiles(allFiles, false)
-      const filteredBinFiles = collectBinFiles(allFiles)
-
-      saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
-      binFloders.splice(0, binFloders.length, ...filteredBinFiles)
-
-      showFloders.splice(0, showFloders.length, ...binFloders)
 
       return { success: true }
     } catch (error) {
@@ -517,28 +566,38 @@ export const useFileStore = defineStore('useFileStore', () => {
   }
 
   // 进入文件夹
-  const enterFolder = (itemId: string) => {
-    const item = findFileById(allFiles, itemId)
+  const enterFolder = (itemId: string, isInBin: boolean = false) => {
+    // 同时在正常文件列表和回收站列表中查找
+    let item = findFileById(allFiles, itemId)
+    if (!item) {
+      item = findFileById(binFiles, itemId)
+    }
     if (item && item.children && item.id) {
       folderPath.push(item.id)
-      const filteredChildren = filterFiles(item.children, false)
+      // 回收站模式下显示所有子项，正常模式下过滤掉回收站文件
+      const filteredChildren = filterFiles(item.children, isInBin)
       showFloders.splice(0, showFloders.length, ...filteredChildren)
     }
   }
 
   // 返回上级
-  const backToParent = () => {
+  const backToParent = (isInBin: boolean = false) => {
     if (folderPath.length > 0) {
       folderPath.pop()
 
       if (folderPath.length === 0) {
-        showFloders.splice(0, showFloders.length, ...saveFloders)
+        // 返回到根级时，根据模式显示对应列表
+        showFloders.splice(0, showFloders.length, ...(isInBin ? binFloders : saveFloders))
       } else {
         const parentId = folderPath[folderPath.length - 1]
         if (parentId) {
-          const parentFolder = findFileById(allFiles, parentId)
+          // 同时在正常文件列表和回收站列表中查找
+          let parentFolder = findFileById(allFiles, parentId)
+          if (!parentFolder) {
+            parentFolder = findFileById(binFiles, parentId)
+          }
           if (parentFolder && parentFolder.children) {
-            showFloders.splice(0, showFloders.length, ...filterFiles(parentFolder.children, false))
+            showFloders.splice(0, showFloders.length, ...filterFiles(parentFolder.children, isInBin))
           }
         }
       }
@@ -630,6 +689,7 @@ export const useFileStore = defineStore('useFileStore', () => {
 
   return {
     allFiles,
+    binFiles,
     showFloders,
     saveFloders,
     binFloders,

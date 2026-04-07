@@ -24,6 +24,11 @@ const router = express.Router();
  *         name: parent_folder_id
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: include_deleted
+ *         schema:
+ *           type: boolean
+ *         description: 是否包含已删除的文件（回收站）
  *     responses:
  *       200:
  *         description: 成功返回项目文档列表
@@ -34,18 +39,32 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { project_id, parent_folder_id } = req.query;
-    let queryText = 'SELECT * FROM project_documents WHERE deleted_at IS NULL';
-    let params = [];
+    const { project_id, parent_folder_id, include_deleted } = req.query;
+    let queryText = 'SELECT * FROM project_documents';
+    const conditions = [];
+    const params = [];
+
+    // 添加已删除条件
+    if (include_deleted !== 'true') {
+      conditions.push('deleted_at IS NULL');
+    }
 
     if (project_id) {
-      queryText += ' AND project_id = $1';
       params.push(project_id);
+      conditions.push(`project_id = $${params.length}`);
     }
 
     if (parent_folder_id !== undefined) {
-      queryText += ` AND parent_folder_id ${parent_folder_id ? '= $2' : 'IS NULL'}`;
-      if (parent_folder_id) params.push(parent_folder_id);
+      if (parent_folder_id) {
+        params.push(parent_folder_id);
+        conditions.push(`parent_folder_id = $${params.length}`);
+      } else {
+        conditions.push('parent_folder_id IS NULL');
+      }
+    }
+
+    if (conditions.length > 0) {
+      queryText += ' WHERE ' + conditions.join(' AND ');
     }
 
     queryText += ' ORDER BY id DESC';
@@ -330,6 +349,61 @@ router.delete('/:id', async (req, res, next) => {
     }
 
     res.json({ success: true, message: '文档删除成功' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/project-documents/{id}/permanent:
+ *   delete:
+ *     summary: 彻底删除文档（从数据库和文件系统删除）
+ *     tags: [Project Documents]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.delete('/:id/permanent', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 先获取文件信息，用于删除物理文件
+    const docResult = await query(
+      'SELECT * FROM project_documents WHERE id = $1',
+      [id]
+    );
+
+    if (docResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '文档不存在'
+      });
+    }
+
+    const file = docResult.rows[0];
+
+    // 从数据库彻底删除
+    await query('DELETE FROM project_documents WHERE id = $1', [id]);
+
+    // 删除物理文件
+    const fs = await import('fs');
+    const filePath = path.join(__dirname, '../../uploads', path.basename(file.file_url));
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.json({ success: true, message: '文档彻底删除成功' });
   } catch (error) {
     next(error);
   }
