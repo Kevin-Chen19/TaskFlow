@@ -121,8 +121,10 @@
       <el-upload
         class="upload-demo"
         drag
-        action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+        :auto-upload="false"
+        :show-file-list="false"
         multiple
+        :on-change="handleDropFileChange"
       >
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
         <div class="el-upload__text">
@@ -336,6 +338,34 @@ const handleFileChange = (file: any) => {
   const existingIndex = fileList.value.findIndex(f => f.uid === file.uid)
   if (existingIndex === -1) {
     fileList.value.push(file)
+  }
+}
+
+// 处理拖拽区域文件变化 - 直接上传
+const handleDropFileChange = async (file: any) => {
+  const projectId = otherStore.currentProjectId
+  if (!projectId) {
+    ElMessage.warning('请先选择项目')
+    return
+  }
+
+  const fileToUpload = file.raw
+  if (!fileToUpload || !(fileToUpload instanceof File)) {
+    console.error('无效的文件对象:', file)
+    ElMessage.error(`${file.name} 上传失败：无效文件`)
+    return
+  }
+
+  try {
+    const result = await fileStore.uploadFile(projectId, fileToUpload, currentFolderId.value)
+    if (result.success) {
+      ElMessage.success(`${file.name} 上传成功`)
+    } else {
+      ElMessage.error(`${file.name} 上传失败`)
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    ElMessage.error(`${file.name} 上传失败`)
   }
 }
 
