@@ -317,6 +317,9 @@ router.delete('/:id/permanent', async (req, res, next) => {
     const { id } = req.params;
     const fs = await import('fs');
     const pathModule = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = pathModule.dirname(__filename);
 
     // 递归获取所有子文件夹ID
     const getAllFolderIds = async (folderId) => {
