@@ -791,3 +791,10 @@ export const deleteProjectDocument = (id: number) => {
     method: 'delete'
   })
 }
+
+/**
+ * 获取文档下载链接
+ */
+export const getDocumentDownloadUrl = (id: number) => {
+  return `http://localhost:3000/api/project-documents/download/${id}`
+}

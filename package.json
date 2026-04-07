@@ -21,6 +21,7 @@
     "element-plus": "^2.13.1",
     "jsdoc": "^4.0.5",
     "jsonwebtoken": "^9.0.3",
+    "jszip": "^3.10.1",
     "lucide-vue-next": "^0.563.0",
     "multer": "^2.1.1",
     "pinia": "^3.0.4",

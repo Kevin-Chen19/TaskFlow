@@ -1,5 +1,6 @@
 import { reactive , ref } from 'vue'
 import { defineStore } from 'pinia'
+import JSZip from 'jszip'
 import {
   getProjectFolders,
   createProjectFolder,
@@ -8,7 +9,8 @@ import {
   getProjectDocuments,
   uploadProjectDocument,
   updateProjectDocument,
-  deleteProjectDocument
+  deleteProjectDocument,
+  getDocumentDownloadUrl
 } from '@/api'
 
 export interface FileItem {
@@ -563,6 +565,69 @@ export const useFileStore = defineStore('useFileStore', () => {
     }
   }
 
+  // 下载单个文件
+  const downloadFile = (file: FileItem) => {
+    if (!file.id) {
+      console.error('文件ID不存在')
+      return
+    }
+    // 使用后端专门的下载接口
+    const downloadUrl = getDocumentDownloadUrl(Number(file.id))
+    window.open(downloadUrl, '_blank')
+  }
+
+  // 递归收集文件夹内所有文件
+  const collectFolderFiles = async (item: FileItem, parentPath: string, zip: JSZip): Promise<void> => {
+    if (item.children && item.children.length > 0) {
+      // 是文件夹，递归处理子项
+      const folderName = item.fileName
+      for (const child of item.children) {
+        await collectFolderFiles(child, `${parentPath}/${folderName}`, zip)
+      }
+    } else if (item.id) {
+      // 是文件，使用后端下载接口获取并添加到 ZIP
+      try {
+        const downloadUrl = getDocumentDownloadUrl(Number(item.id))
+        const response = await fetch(downloadUrl)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const blob = await response.blob()
+        zip.file(`${parentPath}/${item.fileName}`, blob)
+      } catch (error) {
+        console.error(`下载文件 ${item.fileName} 失败:`, error)
+      }
+    }
+  }
+
+  // 下载文件夹（打包为 ZIP）
+  const downloadFolder = async (folder: FileItem) => {
+    const zip = new JSZip()
+    const folderName = folder.fileName
+
+    // 收集文件夹内所有文件
+    if (folder.children && folder.children.length > 0) {
+      for (const child of folder.children) {
+        await collectFolderFiles(child, '', zip)
+      }
+    }
+
+    // 生成 ZIP 并下载
+    try {
+      const content = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(content)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${folderName}.zip`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('生成 ZIP 失败:', error)
+    }
+  }
+
   return {
     allFiles,
     showFloders,
@@ -581,6 +646,8 @@ export const useFileStore = defineStore('useFileStore', () => {
     backToParent,
     searchFiles,
     toggleBin,
-    findFileById
+    findFileById,
+    downloadFile,
+    downloadFolder
   }
 })

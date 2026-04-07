@@ -2,6 +2,10 @@ import express from 'express';
 import { query } from '../config/database.js';
 import upload from '../utils/upload.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -327,6 +331,55 @@ router.delete('/:id', async (req, res, next) => {
 
     res.json({ success: true, message: '文档删除成功' });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/project-documents/download/:id:
+ *   get:
+ *     summary: 下载文档
+ *     tags: [Project Documents]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 文件下载
+ */
+router.get('/download/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'SELECT * FROM project_documents WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '文档不存在'
+      });
+    }
+
+    const file = result.rows[0];
+    const filePath = path.join(__dirname, '../../uploads', path.basename(file.file_url));
+
+    // 设置下载响应头
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+
+    // 使用流方式发送文件
+    const fs = await import('fs');
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('下载文件失败:', error);
     next(error);
   }
 });

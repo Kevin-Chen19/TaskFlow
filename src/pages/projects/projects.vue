@@ -413,6 +413,15 @@ const handleCommand = async (file: any, command: string) => {
         console.error('删除失败:', error)
       }
     }
+  } else if (command === "download") {
+    // 下载文件或文件夹
+    if (file.children && file.children.length > 0) {
+      // 是文件夹，下载为 ZIP
+      await fileStore.downloadFolder(file)
+    } else {
+      // 是单个文件，直接下载
+      await fileStore.downloadFile(file)
+    }
   }
 }
 
