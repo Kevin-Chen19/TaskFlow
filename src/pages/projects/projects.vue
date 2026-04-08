@@ -38,7 +38,7 @@
           </div>
         </div>
         <div class="spaceLine"></div>
-        <div class="iconBox uploadBox" @click="openUploadDialog">
+        <div class="iconBox uploadBox" @click="openUploadDialog" v-if="!ifBin">
           <img src="@/assets/icons/上传文件.png" alt="上传文件图标" />
           <div>{{ $t("projects.uploadFile") }}</div>
         </div>
@@ -117,7 +117,7 @@
       </el-tree>
     </div>
     <div class="emptyBox" v-if="ifEmpty">{{ $t("noMatchFound") }}</div>
-    <div class="dropBox">
+    <div class="dropBox" v-if="!ifBin">
       <el-upload
         class="upload-demo"
         drag
@@ -324,6 +324,11 @@ const showBinFolders = () => {
 
 // 打开上传对话框
 const openUploadDialog = () => {
+  // 在回收站模式下禁用上传
+  if (ifBin.value) {
+    ElMessage.warning('回收站模式下无法上传文件')
+    return
+  }
   fileList.value = []
   uploadDialogVisible.value = true
 }
@@ -343,6 +348,12 @@ const handleFileChange = (file: any) => {
 
 // 处理拖拽区域文件变化 - 直接上传
 const handleDropFileChange = async (file: any) => {
+  // 在回收站模式下禁用上传
+  if (ifBin.value) {
+    ElMessage.warning('回收站模式下无法上传文件')
+    return
+  }
+  
   const projectId = otherStore.currentProjectId
   if (!projectId) {
     ElMessage.warning('请先选择项目')
