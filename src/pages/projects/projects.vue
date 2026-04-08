@@ -47,7 +47,7 @@
     <div class="Line_two">
       <div class="inputName" style="margin-top: 2rem">
         <span
-          v-if="folderPath.length > 0"
+          v-if="fileStore.folderPath.length > 0"
           class="backBtn"
           @click="backToParent"
         >
@@ -255,12 +255,12 @@ const mentionsDate = reactive({
 
 // 使用 fileStore 的数据
 const showFloders = computed(() => fileStore.showFloders)
-const folderPath = computed(() => fileStore.folderPath)
 
 // 获取当前文件夹 ID（用于上传和创建文件夹）
 const currentFolderId = computed(() => {
-  return folderPath.value.length > 0
-    ? folderPath.value[folderPath.value.length - 1]
+  const folderPath = fileStore.folderPath
+  return folderPath.length > 0
+    ? folderPath[folderPath.length - 1]
     : null
 })
 
@@ -318,8 +318,8 @@ const showBinFolders = () => {
   ifBin.value = !ifBin.value
   ifShowCreateBox.value = !ifBin.value
   fileStore.toggleBin(ifBin.value)
-  // 清空路径
-  fileStore.folderPath = []
+  // 清空路径（使用 splice 保持响应式）
+  fileStore.folderPath.splice(0, fileStore.folderPath.length)
 }
 
 // 打开上传对话框

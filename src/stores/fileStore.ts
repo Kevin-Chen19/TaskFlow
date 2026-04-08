@@ -243,26 +243,30 @@ export const useFileStore = defineStore('useFileStore', () => {
       }
 
       // 第三步：构建文件夹层级
+      // 先将所有根文件夹添加到对应根级
+      const rootFolders: FileItem[] = []
+      allFolderMap.forEach((folder) => {
+        if (!folder.parentId) {
+          rootFolders.push(folder)
+        }
+      })
+
+      // 再建立父子关系（子文件夹不添加到根级）
       allFolderMap.forEach((folder) => {
         if (folder.parentId) {
           const parentFolder = allFolderMap.get(folder.parentId)
           if (parentFolder && parentFolder.children) {
             parentFolder.children.push(folder)
-          } else {
-            // 父文件夹不存在（可能被删除了），添加到对应根级
-            if (folder.ifInBin) {
-              binRootFiles.push(folder)
-            } else {
-              normalRootFiles.push(folder)
-            }
           }
+        }
+      })
+
+      // 将根级文件夹分类
+      rootFolders.forEach((folder) => {
+        if (folder.ifInBin) {
+          binRootFiles.push(folder)
         } else {
-          // 根级文件夹
-          if (folder.ifInBin) {
-            binRootFiles.push(folder)
-          } else {
-            normalRootFiles.push(folder)
-          }
+          normalRootFiles.push(folder)
         }
       })
 
@@ -270,8 +274,9 @@ export const useFileStore = defineStore('useFileStore', () => {
       allFiles.splice(0, allFiles.length, ...normalRootFiles)
       binFiles.splice(0, binFiles.length, ...binRootFiles)
 
-      // 正常文件过滤（应该为空，因为 allFiles 只包含非回收站的）
+      // 正常文件显示（过滤掉回收站文件）
       const filteredShowFiles = filterFiles(allFiles, false)
+      // 回收站文件显示（显示完整树结构，只显示已删除的文件夹）
       const filteredBinFiles = filterFiles(binFiles, true)
 
       saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
