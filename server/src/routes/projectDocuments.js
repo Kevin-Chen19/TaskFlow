@@ -356,6 +356,97 @@ router.delete('/:id', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/project-documents/{id}/restore:
+ *   put:
+ *     summary: 恢复文档从回收站
+ *     tags: [Project Documents]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 恢复成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.put('/:id/restore', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 获取文档当前信息（包括父文件夹）
+    const docResult = await query(
+      'SELECT * FROM project_documents WHERE id = $1 AND deleted_at IS NOT NULL',
+      [id]
+    );
+
+    if (docResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '文档不存在或未被删除'
+      });
+    }
+
+    const doc = docResult.rows[0];
+    let targetParentId = doc.parent_folder_id;
+
+    // 如果文档有父文件夹，检查父文件夹是否在回收站中
+    if (doc.parent_folder_id) {
+      // 递归查找最近的未删除父文件夹
+      const findNearestAvailableParent = async (folderId) => {
+        const folderResult = await query(
+          'SELECT parent_folder_id, deleted_at FROM project_folders WHERE id = $1',
+          [folderId]
+        );
+
+        if (folderResult.rows.length === 0) {
+          return null; // 文件夹不存在
+        }
+
+        const folder = folderResult.rows[0];
+
+        // 如果当前文件夹未删除，返回该文件夹ID
+        if (folder.deleted_at === null) {
+          return folderId;
+        }
+
+        // 如果当前文件夹已删除且还有父文件夹，继续向上查找
+        if (folder.parent_folder_id) {
+          return await findNearestAvailableParent(folder.parent_folder_id);
+        }
+
+        // 已到达根级且根级文件夹也在回收站中，返回null（恢复到项目根级）
+        return null;
+      };
+
+      targetParentId = await findNearestAvailableParent(doc.parent_folder_id);
+    }
+
+    // 更新文档：恢复并更新父文件夹ID（如果需要）
+    const result = await query(
+      'UPDATE project_documents SET deleted_at = NULL, parent_folder_id = $1 WHERE id = $2 AND deleted_at IS NOT NULL RETURNING id',
+      [targetParentId, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '文档恢复失败'
+      });
+    }
+
+    res.json({ success: true, message: '文档恢复成功' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/project-documents/{id}/permanent:
  *   delete:
  *     summary: 彻底删除文档（从数据库和文件系统删除）

@@ -757,6 +757,26 @@ export const moveDocumentToBin = (id: number) => {
 }
 
 /**
+ * 恢复文档从回收站
+ */
+export const restoreProjectDocument = (id: number) => {
+  return request({
+    url: `/project-documents/${id}/restore`,
+    method: 'put'
+  })
+}
+
+/**
+ * 恢复文件夹从回收站
+ */
+export const restoreProjectFolder = (id: number) => {
+  return request({
+    url: `/project-folders/${id}/restore`,
+    method: 'put'
+  })
+}
+
+/**
  * 彻底删除文档（从数据库和文件系统删除）
  */
 export const deleteProjectDocumentPermanent = (id: number) => {

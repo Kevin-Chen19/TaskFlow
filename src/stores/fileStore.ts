@@ -10,6 +10,8 @@ import {
   deleteProjectFolderPermanent,
   moveFolderToBin,
   moveDocumentToBin,
+  restoreProjectFolder,
+  restoreProjectDocument,
   deleteProjectDocumentPermanent,
   getProjectDocuments,
   uploadProjectDocument,
@@ -506,22 +508,35 @@ export const useFileStore = defineStore('useFileStore', () => {
   // 恢复文件
   const restoreFile = async (id: string) => {
     try {
-      const file = findFileById(allFiles, id)
+      // 同时在正常文件列表和回收站列表中查找
+      let file = findFileById(allFiles, id)
+      if (!file) {
+        file = findFileById(binFiles, id)
+      }
       if (!file) {
         return { success: false, message: '文件不存在' }
       }
 
-      // 递归恢复
-      deleteFileRecursively(file, false)
+      const isFolder = !!file.children
 
-      // 更新显示
-      const filteredShowFiles = filterFiles(allFiles, false)
-      const filteredBinFiles = collectBinFiles(allFiles)
+      // 调用后端 API 恢复
+      if (isFolder) {
+        const res: any = await restoreProjectFolder(parseInt(id))
+        if (!res.success) {
+          return { success: false, message: res.message || '恢复失败' }
+        }
+      } else {
+        const res: any = await restoreProjectDocument(parseInt(id))
+        if (!res.success) {
+          return { success: false, message: res.message || '恢复失败' }
+        }
+      }
 
-      saveFloders.splice(0, saveFloders.length, ...filteredShowFiles)
-      binFloders.splice(0, binFloders.length, ...filteredBinFiles)
-
-      showFloders.splice(0, showFloders.length, ...binFloders)
+      // 重新加载文件列表
+      const projectId = getCurrentProjectId()
+      if (projectId) {
+        await loadProjectFiles(projectId)
+      }
 
       return { success: true }
     } catch (error) {

@@ -16,6 +16,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="rename">{{ t('projects.rename') }}</el-dropdown-item>
                 <el-dropdown-item v-if="!props.ifBin" command="delete">{{ t('fileCard.moveToBin') }}</el-dropdown-item>
+                <el-dropdown-item v-if="props.ifBin" command="restore">{{ t('fileCard.restore') }}</el-dropdown-item>
                 <el-dropdown-item v-if="props.ifBin" command="deletePermanently">{{ t('fileCard.delete') }}</el-dropdown-item>
                 <el-dropdown-item command="download">{{ t('fileCard.download') }}</el-dropdown-item>
                 <el-dropdown-item command="notify">{{ t('fileCard.remindMembers') }}</el-dropdown-item>

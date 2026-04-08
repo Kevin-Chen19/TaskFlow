@@ -98,6 +98,7 @@ export default {
   fileCard: {
     moveToBin: "Move to Recycle Bin",
     delete: "Delete",
+    restore: "Restore",
     download: "Download",
     remindMembers: "Remind members",
   },

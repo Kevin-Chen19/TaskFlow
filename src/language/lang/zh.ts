@@ -98,6 +98,7 @@ export default {
   fileCard: {
     moveToBin: "移至回收站",
     delete: "删除",
+    restore: "恢复",
     download: "下载",
     remindMembers: "提醒成员",
   },

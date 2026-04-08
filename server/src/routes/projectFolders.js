@@ -294,6 +294,123 @@ router.put('/:id/bin', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/project-folders/{id}/restore:
+ *   put:
+ *     summary: 递归恢复文件夹及其所有子项从回收站
+ *     tags: [Project Folders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 恢复成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.put('/:id/restore', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 获取文件夹当前信息
+    const folderResult = await query(
+      'SELECT * FROM project_folders WHERE id = $1 AND deleted_at IS NOT NULL',
+      [id]
+    );
+
+    if (folderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '文件夹不存在或未被删除'
+      });
+    }
+
+    const folder = folderResult.rows[0];
+    let targetParentId = folder.parent_folder_id;
+
+    // 如果文件夹有父文件夹，检查父文件夹是否在回收站中
+    if (folder.parent_folder_id) {
+      // 递归查找最近的未删除父文件夹
+      const findNearestAvailableParent = async (folderId) => {
+        const parentResult = await query(
+          'SELECT parent_folder_id, deleted_at FROM project_folders WHERE id = $1',
+          [folderId]
+        );
+
+        if (parentResult.rows.length === 0) {
+          return null; // 父文件夹不存在
+        }
+
+        const parentFolder = parentResult.rows[0];
+
+        // 如果父文件夹未删除，返回该父文件夹ID
+        if (parentFolder.deleted_at === null) {
+          return folderId;
+        }
+
+        // 如果父文件夹已删除且还有父文件夹，继续向上查找
+        if (parentFolder.parent_folder_id) {
+          return await findNearestAvailableParent(parentFolder.parent_folder_id);
+        }
+
+        // 已到达根级且根级文件夹也在回收站中，返回null（恢复到项目根级）
+        return null;
+      };
+
+      targetParentId = await findNearestAvailableParent(folder.parent_folder_id);
+    }
+
+    // 递归获取所有子文件夹ID
+    const getAllFolderIds = async (folderId) => {
+      const folderIds = [folderId];
+      const children = await query(
+        'SELECT id FROM project_folders WHERE parent_folder_id = $1',
+        [folderId]
+      );
+      for (const child of children.rows) {
+        const childIds = await getAllFolderIds(child.id);
+        folderIds.push(...childIds);
+      }
+      return folderIds;
+    };
+
+    // 获取所有子文件夹ID
+    const allFolderIds = await getAllFolderIds(parseInt(id));
+
+    // 递归将所有子文件夹从回收站恢复（不修改它们的父文件夹关系）
+    for (const folderId of allFolderIds) {
+      await query(
+        'UPDATE project_folders SET deleted_at = NULL WHERE id = $1 AND deleted_at IS NOT NULL',
+        [folderId]
+      );
+    }
+
+    // 更新当前文件夹的父文件夹ID（如果需要）
+    await query(
+      'UPDATE project_folders SET deleted_at = NULL, parent_folder_id = $1 WHERE id = $2 AND deleted_at IS NOT NULL',
+      [targetParentId, id]
+    );
+
+    // 将所有子文档从回收站恢复
+    for (const folderId of allFolderIds) {
+      await query(
+        'UPDATE project_documents SET deleted_at = NULL WHERE parent_folder_id = $1 AND deleted_at IS NOT NULL',
+        [folderId]
+      );
+    }
+
+    res.json({ success: true, message: '文件夹及其内容已恢复' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/project-folders/{id}/permanent:
  *   delete:
  *     summary: 彻底删除文件夹（从数据库和文件系统删除，包含所有子文件和子文件夹）

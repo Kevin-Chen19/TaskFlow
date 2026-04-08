@@ -423,6 +423,14 @@ const handleCommand = async (file: any, command: string) => {
     } else {
       ElMessage.error(result.message || '删除失败')
     }
+  } else if (command === "restore") {
+    // 恢复文件
+    const result = await fileStore.restoreFile(file.id)
+    if (result.success) {
+      ElMessage.success('恢复成功')
+    } else {
+      ElMessage.error(result.message || '恢复失败')
+    }
   } else if (command === "notify") {
     mentionsDate.fileName = file.fileName;
     notificationDialogVisible.value = true;
