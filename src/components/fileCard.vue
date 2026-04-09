@@ -23,6 +23,9 @@
                 <el-dropdown-item v-if="props.ifBin" command="drop">{{
                   $t("fileCard.delete")
                 }}</el-dropdown-item>
+                <el-dropdown-item v-if="props.ifBin" command="restore">{{
+                  $t("fileCard.restore")
+                }}</el-dropdown-item>
                 <el-dropdown-item command="download">{{
                   $t("fileCard.download")
                 }}</el-dropdown-item>
@@ -33,10 +36,7 @@
             </template>
           </el-dropdown>
         </div>
-        <div
-          v-if="props.ifJob"
-          style="display: flex; gap: 0.5rem;"
-        >
+        <div v-if="props.ifJob" style="display: flex; gap: 0.5rem">
           <el-icon class="actionIcon" @click.stop="handleEdit">
             <Edit />
           </el-icon>

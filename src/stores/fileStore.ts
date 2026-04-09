@@ -125,10 +125,15 @@ export const useFileStore = defineStore('useFileStore', () => {
     files.forEach((item) => {
       const isMatch = item.fileName.toLowerCase().includes(name.toLowerCase())
       if (!item.children) {
+        // 文件：检查是否匹配
         if (isMatch) {
           result.push(item)
         }
       } else {
+        // 文件夹：先检查自身是否匹配，再递归搜索子项
+        if (isMatch) {
+          result.push(item)
+        }
         const children = collectMatchingItems(item.children, name)
         result.push(...children)
       }
@@ -627,8 +632,9 @@ export const useFileStore = defineStore('useFileStore', () => {
   // 搜索文件
   const searchFiles = (name: string) => {
     if (name !== '') {
-      const filteredSearchFiles = filterFilesByName(allFiles, name)
-      showFloders.splice(0, showFloders.length, ...filteredSearchFiles)
+      // 从完整的文件树中搜索（allFiles包含所有文件，包括回收站中的）
+      const allSearchResults = filterFilesByName(allFiles, name)
+      showFloders.splice(0, showFloders.length, ...allSearchResults)
     } else {
       showFloders.splice(0, showFloders.length, ...saveFloders)
     }

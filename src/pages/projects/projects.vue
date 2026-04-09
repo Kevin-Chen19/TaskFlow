@@ -38,7 +38,7 @@
           </div>
         </div>
         <div class="spaceLine"></div>
-        <div class="iconBox uploadBox" @click="openUploadDialog" v-if="!ifBin">
+        <div class="iconBox uploadBox" @click="openUploadDialog" v-if="!ifBin && !isSearching">
           <img src="@/assets/icons/上传文件.png" alt="上传文件图标" />
           <div>{{ $t("projects.uploadFile") }}</div>
         </div>
@@ -117,7 +117,7 @@
       </el-tree>
     </div>
     <div class="emptyBox" v-if="ifEmpty">{{ $t("noMatchFound") }}</div>
-    <div class="dropBox" v-if="!ifBin">
+    <div class="dropBox" v-if="!ifBin && !isSearching">
       <el-upload
         class="upload-demo"
         drag
@@ -240,6 +240,7 @@ const uploadDialogVisible = ref(false);
 const treeRef2 = ref<TreeInstance>();
 const menuKind = ref(0);
 const ifBin = ref(false);
+const isSearching = ref(false); // 是否处于搜索状态
 const newName = ref("");
 const houzhui = ref("");
 const currentFileId = ref("");
@@ -303,10 +304,12 @@ const backToParent = () => {
 // 搜索文件
 const searchFiles = () => {
   if (searchFileValue.value !== "") {
+    isSearching.value = true;
     ifShowCreateBox.value = false;
     fileStore.searchFiles(searchFileValue.value)
     ifEmpty.value = fileStore.showFloders.length === 0
   } else {
+    isSearching.value = false;
     ifShowCreateBox.value = true;
     fileStore.searchFiles("")
     ifEmpty.value = false
@@ -316,7 +319,9 @@ const searchFiles = () => {
 // 显示/隐藏回收站
 const showBinFolders = () => {
   ifBin.value = !ifBin.value
-  ifShowCreateBox.value = !ifBin.value
+  ifShowCreateBox.value = !ifBin.value && !isSearching.value
+  isSearching.value = false  // 退出回收站时重置搜索状态
+  searchFileValue.value = "" // 清空搜索框
   fileStore.toggleBin(ifBin.value)
   // 清空路径（使用 splice 保持响应式）
   fileStore.folderPath.splice(0, fileStore.folderPath.length)
@@ -324,9 +329,13 @@ const showBinFolders = () => {
 
 // 打开上传对话框
 const openUploadDialog = () => {
-  // 在回收站模式下禁用上传
+  // 在回收站模式或搜索模式下禁用上传
   if (ifBin.value) {
     ElMessage.warning('回收站模式下无法上传文件')
+    return
+  }
+  if (isSearching.value) {
+    ElMessage.warning('搜索模式下无法上传文件')
     return
   }
   fileList.value = []
@@ -348,9 +357,13 @@ const handleFileChange = (file: any) => {
 
 // 处理拖拽区域文件变化 - 直接上传
 const handleDropFileChange = async (file: any) => {
-  // 在回收站模式下禁用上传
+  // 在回收站模式或搜索模式下禁用上传
   if (ifBin.value) {
     ElMessage.warning('回收站模式下无法上传文件')
+    return
+  }
+  if (isSearching.value) {
+    ElMessage.warning('搜索模式下无法上传文件')
     return
   }
   
