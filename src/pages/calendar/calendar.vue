@@ -317,6 +317,7 @@ interface Task {
   description: string;
   priority: number;
   created_at: string;
+  start_date: string;
   due_date: string;
   creator_id: string;
   assignee_ids: number[];
@@ -637,7 +638,7 @@ const goToToday = () => {
 const getNormalizedTasks = computed(() => {
   return allTasks.map((task) => ({
     ...task,
-    startDate: new Date(task.created_at),
+    startDate: new Date(task.start_date),
     endDate: new Date(task.due_date),
     status: getTaskStatus(task),
     assignees: task.assignee_ids,

@@ -130,7 +130,7 @@
         </el-table-column>
         <el-table-column :label="$t('taskPage.TIMELINE')" width="250">
           <template #default="scope">
-            <div>{{ getData(scope.row.created_at) }}——{{ getData(scope.row.due_date) }}</div>
+            <div>{{ getData(scope.row.start_date) }}——{{ getData(scope.row.due_date) }}</div>
           </template>
         </el-table-column>
         <el-table-column
@@ -293,6 +293,7 @@ const MessageTask = reactive({
   description: "",
   priority: 0,
   created_at: "",
+  start_date: "",
   due_date: "",
   creator_id: 0,
   assignee_ids: [] as number[],
@@ -395,6 +396,7 @@ const allTasks = reactive<Task[]>([
     description: "按照UI设计稿完成登录页的前端开发与功能的实现",
     priority: "High",
     createLine: "2026-01-03",
+    startLine: "2026-01-03",
     dueLine: "2026-01-04",
     createUser: "202601053",
     assignee: ["202601051"],
@@ -563,6 +565,7 @@ interface Task {
   description: string;
   priority: number;
   created_at: string;
+  start_date: string;
   due_date: string;
   creator_id: string;
   assignee_ids: number[];
@@ -624,6 +627,7 @@ const submitEdit = async() => {
     const componentData = JSON.parse(
       JSON.stringify(taskCardRef.value?.formData),
     ); // 深拷贝
+    componentData.start_date = formatDate(new Date(componentData.start_date));
     componentData.due_date = formatDate(new Date(componentData.due_date));
     componentData.creator_id = userStore.user.userId;
     console.log(componentData);
@@ -632,13 +636,16 @@ const submitEdit = async() => {
       title: componentData.title,
       description: componentData.description,
       priority: componentData.priority,
+      start_date: componentData.start_date,
       due_date: componentData.due_date,
       assignee_ids: componentData.assignee_ids,
       progress: componentData.progress,
     })
     if(res.success){
       const index = allTasks.findIndex((task) => task.id === MessageTask.id);
-      allTasks[index] = { ...componentData };
+      if (index !== -1) {
+        allTasks[index] = { ...componentData };
+      }
       //刷新数据
       resetTableData();
       ElMessage({
@@ -761,7 +768,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
       if(Array.isArray(TimeLineValue.value) && TimeLineValue.value.length >= 2) {
         tasks.splice(0, tasks.length);
         tasks.push(...allTasks.filter((task) =>
-          task.due_date >= formatDate(new Date(TimeLineValue.value[0]!)) && task.due_date <= formatDate(new Date(TimeLineValue.value[1]!))
+          task.start_date >= formatDate(new Date(TimeLineValue.value[0]!)) && task.start_date <= formatDate(new Date(TimeLineValue.value[1]!))
         ));
         reshowTableData();
       } else {

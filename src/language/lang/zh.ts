@@ -149,6 +149,7 @@ export default {
     PRIORITYLEVEL: "优先级",
     Select: "选择",
     DUELINE: "截止时间",
+    STARTDATE: "开始时间",
     searchByNameOr: "通过姓名或职位搜索...",
     TaskName: "任务名称。。。",
     PickADay: "选择一个日期",

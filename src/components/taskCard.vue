@@ -16,8 +16,7 @@
       :placeholder="$t('taskCard.addDetails')"
       class="description-input"
     />
-    <div style="width: 100%; display: flex; justify-content: space-between">
-      <div>
+          <div>
         <div class="inputName">{{ $t('taskCard.PRIORITYLEVEL') }}</div>
         <el-select
           v-model="formData.priority"
@@ -40,8 +39,19 @@
           />
         </el-select>
       </div>
+    <div style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 2rem">
       <div>
-      <div class="inputName">{{ $t('taskCard.DUELINE') }}</div>
+        <div class="inputName">{{ $t('taskCard.STARTDATE') }}</div>
+        <el-date-picker
+          v-model="formData.start_date"
+          type="date"
+          :placeholder="$t('taskCard.PickADay')"
+          style="width: 18rem"
+          class="dateLine-input"
+        />
+      </div>
+      <div>
+        <div class="inputName">{{ $t('taskCard.DUELINE') }}</div>
         <el-date-picker
           v-model="formData.due_date"
           type="date"

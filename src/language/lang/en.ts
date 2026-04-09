@@ -149,6 +149,7 @@ export default {
     PRIORITYLEVEL: "PRIORITY LEVEL",
     Select: "Select",
     DUELINE: "DUELINE",
+    STARTDATE: "START DATE",
     searchByNameOr: "Search by name or position...",
     TaskName: "Task Name...",
     PickADay: "Pick a day",
