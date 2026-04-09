@@ -52,12 +52,17 @@ CREATE TABLE IF NOT EXISTS project_members (
 -- Create notifications table
 CREATE TABLE IF NOT EXISTS notifications (
   id SERIAL PRIMARY KEY,
+  type VARCHAR(50) NOT NULL DEFAULT 'info', -- 通知类型: project_invite, document_upload, task_assigned, comment_mention
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  sender_id INTEGER REFERENCES users(id) ON DELETE SET NULL, -- 发送者
+  receiver_id INTEGER REFERENCES users(id) ON DELETE CASCADE, -- 接收者（明确一对一）
   project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
-  creator_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  description TEXT,
-  type VARCHAR(50) DEFAULT 'chat',
-  assignee_ids INTEGER[],
-  status BOOLEAN[],
+  document_id INTEGER REFERENCES project_documents(id) ON DELETE CASCADE, -- 关联文档
+  task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE, -- 关联任务
+  data JSONB DEFAULT '{}', -- 额外数据
+  is_read BOOLEAN DEFAULT FALSE,
+  read_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -69,6 +69,16 @@ export default {
     markAsRead: "Mark as read",
     markAsUnread: "Mark as unread",
   },
+  notificationCenter: {
+    title: "Notification Center",
+    all: "All",
+    unread: "Unread",
+    invites: "Invites",
+    documents: "Documents",
+    tasks: "Tasks",
+    markAllRead: "Mark all as read",
+    noNotifications: "No notifications",
+  },
   projects: {
     documentLibary: "Project Document Libary",
     shareTeamFiles: "Share team files here.",

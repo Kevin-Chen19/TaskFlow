@@ -69,6 +69,16 @@ export default {
     markAsRead: "标记为已读",
     markAsUnread: "标记为未读",
   },
+  notificationCenter: {
+    title: "通知中心",
+    all: "全部",
+    unread: "未读",
+    invites: "邀请",
+    documents: "文档",
+    tasks: "任务",
+    markAllRead: "全部标记为已读",
+    noNotifications: "暂无通知",
+  },
   projects: {
     documentLibary: "项目文档库",
     shareTeamFiles: "共享团队文件。",

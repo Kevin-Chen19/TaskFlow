@@ -51,6 +51,7 @@ declare module 'vue' {
     FileCard: typeof import('./src/components/fileCard.vue')['default']
     MentionsCard: typeof import('./src/components/mentionsCard.vue')['default']
     NewProjectCard: typeof import('./src/components/newProjectCard.vue')['default']
+    NotificationCenter: typeof import('./src/components/NotificationCenter.vue')['default']
     NotificationsCard: typeof import('./src/components/notificationsCard.vue')['default']
     ProjectCard: typeof import('./src/components/projectCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

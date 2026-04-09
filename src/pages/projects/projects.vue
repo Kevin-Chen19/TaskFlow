@@ -171,9 +171,6 @@
         <div @click="notificationDialogVisible = false" class="cancelBtn">
           {{$t('cancel')}}
         </div>
-        <div type="primary" class="sendBtn" @click="sendNotification">
-          {{$t('projects.sendNotifications')}}
-        </div>
       </div>
     </template>
   </el-dialog>
@@ -407,6 +404,8 @@ const submitUpload = async () => {
   }
 
   try {
+    const uploadResults = [];
+    
     for (const file of fileList.value) {
       // el-upload 的 fileList 中文件对象结构：{ name, size, percentage, status, uid, raw: File }
       const fileToUpload = file.raw
@@ -417,17 +416,75 @@ const submitUpload = async () => {
       }
 
       const result = await fileStore.uploadFile(projectId, fileToUpload, currentFolderId.value)
-      if (!result.success) {
+      if (result.success) {
+        uploadResults.push({
+          name: file.name,
+          documentId: result.data?.id,
+          success: true
+        });
+      } else {
         ElMessage.error(`${file.name} 上传失败`)
+        uploadResults.push({
+          name: file.name,
+          success: false
+        });
       }
     }
+    
     ElMessage.success('文件上传成功')
     uploadDialogVisible.value = false
+    
+    // 发送通知给项目成员
+    await sendDocumentUploadNotification(uploadResults.filter(r => r.success));
+    
   } catch (error) {
     console.error('上传失败:', error)
     ElMessage.error('文件上传失败')
   }
 }
+
+// 发送文档上传通知
+const sendDocumentUploadNotification = async (uploadedFiles: any[]) => {
+  if (uploadedFiles.length === 0) return;
+  
+  try {
+    const notificationStore = useNotificationStore();
+    const projectId = otherStore.currentProjectId;
+    const userStore = useUserStore();
+    
+    // 获取项目成员
+    const membersResponse = await fetch(`/api/project-members?project_id=${projectId}`);
+    if (!membersResponse.ok) return;
+    
+    const membersResult = await membersResponse.json();
+    const members = membersResult.data || [];
+    
+    // 为每个成员发送通知（除了上传者自己）
+    for (const member of members) {
+      if (member.user_id === userStore.user?.id) continue;
+      
+      const fileNames = uploadedFiles.map(f => f.name).join(', ');
+      
+      await notificationStore.createNotification({
+        type: 'document_upload',
+        title: '新文档上传',
+        message: `${userStore.user?.fullname} 上传了文档: ${fileNames}`,
+        sender_id: userStore.user?.id,
+        receiver_id: member.user_id,
+        project_id: projectId,
+        data: {
+          uploadedFiles: uploadedFiles,
+          folderId: currentFolderId.value
+        }
+      });
+    }
+    
+    console.log(`📢 Sent upload notifications to ${members.length - 1} members`);
+  } catch (error) {
+    console.error('Failed to send upload notifications:', error);
+  }
+}
+
 // 处理菜单文件命令
 const handleCommand = async (file: any, command: string) => {
   console.log("Received command:", command, file);
@@ -595,29 +652,6 @@ const createFolder = async () => {
     ElMessage.error(result.message || '创建失败')
   }
 }
-const sendNotification = () => {
-  console.log(mentionsDate);
-  notificationStore.notifications.unshift({
-    // 使用 slice() 替代已弃用的 substr()
-    id: `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-    name: mentionsDate.fileName + "提醒",
-    time: formatDate(new Date()),
-    status: "未读",
-    creator: userStore.user.name,
-    receiver: [...mentionsDate.members],
-    kind: "文件提醒",
-    content: mentionsDate.note,
-  });
-  console.log(notificationStore.notifications);
-  notificationDialogVisible.value = false;
-  clearmentionsDate();
-};
-const clearmentionsDate = () => {
-  mentionsDate.note = "";
-  mentionsDate.members = [];
-  mentionsDate.fileName = "";
-  console.log(mentionsDate);
-};
 
 // 格式化日期为 yyyy-MM-dd HH:mm:ss
 const formatDate = (date: Date): string => {

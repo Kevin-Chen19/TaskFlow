@@ -11,11 +11,10 @@
     }
   },
   "vueCompilerOptions": {
-    "target": 3,
+    "target": 3.3,
     "plugins": [
       {
-        "name": "@vue/language-service",
-        "mode": "normal"
+        "name": "@vue/language-service"
       }
     ]
   }

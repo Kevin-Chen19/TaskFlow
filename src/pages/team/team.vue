@@ -176,6 +176,7 @@ import { useUserStore, type UserItem } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
+import { ElMessage } from "element-plus";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -288,8 +289,54 @@ const toFind = () => {
     showUsers.splice(0, showUsers.length, ...newTable);
   }
 };
-const submitInvite = () => {
-  inviteDialogVisible.value = false;
+
+// 提交邀请
+const submitInvite = async () => {
+  if (!inviteData.emailContent) {
+    ElMessage.warning('请输入邮箱地址');
+    return;
+  }
+
+  const projectId = otherStore.currentProjectId;
+  if (!projectId) {
+    ElMessage.warning('当前没有选择项目');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/project-members/${projectId}/invite`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        email: inviteData.emailContent,
+        role: inviteData.roleContent || 'viewer',
+        position: inviteData.positionContent,
+        sender_id: userStore.userInfo?.id,
+        sender_name: userStore.userInfo?.fullname,
+        sender_avatar: userStore.userInfo?.avatar_url
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      ElMessage.success('邀请已发送');
+      // 重置表单
+      inviteData.emailContent = '';
+      inviteData.roleContent = '';
+      inviteData.positionContent = '';
+      inviteDialogVisible.value = false;
+    } else {
+      ElMessage.error(result.message || '邀请失败');
+    }
+  } catch (error) {
+    console.error('发送邀请失败:', error);
+    ElMessage.error('发送邀请失败，请稍后重试');
+  }
 }
 
 // 加载项目成员数据

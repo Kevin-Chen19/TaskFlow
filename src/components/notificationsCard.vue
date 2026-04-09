@@ -1,78 +1,164 @@
 <template>
-  <div class="contenBox2">
+  <div class="contenBox2" :class="{ unread: !notification.is_read }">
     <div class="picBox">
-      <div class="iconBox" :style="{backgroundColor: iconBgc}">
+      <div class="iconBox" :style="{ backgroundColor: iconBgc }">
         <img :src="iconPic" alt="消息图标">
-        <div class="point" v-show="props.notification?.status === '未读'"></div>
+        <div class="point" v-show="!notification.is_read"></div>
       </div>
     </div>
     <div class="messageBox">
       <div class="messTop">
-        <span class="messTitle">{{ props.notification?.name ? $t(props.notification?.name) : '' }}</span>
-        <span class="messTime">{{ props.notification?.time?.split(' ')[1] || '' }}</span>
+        <span class="messTitle">{{ notification.title }}</span>
+        <span class="messTime">{{ formatTime(notification.created_at) }}</span>
       </div>
-      <div class="whoSayBox" v-if="props.notification?.kind === '聊天消息'">
-        <span style="color: #135bec; margin-right: 0.4rem;">@{{ props.notification?.creator }}</span>
-        <span>{{$t('notificationCard.commented')}}:</span>
+      <div class="whoSayBox" v-if="notification.sender_name">
+        <span style="color: #135bec; margin-right: 0.4rem;">@{{ notification.sender_name }}</span>
       </div>
       <div class="descriptionBox">
-        <span>{{  props.notification?.content }}</span>
+        <span>{{ notification.message }}</span>
       </div>
-      <div class="messBottom">
-        <div class="replyBtn" v-if="props.notification?.kind === '聊天消息'">{{ $t('notificationCard.reply') }}</div>
-        <div v-if="props.notification?.status === '未读'" class="MarkBtn" @click="handleMarkRead">{{ $t('notificationCard.markAsRead') }}</div>
-        <div v-if="props.notification?.status !== '未读'" class="MarkBtn" @click="handleMarkUnread">{{ $t('notificationCard.markAsUnread') }}</div>
+          <div class="messBottom">
+        <!-- 项目邀请响应按钮 -->
+        <template v-if="notification.type === 'project_invite'">
+          <div class="acceptBtn" @click.stop="handleAcceptInvite">
+            接受邀请
+          </div>
+          <div class="rejectBtn" @click.stop="handleRejectInvite">
+            拒绝邀请
+          </div>
+        </template>
+        <!-- 其他通知类型的回复按钮 -->
+        <div class="replyBtn" v-if="notification.type === 'comment_mention'">
+          {{ $t('notificationCard.reply') }}
+        </div>
+        <div v-if="!notification.is_read" class="MarkBtn" @click="handleMarkRead">
+          {{ $t('notificationCard.markAsRead') }}
+        </div>
+        <div v-else class="MarkBtn" @click="handleMarkUnread">
+          {{ $t('notificationCard.markAsUnread') }}
+        </div>
       </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { computed } from "vue";
-import type { notificationItem } from "@/stores/notificationStore";
+import type { Notification } from "@/stores/notificationStore";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { ElMessage } from "element-plus";
 import ChatIcon from "@/assets/icons/聊天消息.png";
 import FileIcon from "@/assets/icons/文件上传.png";
 import TaskIcon from "@/assets/icons/变更.png";
-const props = defineProps<{
-  notification?: notificationItem;
-  markRead?: (id: string) => void;
-}>();
+import InviteIcon from "@/assets/icons/变更.png";
+
+const props = defineProps<{ notification: Notification }>();
 const emit = defineEmits<{
-  markAsRead: [id: string]
+  (e: 'accept-invite', notification: Notification): void;
+  (e: 'reject-invite', notification: Notification): void;
 }>();
+
+const notificationStore = useNotificationStore();
+
 const iconPic = computed(() => {
-  if(props.notification?.kind === "聊天消息"){
-    return ChatIcon;
-  } else if (props.notification?.kind === "任务提醒" ){
-    return TaskIcon;
-  } else {
-    return FileIcon;
+  switch (props.notification.type) {
+    case 'comment_mention':
+      return ChatIcon;
+    case 'document_upload':
+      return FileIcon;
+    case 'task_assigned':
+      return TaskIcon;
+    case 'project_invite':
+      return InviteIcon;
+    default:
+      return FileIcon;
   }
-})
+});
+
 const iconBgc = computed(() => {
-  if(props.notification?.kind === "聊天消息"){
-    return "#eff6ff";
-  } else if (props.notification?.kind === "任务提醒" ){
-
-    return "#fff7ed";
-  } else {
-
-    return "#faf5ff";
+  switch (props.notification.type) {
+    case 'comment_mention':
+      return "#eff6ff";
+    case 'document_upload':
+      return "#faf5ff";
+    case 'task_assigned':
+      return "#fff7ed";
+    case 'project_invite':
+      return "#fef3c7";
+    default:
+      return "#f3f4f6";
   }
-})
+});
 
-const handleMarkRead = () => {
-  if (props.notification?.id) {
-    emit('markAsRead', props.notification.id);
-  }
-}
+const formatTime = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('zh-CN', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+};
+
+const handleMarkRead = async () => {
+  await notificationStore.markAsRead(props.notification.id);
+};
 
 const handleMarkUnread = () => {
-  if (props.notification?.id) {
-    emit('markAsRead', props.notification.id);
-    props.notification.status = '未读';
+  // 标记为未读（可以扩展API支持）
+  props.notification.is_read = false;
+  props.notification.read_at = undefined;
+};
+
+// 接受项目邀请
+const handleAcceptInvite = async () => {
+  if (!props.notification.project_id) {
+    ElMessage.error('项目信息缺失');
+    return;
   }
-}
+
+  try {
+    const token = localStorage.getItem('token');
+    const inviteData = props.notification.data ? JSON.parse(props.notification.data) : {};
+
+    const response = await fetch('/api/project-members', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        project_id: props.notification.project_id,
+        user_id: props.notification.receiver_id,
+        role: inviteData.role || 'member',
+        position: inviteData.position || '',
+        is_active: true
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // 标记通知为已读
+      await notificationStore.markAsRead(props.notification.id);
+      ElMessage.success('已接受邀请，加入项目成功');
+      emit('accept-invite', props.notification);
+    } else {
+      ElMessage.error(result.message || '接受邀请失败');
+    }
+  } catch (error) {
+    console.error('接受邀请失败:', error);
+    ElMessage.error('接受邀请失败，请稍后重试');
+  }
+};
+
+// 拒绝项目邀请
+const handleRejectInvite = async () => {
+  // 简单标记为已读即可（不添加到项目成员）
+  await notificationStore.markAsRead(props.notification.id);
+  ElMessage.info('已拒绝邀请');
+  emit('reject-invite', props.notification);
+};
 </script>
+
 <style scoped lang="scss">
 .contenBox2{
   box-sizing: border-box;
@@ -166,6 +252,30 @@ const handleMarkUnread = () => {
   }
   .MarkBtn:hover{
     color: #135bec;
+  }
+  .acceptBtn{
+    padding: 0.3rem 1rem;
+    background-color: #10b981;
+    border-radius: 0.3rem;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .acceptBtn:hover{
+    background-color: #059669;
+  }
+  .rejectBtn{
+    padding: 0.3rem 1rem;
+    background-color: #ef4444;
+    border-radius: 0.3rem;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .rejectBtn:hover{
+    background-color: #dc2626;
   }
 }
 </style>

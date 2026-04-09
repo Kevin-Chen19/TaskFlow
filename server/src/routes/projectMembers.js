@@ -90,6 +90,154 @@ router.get('/project/:projectId', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/projects/{projectId}/invite:
+ *   post:
+ *     summary: 通过邮箱邀请用户加入项目
+ *     tags: [Project Members]
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: 被邀请用户的邮箱
+ *               role:
+ *                 type: string
+ *                 description: 角色 (viewer, contributor, manager)
+ *               position:
+ *                 type: string
+ *                 description: 职位
+ *     responses:
+ *       200:
+ *         description: 邀请发送成功
+ *       404:
+ *         description: 用户不存在
+ *       400:
+ *         description: 参数错误
+ */
+router.post('/:projectId/invite', async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { email, role, position } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: '邮箱地址为必填项'
+      });
+    }
+
+    // 查找用户
+    const userResult = await query(
+      'SELECT id, fullname, avatar_url FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '未找到该邮箱对应的用户'
+      });
+    }
+
+    const invitedUser = userResult.rows[0];
+
+    // 获取项目信息
+    const projectResult = await query(
+      'SELECT id, name, owner_id FROM projects WHERE id = $1',
+      [projectId]
+    );
+
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '项目不存在'
+      });
+    }
+
+    const project = projectResult.rows[0];
+
+    // 不能邀请自己
+    const senderId = req.body.sender_id || null;
+    if (invitedUser.id === senderId) {
+      return res.status(400).json({
+        success: false,
+        message: '不能邀请自己'
+      });
+    }
+
+    // 检查是否已经是项目成员
+    const existingMember = await query(
+      'SELECT id FROM project_members WHERE project_id = $1 AND user_id = $2',
+      [projectId, invitedUser.id]
+    );
+
+    if (existingMember.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: '该用户已是项目成员'
+      });
+    }
+
+    // 创建项目邀请通知
+    const notificationResult = await query(
+      `INSERT INTO notifications (type, title, message, sender_id, receiver_id, project_id, data) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        'project_invite',
+        `项目邀请：${project.name}`,
+        `您被邀请加入项目"${project.name}"，担任${role || '成员'}`,
+        senderId,
+        invitedUser.id,
+        projectId,
+        JSON.stringify({ role: role || 'member', position: position || '' })
+      ]
+    );
+
+    const notification = notificationResult.rows[0];
+
+    // 通过 Socket.io 推送通知
+    const io = req.app.get('io');
+    const redis = req.app.get('redis');
+
+    const socketId = await redis.get(`user_online:${invitedUser.id}`);
+
+    if (socketId) {
+      io.to(`user:${invitedUser.id}`).emit('notification:new', {
+        ...notification,
+        sender_name: req.body.sender_name || '系统',
+        sender_avatar: req.body.sender_avatar || null
+      });
+      console.log(`📢 项目邀请通知推送给用户 ${invitedUser.id}`);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: '邀请已发送',
+      data: {
+        user_id: invitedUser.id,
+        user_name: invitedUser.fullname,
+        notification_id: notification.id
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/project-members:
  *   post:
  *     summary: 添加项目成员
