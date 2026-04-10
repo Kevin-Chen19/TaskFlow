@@ -199,7 +199,7 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import NotificationsCardComponent from "@/components/notificationsCard.vue";
 import TourComponents from "@/components/TourComponents.vue";
-import { useNotificationStore, type notificationItem } from "@/stores/notificationStore";
+import { useNotificationStore, type Notification } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { useLoginStore } from "@/stores/loginStore";
@@ -222,7 +222,7 @@ const todayDate = ref("");
 const yesterdayDate = ref("");
 interface DateNotifications {
   date: string;
-  notifications: notificationItem[];
+  notifications: Notification[];
 }
 const notificationsByDate = reactive<DateNotifications[]>([]);
 const changeLanguage = (languageValue: string) => {
@@ -263,7 +263,7 @@ const getCurrentDateTime = (): string => {
 const ifHasUnread = computed(() => {
   return notificationsByDate.some((dateItem) => {
     return dateItem.notifications.some((item) => {
-      return item.status === "未读";
+      return !item.is_read;
     });
   });
 }); 
@@ -303,7 +303,7 @@ const getNotifications = () => {
   };
   let num = 0;
   for (let item of notificationStore.notifications) {
-    let splitDate = item.time.split(" ")[0];
+    let splitDate = item.created_at.split(" ")[0];
     if (curentDate === splitDate) {
       datejih.notifications.push(item);
     } else {
@@ -336,7 +336,7 @@ const MarkRead = (type: string, id: string, ifAll: boolean) => {
   if (ifAll) {
     notificationsByDate.forEach((dateItem) => {
       dateItem.notifications.forEach((item) => {
-        item.status = "已读";
+        item.is_read = true;
       });
     });
   } else {
@@ -347,7 +347,7 @@ const MarkRead = (type: string, id: string, ifAll: boolean) => {
       }
       dateItem.notifications.forEach((item) => {
         if (item.id === id) {
-          item.status = "已读";
+          item.is_read = true;
           breakFlag = true;
           return;
         }

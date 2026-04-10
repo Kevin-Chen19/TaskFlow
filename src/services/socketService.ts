@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { useUserStore } from '@/stores/userStore';
+import { useLoginStore } from '@/stores/loginStore';
 import { ElMessage } from 'element-plus';
 import { useNotificationStore } from '@/stores/notificationStore';
 
@@ -11,11 +11,11 @@ class SocketService {
 
   // 初始化连接
   public connect() {
-    const userStore = useUserStore();
-    const token = userStore.user.token;
+    const loginStore = useLoginStore();
+    const token = loginStore.token || localStorage.getItem('token');
 
     if (!token) {
-      console.error('No token available for socket connection');
+      console.warn('Socket: No token available, waiting for login...');
       return;
     }
 

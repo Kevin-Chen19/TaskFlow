@@ -169,6 +169,7 @@ import { useLoginStore } from "../../stores/loginStore";
 import { useRouter } from "vue-router";
 import { ElMessage } from 'element-plus';
 import { useUserStore } from "../../stores/userStore";
+import { socketService } from "@/services/socketService";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -312,6 +313,8 @@ const submitForm = async (formEl: FormInstance | undefined) => {
           ElMessage.success('登录成功');
           // 同步用户数据到 userStore
           userStore.initUser();
+          // 连接 Socket.io
+          socketService.connect();
           router.push('/dashboard');
         }
       } catch (error) {

@@ -19,8 +19,13 @@ app.use(ElementPlus)
 app.mount('#app')
 
 // 初始化Socket.io连接（延迟执行确保pinia store已就绪）
-setTimeout(() => {
-  socketService.connect();
+setTimeout(async () => {
+  // 尝试从 localStorage 恢复登录状态并连接
+  const token = localStorage.getItem('token');
+  if (token) {
+    console.log('Socket: Found existing token, connecting...');
+    socketService.connect();
+  }
 }, 100);
 
 // 请求浏览器通知权限

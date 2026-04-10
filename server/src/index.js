@@ -122,23 +122,27 @@ app.use((err, req, res, next) => {
   });
 });
 
+// 将 io 和 redis 挂载到 app，方便在路由中使用
+app.set('io', io);
+app.set('redis', redisClient);
+
 // Socket.io 中间件 - 身份验证
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth.token;
-    
+
     if (!token) {
       return next(new Error('Authentication error: No token provided'));
     }
-    
+
     // 验证JWT token
     const decoded = verifyToken(token);
     socket.userId = decoded.userId;
     socket.user = decoded;
-    
+
     // 将用户标记为在线
     await redisClient.setEx(`user_online:${decoded.userId}`, 300, socket.id);
-    
+
     next();
   } catch (error) {
     next(new Error('Authentication error: Invalid token'));
@@ -148,10 +152,10 @@ io.use(async (socket, next) => {
 // Socket.io 连接处理
 io.on('connection', (socket) => {
   console.log(`🔌 User connected: ${socket.userId} (Socket ID: ${socket.id})`);
-  
+
   // 加入用户房间
   socket.join(`user:${socket.userId}`);
-  
+
   // 获取用户项目列表并加入项目房间
   socket.on('join:projects', async () => {
     try {
@@ -159,7 +163,7 @@ io.on('connection', (socket) => {
         'SELECT project_id FROM project_members WHERE user_id = $1',
         [socket.userId]
       );
-      
+
       result.rows.forEach(row => {
         socket.join(`project:${row.project_id}`);
         console.log(`📂 User ${socket.userId} joined project room: ${row.project_id}`);
@@ -168,48 +172,44 @@ io.on('connection', (socket) => {
       console.error('Error joining project rooms:', error);
     }
   });
-  
+
   // 加入指定项目房间
   socket.on('join:project', (projectId) => {
     socket.join(`project:${projectId}`);
     console.log(`📂 User ${socket.userId} joined project room: ${projectId}`);
   });
-  
+
   // 离开项目房间
   socket.on('leave:project', (projectId) => {
     socket.leave(`project:${projectId}`);
     console.log(`📂 User ${socket.userId} left project room: ${projectId}`);
   });
-  
+
   // 标记通知为已读
   socket.on('notification:mark-read', async (notificationId) => {
     try {
       await query(
-        'UPDATE notifications SET status = $1 WHERE id = $2',
-        [['read'], notificationId]
+        'UPDATE notifications SET is_read = true WHERE id = $1',
+        [notificationId]
       );
-      
+
       socket.emit('notification:read-success', { notificationId });
     } catch (error) {
       socket.emit('notification:error', { message: 'Failed to mark notification as read' });
     }
   });
-  
+
   // 心跳保活
   socket.on('ping', () => {
     socket.emit('pong');
   });
-  
+
   // 断开连接处理
   socket.on('disconnect', async () => {
     console.log(`🔌 User disconnected: ${socket.userId} (Socket ID: ${socket.id})`);
     await redisClient.del(`user_online:${socket.userId}`);
   });
 });
-
-// 将 io 和 redis 挂载到 app，方便在路由中使用
-app.set('io', io);
-app.set('redis', redisClient);
 
 // 启动服务器
 server.listen(PORT, () => {

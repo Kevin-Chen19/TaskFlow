@@ -212,6 +212,7 @@ router.post('/:projectId/invite', async (req, res, next) => {
     const redis = req.app.get('redis');
 
     const socketId = await redis.get(`user_online:${invitedUser.id}`);
+    console.log(`🔍 检查用户 ${invitedUser.id} 的在线状态，socketId: ${socketId}`);
 
     if (socketId) {
       io.to(`user:${invitedUser.id}`).emit('notification:new', {
@@ -220,6 +221,8 @@ router.post('/:projectId/invite', async (req, res, next) => {
         sender_avatar: req.body.sender_avatar || null
       });
       console.log(`📢 项目邀请通知推送给用户 ${invitedUser.id}`);
+    } else {
+      console.log(`⚠️ 用户 ${invitedUser.id} 当前不在线，通知已存入数据库`);
     }
 
     res.status(201).json({
