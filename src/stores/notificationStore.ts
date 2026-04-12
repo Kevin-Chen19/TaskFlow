@@ -222,6 +222,28 @@ export const useNotificationStore = defineStore("notification", () => {
     }
   };
 
+  // 标记通知为未读
+  const markAsUnread = async (notificationId: number) => {
+    try {
+      const response = await fetch(`/api/notifications/${notificationId}/unread`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const index = notifications.value.findIndex(n => n.id === notificationId);
+        if (index !== -1) {
+          notifications.value[index].is_read = false;
+          notifications.value[index].read_at = undefined;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to mark notification as unread:', error);
+    }
+  };
+
   // 删除通知
   const deleteNotification = async (notificationId: number) => {
     try {
@@ -264,6 +286,7 @@ export const useNotificationStore = defineStore("notification", () => {
     fetchUnreadCount,
     createNotification,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
     deleteNotification,
     requestNotificationPermission

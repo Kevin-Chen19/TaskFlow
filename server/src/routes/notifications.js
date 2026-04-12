@@ -347,6 +347,52 @@ router.put('/:id/read', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/notifications/{id}/unread:
+ *   put:
+ *     summary: 标记通知为未读
+ *     tags: [Notifications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 标记成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.put('/:id/unread', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'UPDATE notifications SET is_read = false, read_at = NULL WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '通知不存在'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '通知已标记为未读',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/notifications/mark-all-read:
  *   put:
  *     summary: 标记所有通知为已读

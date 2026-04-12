@@ -110,10 +110,8 @@ const handleMarkRead = async () => {
   await notificationStore.markAsRead(props.notification.id);
 };
 
-const handleMarkUnread = () => {
-  // 标记为未读（可以扩展API支持）
-  props.notification.is_read = false;
-  props.notification.read_at = undefined;
+const handleMarkUnread = async () => {
+  await notificationStore.markAsUnread(props.notification.id);
 };
 
 // 接受项目邀请
