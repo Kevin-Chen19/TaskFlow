@@ -165,12 +165,15 @@
     align-center
   >
     <div class="line"></div>
-    <MentionsCard :mentionsDate="mentionsDate"></MentionsCard>
+    <MentionsCard :mentionsDate="mentionsDate" ref="mentionsCardRef"></MentionsCard>
     <template #footer>
       <div class="dialog-footer">
-        <div @click="notificationDialogVisible = false" class="cancelBtn">
+        <el-button @click="notificationDialogVisible = false" class="cancelBtn">
           {{$t('cancel')}}
-        </div>
+        </el-button>
+        <el-button type="primary" @click="sendNotification" class="confirmBtn" :disabled="mentionsDate.members.length === 0">
+          {{$t('send')}}
+        </el-button>
       </div>
     </template>
   </el-dialog>
@@ -235,6 +238,7 @@ const renameDialogVisible = ref(false);
 const notificationDialogVisible = ref(false);
 const uploadDialogVisible = ref(false);
 const treeRef2 = ref<TreeInstance>();
+const mentionsCardRef = ref<any>(null);
 const menuKind = ref(0);
 const ifBin = ref(false);
 const isSearching = ref(false); // 是否处于搜索状态
@@ -245,7 +249,13 @@ const ifShowCreateBox = ref(true);
 const ifEmpty = ref(false);
 const searchFileValue = ref("");
 const fileList = ref<any[]>([]);
-const mentionsDate = reactive({
+interface MentionsDate {
+  members: number[];
+  note: string;
+  fileName: string;
+}
+
+const mentionsDate = reactive<MentionsDate>({
   members: [],
   note: "",
   fileName: "",
@@ -461,15 +471,15 @@ const sendDocumentUploadNotification = async (uploadedFiles: any[]) => {
     
     // 为每个成员发送通知（除了上传者自己）
     for (const member of members) {
-      if (member.user_id === userStore.user?.id) continue;
+      if (member.user_id === userStore.user?.userId) continue;
       
       const fileNames = uploadedFiles.map(f => f.name).join(', ');
       
       await notificationStore.createNotification({
         type: 'document_upload',
         title: '新文档上传',
-        message: `${userStore.user?.fullname} 上传了文档: ${fileNames}`,
-        sender_id: userStore.user?.id,
+        message: `${userStore.user?.name} 上传了文档: ${fileNames}`,
+        sender_id: userStore.user?.userId,
         receiver_id: member.user_id,
         project_id: projectId,
         data: {
@@ -514,6 +524,8 @@ const handleCommand = async (file: any, command: string) => {
     }
   } else if (command === "notify") {
     mentionsDate.fileName = file.fileName;
+    mentionsDate.members = [];
+    mentionsDate.note = '';
     notificationDialogVisible.value = true;
   } else if (command === "deletePermanently") {
     // 彻底删除
@@ -543,6 +555,57 @@ const handleCommand = async (file: any, command: string) => {
     }
   }
 }
+
+// 发送文件提醒通知
+const sendNotification = async () => {
+  if (mentionsDate.members.length === 0) {
+    ElMessage.warning('请至少选择一名成员');
+    return;
+  }
+
+  try {
+    const projectId = otherStore.currentProjectId;
+    if (!projectId) {
+      ElMessage.warning('请先选择项目');
+      return;
+    }
+
+    // 获取当前用户信息
+    const currentUserId = userStore.user.userId;
+    const currentUserName = userStore.user.name;
+
+    // 为每个选中的成员发送通知
+    for (const memberId of mentionsDate.members) {
+      await notificationStore.createNotification({
+        type: 'document_upload',
+        title: '文件提醒',
+        message: `${currentUserName} 提醒您查看文件: ${mentionsDate.fileName}${mentionsDate.note ? ' - ' + mentionsDate.note : ''}`,
+        sender_id: currentUserId,
+        receiver_id: Number(memberId),
+        project_id: projectId,
+        data: {
+          fileName: mentionsDate.fileName,
+          note: mentionsDate.note
+        }
+      });
+    }
+
+    ElMessage.success(`已成功发送提醒给 ${mentionsDate.members.length} 位成员`);
+    notificationDialogVisible.value = false;
+    
+    // 清空选择
+    mentionsDate.members = [];
+    mentionsDate.note = '';
+    
+    // 清空表格选择
+    if (mentionsCardRef.value && mentionsCardRef.value.tableRef) {
+      mentionsCardRef.value.tableRef.clearSelection();
+    }
+  } catch (error) {
+    console.error('发送提醒失败:', error);
+    ElMessage.error('发送提醒失败，请稍后重试');
+  }
+};
 
 // 处理文件卡片操作
 const handleFileAction = async (file: any, action: string) => {

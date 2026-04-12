@@ -59,7 +59,7 @@ const textarea = ref("");
 const tableRef = ref<InstanceType<typeof ElTable>>();
 const selectedNum = ref(0);
 interface MentionsDate {
-  members: string[];
+  members: number[];
   note: string;
   fileName: string;
 }
@@ -76,6 +76,10 @@ const handleSelectionChange = (selection: typeof userStore.usersTable) => {
   selectedNum.value = selection.length;
 };
 
+// 暴露 tableRef 给父组件
+defineExpose({
+  tableRef
+});
 
 </script>
 <style scoped lang="scss">
