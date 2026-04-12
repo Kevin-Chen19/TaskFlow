@@ -9,7 +9,12 @@
     <div class="messageBox">
       <div class="messTop">
         <span class="messTitle">{{ notification.title }}</span>
-        <span class="messTime">{{ formatTime(notification.created_at) }}</span>
+        <div class="topRight">
+          <span class="messTime">{{ formatTime(notification.created_at) }}</span>
+          <div class="deleteBtn" @click.stop="handleDelete">
+            <img :src="DeleteIcon" alt="删除">
+          </div>
+        </div>
       </div>
       <div class="whoSayBox" v-if="notification.sender_name">
         <span style="color: #135bec; margin-right: 0.4rem;">@{{ notification.sender_name }}</span>
@@ -21,10 +26,10 @@
         <!-- 项目邀请响应按钮 -->
         <template v-if="notification.type === 'project_invite'">
           <div class="acceptBtn" @click.stop="handleAcceptInvite">
-            接受邀请
+            接受
           </div>
           <div class="rejectBtn" @click.stop="handleRejectInvite">
-            拒绝邀请
+            拒绝
           </div>
         </template>
         <!-- 其他通知类型的回复按钮 -->
@@ -46,11 +51,13 @@
 import { computed } from "vue";
 import type { Notification } from "@/stores/notificationStore";
 import { useNotificationStore } from "@/stores/notificationStore";
-import { ElMessage } from "element-plus";
+import { useUserStore } from "@/stores/userStore";
+import { ElMessage, ElMessageBox } from "element-plus";
 import ChatIcon from "@/assets/icons/聊天消息.png";
 import FileIcon from "@/assets/icons/文件上传.png";
 import TaskIcon from "@/assets/icons/变更.png";
 import InviteIcon from "@/assets/icons/变更.png";
+import DeleteIcon from "@/assets/icons/回收站.png";
 
 const props = defineProps<{ notification: Notification }>();
 const emit = defineEmits<{
@@ -59,6 +66,7 @@ const emit = defineEmits<{
 }>();
 
 const notificationStore = useNotificationStore();
+const userStore = useUserStore();
 
 const iconPic = computed(() => {
   switch (props.notification.type) {
@@ -117,7 +125,22 @@ const handleAcceptInvite = async () => {
 
   try {
     const token = localStorage.getItem('token');
-    const inviteData = props.notification.data ? JSON.parse(props.notification.data) : {};
+    // 处理 data 字段：可能是对象或 JSON 字符串
+    let inviteData = {};
+    if (props.notification.data) {
+      if (typeof props.notification.data === 'string') {
+        try {
+          inviteData = JSON.parse(props.notification.data);
+        } catch (e) {
+          inviteData = {};
+        }
+      } else if (typeof props.notification.data === 'object') {
+        inviteData = props.notification.data;
+      }
+    }
+    
+    // 使用当前登录用户的 ID
+    const currentUserId = userStore.user.userId;
 
     const response = await fetch('/api/project-members', {
       method: 'POST',
@@ -127,7 +150,7 @@ const handleAcceptInvite = async () => {
       },
       body: JSON.stringify({
         project_id: props.notification.project_id,
-        user_id: props.notification.receiver_id,
+        user_id: currentUserId,
         role: inviteData.role || 'member',
         position: inviteData.position || '',
         is_active: true
@@ -141,6 +164,11 @@ const handleAcceptInvite = async () => {
       await notificationStore.markAsRead(props.notification.id);
       ElMessage.success('已接受邀请，加入项目成功');
       emit('accept-invite', props.notification);
+      
+      // 刷新页面以显示新加入的项目
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } else {
       ElMessage.error(result.message || '接受邀请失败');
     }
@@ -156,6 +184,22 @@ const handleRejectInvite = async () => {
   await notificationStore.markAsRead(props.notification.id);
   ElMessage.info('已拒绝邀请');
   emit('reject-invite', props.notification);
+};
+
+// 删除通知
+const handleDelete = async () => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条通知吗？', '删除通知', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    
+    await notificationStore.deleteNotification(props.notification.id);
+    ElMessage.success('通知已删除');
+  } catch (error) {
+    // 用户取消删除
+  }
 };
 </script>
 
@@ -208,11 +252,50 @@ const handleRejectInvite = async () => {
   width: 100%;
   display: flex;
   justify-content: space-between;
+  align-items: start;
+}
+.topRight{
+  position: relative;
+  display: flex;
+  width: 15%;
+  .messTime,
+  .deleteBtn{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transition: opacity 0.2s ease;
+  }
+  .deleteBtn{
+    img{
+      width: 60%;
+    }
+  }
+  .deleteBtn:hover{
+    cursor: pointer;
+  }
+  /* 默认状态：容器1显示，容器2隐藏 */
+.messTime {
+  opacity: 1;
+}
+
+.deleteBtn {
+  opacity: 0;
+}
+}
+/* 鼠标悬停时：容器1隐藏，容器2显示 */
+.messageBox:hover .messTime {
+  opacity: 0;
+}
+
+.messageBox:hover .deleteBtn {
+  opacity: 1;
 }
 .messTitle{
   font-size: 1.2rem;
   font-weight: 600;
   color: black;
+  width: 80%;
 }
 .whoSayBox{
   font-weight: 500;

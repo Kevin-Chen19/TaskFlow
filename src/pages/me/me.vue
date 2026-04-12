@@ -287,6 +287,10 @@ const loadUserProjects = async () => {
   try {
     const userId = parseInt(userStore.user.userId);
 
+    // 清空现有数据
+    MyProjects.length = 0;
+    JoinProjects.length = 0;
+
     // 获取用户创建的项目
     const myRes = await getProjectsByOwner(userId);
     if (myRes.success && myRes.data) {

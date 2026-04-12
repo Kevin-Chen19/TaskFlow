@@ -285,10 +285,45 @@ router.post('/', async (req, res, next) => {
       });
     }
 
+    // 检查用户是否已经是项目成员
+    const existingMember = await query(
+      'SELECT id FROM project_members WHERE project_id = $1 AND user_id = $2',
+      [project_id, user_id]
+    );
+
+    if (existingMember.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: '您已经是该项目的成员'
+      });
+    }
+
     const result = await query(
       'INSERT INTO project_members (project_id, user_id, role, position, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [project_id, user_id, role || 'member', position, is_active || false]
     );
+
+    // 同时更新 projects 表的 assignee_ids 字段
+    const projectResult = await query(
+      'SELECT assignee_ids FROM projects WHERE id = $1',
+      [project_id]
+    );
+
+    if (projectResult.rows.length > 0) {
+      let assigneeIds = projectResult.rows[0].assignee_ids || [];
+      // 确保是数组格式
+      if (!Array.isArray(assigneeIds)) {
+        assigneeIds = [];
+      }
+      // 添加新成员ID（如果不存在）
+      if (!assigneeIds.includes(user_id)) {
+        assigneeIds.push(user_id);
+        await query(
+          'UPDATE projects SET assignee_ids = $1 WHERE id = $2',
+          [assigneeIds, project_id]
+        );
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -296,6 +331,13 @@ router.post('/', async (req, res, next) => {
       data: result.rows[0]
     });
   } catch (error) {
+    // 处理唯一约束冲突
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: '您已经是该项目的成员'
+      });
+    }
     next(error);
   }
 });
@@ -383,6 +425,13 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    // 先获取成员信息，用于后续更新 projects 表
+    const memberResult = await query(
+      'SELECT project_id, user_id FROM project_members WHERE id = $1',
+      [id]
+    );
+
     const result = await query('DELETE FROM project_members WHERE id = $1 RETURNING id', [id]);
 
     if (result.rows.length === 0) {
@@ -390,6 +439,26 @@ router.delete('/:id', async (req, res, next) => {
         success: false,
         message: '项目成员不存在'
       });
+    }
+
+    // 同步更新 projects 表的 assignee_ids 字段
+    if (memberResult.rows.length > 0) {
+      const { project_id, user_id } = memberResult.rows[0];
+      const projectResult = await query(
+        'SELECT assignee_ids FROM projects WHERE id = $1',
+        [project_id]
+      );
+
+      if (projectResult.rows.length > 0) {
+        let assigneeIds = projectResult.rows[0].assignee_ids || [];
+        if (Array.isArray(assigneeIds) && assigneeIds.includes(user_id)) {
+          assigneeIds = assigneeIds.filter(uid => uid !== user_id);
+          await query(
+            'UPDATE projects SET assignee_ids = $1 WHERE id = $2',
+            [assigneeIds, project_id]
+          );
+        }
+      }
     }
 
     res.json({ success: true, message: '项目成员删除成功' });

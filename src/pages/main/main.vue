@@ -175,7 +175,7 @@
       </div>
     </template>
     <div class="MessageBox">
-      <div v-for="(item, index) in notificationsByDate" :key="index">
+      <div v-for="(item, index) in displayedNotificationsByDate" :key="index">
         <div class="TimeTile">
           <div>{{ getDateTip(item.date) }}</div>
           <div class="longLine"></div>
@@ -187,14 +187,19 @@
           />
         </div>
       </div>
-      <div class="moreBtn">{{ $t('viewMore') }}</div>
+      <div class="moreBtn" v-if="!showingAllNotifications && notificationStore.hasEarlierData" @click="handleViewEarlier">
+        {{ isLoadingMore ? '加载中...' : '查看更早通知' }}
+      </div>
+      <div class="moreBtn" v-else-if="showingAllNotifications || notificationsByDate.length > 0">
+        已加载全部通知
+      </div>
     </div>
   </el-drawer>
   <TourComponents :mode="showTour" @finish="handleTourFinish"></TourComponents>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from "vue";
+import { ref, computed, onMounted, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import NotificationsCardComponent from "@/components/notificationsCard.vue";
@@ -218,8 +223,10 @@ const showMenuValue = ref(false);
 const windowWidth = ref(window.innerWidth);
 const direction = ref("rtl");
 const router = useRouter();
+const isLoadingMore = ref(false);
 const todayDate = ref("");
 const yesterdayDate = ref("");
+const showingAllNotifications = ref(false); // 是否显示所有通知
 interface DateNotifications {
   date: string;
   notifications: Notification[];
@@ -266,16 +273,62 @@ const ifHasUnread = computed(() => {
       return !item.is_read;
     });
   });
-}); 
-onMounted(() => {
+});
+
+// 只显示最近三天的通知（除非已点击查看更早通知）
+const displayedNotificationsByDate = computed(() => {
+  if (showingAllNotifications.value) {
+    return notificationsByDate; // 显示所有通知
+  }
+  return notificationsByDate.slice(0, 3); // 只显示前3天
+});
+
+// 查看更早通知
+const handleViewEarlier = async () => {
+  if (isLoadingMore.value) return;
+  
+  isLoadingMore.value = true;
+  showingAllNotifications.value = true; // 标记为显示所有通知
+  const currentUserId = loginStore.user?.id || userStore.user?.userId;
+  
+  if (currentUserId) {
+    await notificationStore.loadEarlierNotifications(currentUserId);
+    // 确保数据更新后再调用 getNotifications
+    getNotifications();
+  }
+  
+  isLoadingMore.value = false;
+};
+
+onMounted(async () => {
   // 先恢复登录状态，从 localStorage 加载用户信息和 token
   loginStore.restoreAuth();
   // 然后初始化 userStore
   userStore.initUser();
   userStore.getProjectMember(otherStore.currentProjectId);
-  getNotifications();
+  
+  // 获取当前用户ID
+  const currentUserId = loginStore.user?.id || userStore.user?.userId;
+  if (currentUserId) {
+    // 先获取总数（不过滤日期），用于判断是否有更早期的数据
+    await notificationStore.fetchNotifications(currentUserId, undefined, 1, 1, false, 0);
+    
+    // 再获取最近3天的通知用于显示
+    await notificationStore.fetchNotifications(currentUserId, undefined, 1, 100, false, 3);
+    getNotifications();
+  }
+  
   loadCurrentProjectName();
 });
+
+// 监听通知列表变化，自动更新显示
+watch(
+  () => notificationStore.notifications,
+  (newNotifications) => {
+    getNotifications();
+  },
+  { deep: true }
+);
 const signOut = () => {
   // 调用 loginStore 的 logout 方法清除登录状态
   const loginStore = useLoginStore();
@@ -289,38 +342,58 @@ const signOut = () => {
 //刷新通知的函数
 const getNotifications = () => {
   notificationsByDate.splice(0, notificationsByDate.length); //清空数据
-  const currentDateTime = getCurrentDateTime();
-  todayDate.value = currentDateTime.split(" ")[0] || '';
-  yesterdayDate.value = new Date(
-    new Date(currentDateTime).getTime() - 24 * 60 * 60 * 1000,
-  )
-    .toISOString()
-    .split("T")[0] || '';
-  let curentDate = "";
-  let datejih: DateNotifications = {
-    date: curentDate,
+  
+  // 获取今天的日期（使用本地时间）
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const today = `${year}-${month}-${day}`;
+  todayDate.value = today;
+  
+  // 获取昨天的日期（使用本地时间）
+  const yesterdayObj = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const yYear = yesterdayObj.getFullYear();
+  const yMonth = String(yesterdayObj.getMonth() + 1).padStart(2, "0");
+  const yDay = String(yesterdayObj.getDate()).padStart(2, "0");
+  const yesterday = `${yYear}-${yMonth}-${yDay}`;
+  yesterdayDate.value = yesterday;
+  
+  let currentDate = "";
+  let dateGroup: DateNotifications = {
+    date: currentDate,
     notifications: [],
   };
   let num = 0;
+  
   for (let item of notificationStore.notifications) {
-    let splitDate = item.created_at.split(" ")[0];
-    if (curentDate === splitDate) {
-      datejih.notifications.push(item);
+    // 统一处理日期格式，提取 YYYY-MM-DD 部分
+    let splitDate = item.created_at?.split("T")[0] || "";
+    
+    // 跳过空日期的通知
+    if (!splitDate) {
+      continue;
+    }
+    
+    if (currentDate === splitDate) {
+      dateGroup.notifications.push(item);
     } else {
-      if (curentDate !== "") {
-        notificationsByDate.push({...datejih});
+      if (currentDate !== "") {
+        notificationsByDate.push({...dateGroup});
       }
-      curentDate = splitDate || '';
-      datejih = {
-        date: curentDate,
+      currentDate = splitDate;
+      dateGroup = {
+        date: currentDate,
         notifications: [],
       };
-      datejih.notifications.push(item);
-      if (num === notificationStore.notifications.length - 1) {
-        notificationsByDate.push({...datejih});
-      }
+      dateGroup.notifications.push(item);
     }
     num++;
+  }
+  
+  // 处理最后一组
+  if (dateGroup.date && dateGroup.notifications.length > 0) {
+    notificationsByDate.push({...dateGroup});
   }
 };
 const getDateTip = (dateValue: string): string => {
@@ -332,7 +405,7 @@ const getDateTip = (dateValue: string): string => {
     return dateValue;
   }
 };
-const MarkRead = (type: string, id: string, ifAll: boolean) => {
+const MarkRead = (type: string, id: number, ifAll: boolean) => {
   if (ifAll) {
     notificationsByDate.forEach((dateItem) => {
       dateItem.notifications.forEach((item) => {
@@ -356,12 +429,16 @@ const MarkRead = (type: string, id: string, ifAll: boolean) => {
   }
 };
 
-const handleMarkAllRead = () => {
-  MarkRead("", "", true);
+const handleMarkAllRead = async () => {
+  const currentUserId = loginStore.user?.id || userStore.user?.userId;
+  if (currentUserId) {
+    await notificationStore.markAllAsRead(currentUserId);
+  }
+  MarkRead("", 0, true);
 };
 
 const handleMarkRead = (id: string) => {
-  MarkRead("", id, false);
+  MarkRead("", parseInt(id), false);
 };
 const showMenu = () => {
   showMenuValue.value = !showMenuValue.value;

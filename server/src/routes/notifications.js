@@ -63,6 +63,16 @@ const router = express.Router();
  *         schema:
  *           type: string
  *         description: 通知类型
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: 页码
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: 每页数量
  *     responses:
  *       200:
  *         description: 成功返回通知列表
@@ -73,35 +83,63 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { receiver_id, is_read, type } = req.query;
+    const { receiver_id, is_read, type, page = 1, limit = 20, days } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 20;
+    const daysNum = parseInt(days) || 0; // 0 表示不限制天数
+    const offset = (pageNum - 1) * limitNum;
+    
     let queryText = 'SELECT n.*, u.fullname as sender_name, u.avatar_url as sender_avatar FROM notifications n LEFT JOIN users u ON n.sender_id = u.id';
+    let countQuery = 'SELECT COUNT(*) as total FROM notifications n';
     let params = [];
+    let countParams = [];
     let conditions = [];
+    let countConditions = [];
 
     if (receiver_id) {
       conditions.push(` n.receiver_id = $${conditions.length + 1}`);
+      countConditions.push(` n.receiver_id = $${countConditions.length + 1}`);
       params.push(receiver_id);
+      countParams.push(receiver_id);
     }
     if (is_read !== undefined) {
       conditions.push(` n.is_read = $${conditions.length + 1}`);
+      countConditions.push(` n.is_read = $${countConditions.length + 1}`);
       params.push(is_read);
+      countParams.push(is_read);
     }
     if (type) {
       conditions.push(` n.type = $${conditions.length + 1}`);
+      countConditions.push(` n.type = $${countConditions.length + 1}`);
       params.push(type);
+      countParams.push(type);
+    }
+    // 按天数过滤（如果指定了 days）- 使用 AT TIME ZONE 确保正确的时区转换
+    if (daysNum > 0) {
+      const daysAgo = daysNum - 1;
+      conditions.push(` (n.created_at AT TIME ZONE 'Asia/Shanghai')::date >= (CURRENT_DATE - INTERVAL '${daysAgo} days')::date`);
+      countConditions.push(` (n.created_at AT TIME ZONE 'Asia/Shanghai')::date >= (CURRENT_DATE - INTERVAL '${daysAgo} days')::date`);
     }
 
     if (conditions.length > 0) {
       queryText += ' WHERE' + conditions.join(' AND');
+      countQuery += ' WHERE' + countConditions.join(' AND');
     }
 
-    queryText += ' ORDER BY n.created_at DESC';
+    queryText += ` ORDER BY n.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limitNum, offset);
 
-    const result = await query(queryText, params);
+    const [result, countResult] = await Promise.all([
+      query(queryText, params),
+      query(countQuery, countParams)
+    ]);
+    
     res.json({
       success: true,
       data: result.rows,
-      count: result.rowCount
+      count: parseInt(countResult.rows[0].total),
+      page: pageNum,
+      limit: limitNum
     });
   } catch (error) {
     next(error);
