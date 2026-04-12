@@ -7,7 +7,7 @@
     <div class="tableBox">
       <el-table
         ref="tableRef"
-        :data="userStore.usersTable"
+        :data="filteredMembers"
         style="width: 100%; height: 15rem"
         @selection-change="handleSelectionChange"
       >
@@ -50,7 +50,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useUserStore } from "@/stores/userStore";
 import { ElTable } from "element-plus";
 
@@ -67,6 +67,11 @@ interface MentionsDate {
 const props = defineProps<{
   mentionsDate?: MentionsDate;
 }>();
+
+// 过滤掉当前登录用户
+const filteredMembers = computed(() => {
+  return userStore.usersTable.filter(user => user.userId !== userStore.user.userId);
+});
 
 const handleSelectionChange = (selection: typeof userStore.usersTable) => {
   if (props.mentionsDate) {
