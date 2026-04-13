@@ -198,6 +198,7 @@ export default {
     EMAILADRESS: "EMAIL ADRESS",
     ROLEASSIGNMENT: "ROLE ASSIGNMENT",
     SendInvites: "Send Invites",
+    RemoveMember: "Remove Member",
   },
   roles: {
     RolePosition: "Role & Position Management",

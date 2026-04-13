@@ -198,6 +198,7 @@ export default {
     EMAILADRESS: "邮箱地址",
     ROLEASSIGNMENT: "角色分配",
     SendInvites: "发送邀请",
+    RemoveMember: "移除成员",
   },
   roles: {
     RolePosition: "角色与职位管理",
