@@ -5,6 +5,64 @@ const router = express.Router();
 
 /**
  * @swagger
+ * /api/project-members:
+ *   get:
+ *     summary: 获取项目成员列表（支持查询参数）
+ *     tags: [Project Members]
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         schema:
+ *           type: integer
+ *         description: 项目ID
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: integer
+ *         description: 用户ID
+ *     responses:
+ *       200:
+ *         description: 成功返回项目成员列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.get('/', async (req, res, next) => {
+  try {
+    const { project_id, user_id } = req.query;
+
+    let queryText = 'SELECT pm.*, u.fullname, u.email, u.avatar_url FROM project_members pm LEFT JOIN users u ON pm.user_id = u.id WHERE 1=1';
+    let params = [];
+    let paramIndex = 1;
+
+    if (project_id) {
+      queryText += ` AND pm.project_id = $${paramIndex}`;
+      params.push(project_id);
+      paramIndex++;
+    }
+
+    if (user_id) {
+      queryText += ` AND pm.user_id = $${paramIndex}`;
+      params.push(user_id);
+      paramIndex++;
+    }
+
+    queryText += ' ORDER BY pm.id';
+
+    const result = await query(queryText, params);
+
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/project-members/project/{projectId}:
  *   get:
  *     summary: 获取项目的所有成员

@@ -102,6 +102,7 @@
     <template #footer>
       <div class="chatBtn">{{ $t('team.Chat') }}</div>
       <div class="chatBtn saveBtn">{{ $t('save') }}</div>
+      <div class="chatBtn removeBtn" @click="removeMember">{{ $t('team.RemoveMember') }}</div>
     </template>
   </el-drawer>
   <el-dialog
@@ -176,7 +177,7 @@ import { useUserStore, type UserItem } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -287,6 +288,74 @@ const toFind = () => {
     }
     // 将newTable赋值给showTable
     showUsers.splice(0, showUsers.length, ...newTable);
+  }
+};
+
+// 移除成员
+const removeMember = async () => {
+  if (!drawerUser.userId) {
+    ElMessage.warning('用户信息不存在');
+    return;
+  }
+
+  try {
+    const projectId = otherStore.currentProjectId;
+    if (!projectId) {
+      ElMessage.warning('当前没有选择项目');
+      return;
+    }
+
+    // 确认是否移除
+    await ElMessageBox.confirm(
+      `确定要移除成员 ${drawerUser.name} 吗？`,
+      '移除成员',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    const token = localStorage.getItem('token');
+
+    // 先获取成员记录 ID
+    const memberResponse = await fetch(`/api/project-members?project_id=${projectId}&user_id=${drawerUser.userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const memberResult = await memberResponse.json();
+    if (!memberResult.success || !memberResult.data || memberResult.data.length === 0) {
+      ElMessage.error('未找到该成员记录');
+      return;
+    }
+
+    const memberId = memberResult.data[0].id;
+
+    // 删除成员
+    const response = await fetch(`/api/project-members/${memberId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      ElMessage.success('成员已移除');
+      showDrawer.value = false;
+      // 刷新成员列表
+      await loadProjectMembers();
+    } else {
+      ElMessage.error(result.message || '移除失败');
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('移除成员失败:', error);
+      ElMessage.error('移除成员失败，请稍后重试');
+    }
   }
 };
 
@@ -549,6 +618,14 @@ onUnmounted(() => {
 }
 .saveBtn:hover {
   background-color: rgba(22, 234, 22, 0.79);
+}
+.removeBtn {
+  margin-top: 1rem;
+  background-color: rgba(239, 68, 68, 0.79);
+  color: rgb(153, 27, 27);
+}
+.removeBtn:hover {
+  background-color: rgba(220, 38, 38, 0.79);
 }
 :deep(.drawer_select .el-select__wrapper) {
   background-color: transparent;
