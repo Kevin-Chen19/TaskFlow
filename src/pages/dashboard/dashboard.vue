@@ -217,7 +217,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import CardTamp from "../../components/cardTamp.vue";
 import NewProjectCard from "../../components/newProjectCard.vue";
@@ -244,6 +244,7 @@ import {
   createMilestone,
   updateMilestone,
   deleteMilestone,
+  createProject,
 } from "@/api";
 const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
@@ -330,28 +331,100 @@ const formatMilestoneDate = (date: string): string => {
     return `计划于：${formattedDate}`;
   }
 };
-const handleSubmit = () => {
+const handleSubmit = async () => {
   try {
     // 访问子组件暴露的数据
-    const componentData = JSON.parse(
-      JSON.stringify(newProjectCardRef.value?.projectData),
-    ); // 深拷贝
-    componentData.createLine = formatDate(new Date());
-    componentData.createUser = userStore.user.userId;
-    //设置id为时间戳加随机数
-    componentData.id = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    const componentData = newProjectCardRef.value?.projectData;
+    if (!componentData || !componentData.projectName.trim()) {
+      ElMessage({
+        message: t("Dashboard.ProjectNameRequired"),
+        type: "warning",
+      });
+      return;
+    }
+
+    // 验证用户ID
+    const ownerId = userStore.user.userId;
+    if (!ownerId) {
+      ElMessage({
+        message: t("Dashboard.UserNotLoggedIn"),
+        type: "error",
+      });
+      return;
+    }
+
+    // 构建项目数据 - 确保所有字段格式正确
+    const projectData = {
+      name: componentData.projectName.trim(),
+      description: componentData.description?.trim() || '',
+      owner_id: Number(ownerId),
+      assignee_ids: (componentData.assignee || []).map((id: string) => Number(id)).filter((id: number) => !isNaN(id)),
+      progress: 0,
+      total_hours: 0,
+    };
+
+    console.log('创建项目数据:', projectData);
+
+    // 调用 API 创建项目
+    const res = await createProject(projectData);
+    
+    if (res.success && res.data) {
+      const newProjectId = res.data.id;
+      const newProjectName = res.data.name;
+      
+      console.log('项目创建成功，ID:', newProjectId, '名称:', newProjectName);
+      
+      // 先关闭对话框，避免用户重复点击
+      centerDialogVisible.value = false;
+      
+      // 切换到新项目 - 这会触发 projectChangeTrigger，其他页面会监听到并刷新
+      otherStore.setCurrentProject(newProjectId, newProjectName);
+      
+      // 给 store 更新一点时间，然后刷新当前页面数据
+      setTimeout(async () => {
+        console.log('开始加载新项目数据，项目ID:', otherStore.currentProjectId.value);
+        // 重新加载所有项目相关数据
+        await loadAllProjectData();
+        
+        ElMessage({
+          message: t("Dashboard.CreateProjectSuccess"),
+          type: "success",
+        });
+      }, 100);
+    } else {
+      ElMessage({
+        message: res.message || t("Dashboard.CreateProjectFailed"),
+        type: "error",
+      });
+    }
+  } catch (error: any) {
+    console.error("创建项目失败:", error);
     ElMessage({
-      message: t("Dashboard.CreateProjectSuccess"),
-      type: "success",
-    });
-  } catch (error) {
-    console.error("获取数据失败:", error);
-    ElMessage({
-      message: t("Dashboard.CreateProjectFailed"),
+      message: error?.response?.data?.message || error?.message || t("Dashboard.CreateProjectFailed"),
       type: "error",
     });
   }
-  centerDialogVisible.value = false;
+};
+
+// 加载所有项目相关数据
+const loadAllProjectData = async () => {
+  const projectId = otherStore.currentProjectId.value;
+  console.log('加载项目数据，项目ID:', projectId);
+  
+  if (!projectId) {
+    console.warn('当前没有选择项目，跳过数据加载');
+    return;
+  }
+  
+  // 清空旧数据
+  activities.splice(0, activities.length);
+  notes.splice(0, notes.length);
+  
+  await Promise.all([
+    loadMilestones(),
+    getNote(),
+    loadProjectStats(),
+  ]);
 };
 const addNote = () => {
   noteDialogVisible.value = true;
@@ -365,7 +438,7 @@ const submitNote = async () => {
   console.log(noteContent);
   try {
     const res = await createNote({
-      project_id: otherStore.currentProjectId,
+      project_id: otherStore.currentProjectId.value,
       creator_id: userStore.user.userId,
       description: noteContent.value,
       status: false,
@@ -544,7 +617,7 @@ const saveMilestone = async () => {
     // 新增模式：创建新里程碑
     try {
       const res = await createMilestone({
-        project_id: otherStore.currentProjectId,
+        project_id: otherStore.currentProjectId.value,
         content: milestoneData.content,
         due_date: formattedDate,
       });
@@ -587,14 +660,22 @@ const saveMilestone = async () => {
 };
 const getNote = async () => {
   try {
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Dashboard 加载笔记，项目ID:', projectId);
+    
+    if (!projectId) {
+      console.warn('Dashboard: 当前没有选择项目，跳过笔记加载');
+      return;
+    }
+    
     const res = await getNotes({
-      project_id: otherStore.currentProjectId,
+      project_id: projectId,
       creator_id: userStore.user.userId,
     });
     notes.splice(0, notes.length, ...res.data);
-    console.log(res);
+    console.log('Dashboard 笔记加载完成，数量:', notes.length);
   } catch (e) {
-    console.log("获取笔记失败", e);
+    console.error("Dashboard 获取笔记失败", e);
   }
 };
 const changeNoteStatus = async (id: number, index: number) => {
@@ -616,8 +697,16 @@ const changeNoteStatus = async (id: number, index: number) => {
 // 加载里程碑数据
 const loadMilestones = async () => {
   try {
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Dashboard 加载里程碑，项目ID:', projectId);
+    
+    if (!projectId) {
+      console.warn('Dashboard: 当前没有选择项目，跳过里程碑加载');
+      return;
+    }
+    
     const res = await getMilestones({
-      project_id: otherStore.currentProjectId,
+      project_id: projectId,
     });
     if (res.success && res.data) {
       // 将后端数据转换为前端格式
@@ -635,16 +724,18 @@ const loadMilestones = async () => {
       getActivityDisplayProps();
     }
   } catch (error) {
-    console.error("加载里程碑数据失败:", error);
+    console.error("Dashboard 加载里程碑数据失败:", error);
   }
 };
 
 // 加载项目统计数据
 const loadProjectStats = async () => {
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Dashboard 加载统计数据，项目ID:', projectId);
+    
     if (!projectId) {
-      console.warn("当前没有选择项目");
+      console.warn("Dashboard: 当前没有选择项目，跳过统计加载");
       return;
     }
 
@@ -655,6 +746,7 @@ const loadProjectStats = async () => {
       projectStats.completed_tasks = res.data.completed_tasks;
       projectStats.warning_tasks = res.data.warning_tasks;
       projectStats.expired_tasks = res.data.expired_tasks;
+      console.log('Dashboard 统计数据加载完成');
     }
   } catch (error) {
     console.error("加载项目统计数据失败:", error);
@@ -685,6 +777,12 @@ onMounted(() => {
       clearInterval(checkUserId);
     }, 3000);
   }
+});
+
+// 监听项目变化，重新加载数据
+watch(() => otherStore.projectChangeTrigger, () => {
+  console.log('Dashboard 检测到项目切换，重新加载数据');
+  loadAllProjectData();
 });
 </script>
 <style scoped lang="scss">

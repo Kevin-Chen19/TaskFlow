@@ -175,7 +175,7 @@
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore, type UserItem } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
-import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
+import { ref, computed, onMounted, onUnmounted, reactive, watch } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
 import { ElMessage, ElMessageBox } from "element-plus";
 const roleStore = useRoleStore();
@@ -299,7 +299,7 @@ const removeMember = async () => {
   }
 
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
     if (!projectId) {
       ElMessage.warning('当前没有选择项目');
       return;
@@ -366,7 +366,7 @@ const submitInvite = async () => {
     return;
   }
 
-  const projectId = otherStore.currentProjectId;
+  const projectId = otherStore.currentProjectId.value;
   if (!projectId) {
     ElMessage.warning('当前没有选择项目');
     return;
@@ -411,9 +411,11 @@ const submitInvite = async () => {
 // 加载项目成员数据
 const loadProjectMembers = async () => {
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Team 页面加载成员，项目ID:', projectId);
+    
     if (!projectId) {
-      console.warn('当前没有选择项目');
+      console.warn('Team 页面: 当前没有选择项目');
       return;
     }
 
@@ -421,8 +423,9 @@ const loadProjectMembers = async () => {
 
     // 将 userStore.usersTable 中的数据复制到 showUsers
     showUsers.splice(0, showUsers.length, ...userStore.usersTable);
+    console.log('Team 页面加载成员完成，数量:', showUsers.length);
   } catch (error) {
-    console.error('加载项目成员失败:', error);
+    console.error('Team 页面加载项目成员失败:', error);
   }
 }
 
@@ -433,6 +436,14 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
+});
+
+// 监听项目变化，重新加载成员数据
+watch(() => otherStore.projectChangeTrigger, () => {
+  // 清空现有数据
+  showUsers.splice(0, showUsers.length);
+  // 加载新数据
+  loadProjectMembers();
 });
 </script>
 <style scoped lang="scss">

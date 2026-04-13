@@ -180,7 +180,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, watch } from "vue";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 import { Edit, Delete } from "@element-plus/icons-vue";
 import FileCard from "@/components/fileCard.vue";
@@ -338,7 +338,7 @@ const addSubmit = async (kind: string) => {
       ],
     };
 
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
     let result;
 
     if (editMode.value && currentEditRoleId.value) {
@@ -400,17 +400,32 @@ const deleteRole = async (role: RoleItem) => {
 // 加载项目角色数据
 const loadRoles = async () => {
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Roles 页面加载角色，项目ID:', projectId);
+    
+    if (!projectId) {
+      console.warn('Roles 页面: 当前没有选择项目');
+      return;
+    }
+    
     await roleStore.loadRoles(projectId);
+    console.log('Roles 页面加载角色完成，数量:', roleStore.allRoles.length);
   } catch (error) {
-    console.error("加载角色数据失败:", error);
+    console.error("Roles 页面加载角色数据失败:", error);
   }
 };
 
 // 加载项目职位数据
 const loadPositions = async () => {
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Roles 页面加载职位，项目ID:', projectId);
+    
+    if (!projectId) {
+      console.warn('Roles 页面: 当前没有选择项目');
+      return;
+    }
+    
     const positionRes = await getProjectPositions({
       project_id: projectId,
     });
@@ -423,17 +438,17 @@ const loadPositions = async () => {
           count: 0
         }))
       );
-      console.log(roleStore.allpositions);
+      console.log('Roles 页面加载职位完成，数量:', roleStore.allpositions.length);
     }
   } catch (error) {
-    console.error("加载职位数据失败:", error);
+    console.error("Roles 页面加载职位数据失败:", error);
   }
 };
 
 // 新增或编辑项目职位
 const addPosition = async () => {
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
 
     if (editMode.value && currentEditPositionId.value) {
       // 编辑职位
@@ -513,6 +528,16 @@ const deletePosition = async (position: any) => {
 };
 
 onMounted(() => {
+  loadRoles();
+  loadPositions();
+});
+
+// 监听项目变化，重新加载数据并清空旧数据
+watch(() => otherStore.projectChangeTrigger, () => {
+  // 清空旧数据
+  roleStore.allRoles.splice(0, roleStore.allRoles.length);
+  roleStore.allpositions.splice(0, roleStore.allpositions.length);
+  // 加载新数据
   loadRoles();
   loadPositions();
 });

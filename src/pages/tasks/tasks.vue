@@ -266,7 +266,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
@@ -598,7 +598,7 @@ const handleSubmit = async() => {
     ); // 深拷贝
     componentData.due_date = formatDate(new Date(componentData.due_date));
     componentData.creator_id = userStore.user.userId;
-    componentData.project_id = otherStore.currentProjectId;
+    componentData.project_id = otherStore.currentProjectId.value;
     //发送网络请求添加新任务
     const res = await createTask(componentData);
     if(res.success){
@@ -665,14 +665,23 @@ const submitEdit = async() => {
 //获取项目的全部任务
 const getAllTasks = async() => {
   try{
+    const projectId = otherStore.currentProjectId.value;
+    console.log('Tasks 页面获取任务，项目ID:', projectId);
+    
+    if (!projectId) {
+      console.warn('Tasks 页面: 当前没有选择项目');
+      return;
+    }
+    
     const res = await getTasks({
-  project_id: otherStore.currentProjectId
-});
+      project_id: projectId
+    });
     if(res.success){
+      console.log('Tasks 页面获取到任务数量:', res.data?.length || 0);
       allTasks.splice(0, allTasks.length, ...res.data);
     }
   }catch(e){
-    console.log('获取任务失败', e);
+    console.error('Tasks 页面获取任务失败', e);
   }
 }
 const getData = (dataLine: string) => {
@@ -694,13 +703,26 @@ const showPriority = (priority: number) => {
 }
 onMounted(() => {
   //获取项目的全部任务
-  getAllTasks().then(() => {
-  console.log(allTasks);
-  showTasks.push(...allTasks.slice(0, 9));
-  tasks.push(...allTasks);
-  total.value = Math.ceil(tasks.length / 9);
-  })
+  loadTasksData()
+});
 
+// 加载任务数据
+const loadTasksData = async () => {
+  // 清空现有数据
+  allTasks.splice(0, allTasks.length);
+  tasks.splice(0, tasks.length);
+  showTasks.splice(0, showTasks.length);
+  
+  await getAllTasks();
+  console.log(allTasks);
+  tasks.push(...allTasks);
+  showTasks.push(...allTasks.slice(0, 9));
+  total.value = Math.ceil(tasks.length / 9);
+}
+
+// 监听项目变化，重新加载数据
+watch(() => otherStore.projectChangeTrigger, () => {
+  loadTasksData();
 });
 const handlePageChange = (page: number) => {
   pageNumber.value = page;

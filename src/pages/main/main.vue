@@ -305,7 +305,7 @@ onMounted(async () => {
   loginStore.restoreAuth();
   // 然后初始化 userStore
   userStore.initUser();
-  userStore.getProjectMember(otherStore.currentProjectId);
+  userStore.getProjectMember(otherStore.currentProjectId.value);
   
   // 获取当前用户ID
   const currentUserId = loginStore.user?.id || userStore.user?.userId;
@@ -452,8 +452,8 @@ const handleTourFinish = () => {
 // 加载当前项目名称
 const loadCurrentProjectName = async () => {
   try {
-    if (otherStore.currentProjectId) {
-      const res = await getProjectById(otherStore.currentProjectId);
+    if (otherStore.currentProjectId.value) {
+      const res = await getProjectById(otherStore.currentProjectId.value);
       if (res.success && res.data) {
         otherStore.currentProjectName = res.data.name || '';
       }

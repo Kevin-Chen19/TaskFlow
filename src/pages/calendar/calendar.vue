@@ -356,7 +356,7 @@ const allTasks = reactive<Task[]>([]);
 const getAllTasks = async() => {
   try{
     const res = await getTasks({
-  project_id: otherStore.currentProjectId
+  project_id: otherStore.currentProjectId.value
 });
     if(res.success){
       allTasks.splice(0, allTasks.length, ...res.data);

@@ -46,6 +46,8 @@ export default {
     scheduledOn: "计划于",
     CreateProjectSuccess: "创建项目成功",
     CreateProjectFailed: "创建项目失败",
+    ProjectNameRequired: "请输入项目名称",
+    UserNotLoggedIn: "用户未登录，请先登录",
   },
   main: {
     currentProject: "当前项目",

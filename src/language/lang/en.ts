@@ -46,6 +46,8 @@ export default {
     scheduledOn: "Scheduled on",
     CreateProjectSuccess: 'Create Project Success',
     CreateProjectFailed: 'Create Project Failed',
+    ProjectNameRequired: 'Please enter project name',
+    UserNotLoggedIn: 'User not logged in, please login first',
   },
   main: {
     currentProject: "Current Project",

@@ -274,17 +274,15 @@ const currentFolderId = computed(() => {
 
 // 初始化
 onMounted(() => {
-  const projectId = otherStore.currentProjectId
+  const projectId = otherStore.currentProjectId.value
   if (projectId) {
     fileStore.loadProjectFiles(projectId)
   }
 })
 
 // 监听项目变化
-watch(() => otherStore.currentProjectId, (newProjectId) => {
-  if (newProjectId) {
-    fileStore.loadProjectFiles(newProjectId)
-  }
+watch(() => otherStore.projectChangeTrigger, () => {
+  fileStore.loadProjectFiles(otherStore.currentProjectId.value)
 })
 
 // 文件树接口定义
@@ -374,7 +372,7 @@ const handleDropFileChange = async (file: any) => {
     return
   }
   
-  const projectId = otherStore.currentProjectId
+  const projectId = otherStore.currentProjectId.value
   if (!projectId) {
     ElMessage.warning('请先选择项目')
     return
@@ -407,7 +405,7 @@ const submitUpload = async () => {
     return
   }
 
-  const projectId = otherStore.currentProjectId
+  const projectId = otherStore.currentProjectId.value
   if (!projectId) {
     ElMessage.warning('请先选择项目')
     return
@@ -459,7 +457,7 @@ const sendDocumentUploadNotification = async (uploadedFiles: any[]) => {
   
   try {
     const notificationStore = useNotificationStore();
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
     const userStore = useUserStore();
     
     // 获取项目成员
@@ -564,7 +562,7 @@ const sendNotification = async () => {
   }
 
   try {
-    const projectId = otherStore.currentProjectId;
+    const projectId = otherStore.currentProjectId.value;
     if (!projectId) {
       ElMessage.warning('请先选择项目');
       return;
@@ -702,7 +700,7 @@ const createFolder = async () => {
     counter++;
   }
 
-  const projectId = otherStore.currentProjectId
+  const projectId = otherStore.currentProjectId.value
   if (!projectId) {
     ElMessage.warning('请先选择项目')
     return
