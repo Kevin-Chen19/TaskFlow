@@ -147,6 +147,110 @@ router.get('/:id', async (req, res, next) => {
  *       400:
  *         description: 请求参数错误
  */
+// 默认角色配置
+const defaultRoles = [
+  {
+    rolename: 'Project Owner',
+    description: 'Full control over the project',
+    settings: {
+      create_tasks: true,
+      delete_tasks: true,
+      edit_all_tasks: true,
+      edit_own_tasks: true,
+      edit_timeline: true,
+      invite_members: true,
+      delete_members: true,
+      manage_roles: true,
+      manage_positions: true,
+      create_documents: true,
+      delete_documents: true,
+      chat: true
+    }
+  },
+  {
+    rolename: 'Project Manager',
+    description: 'Can manage project tasks and members',
+    settings: {
+      create_tasks: true,
+      delete_tasks: true,
+      edit_all_tasks: true,
+      edit_own_tasks: true,
+      edit_timeline: true,
+      invite_members: true,
+      delete_members: true,
+      manage_roles: true,
+      manage_positions: true,
+      create_documents: true,
+      delete_documents: false,
+      chat: true
+    }
+  },
+  {
+    rolename: 'Developer',
+    description: 'Can create and edit tasks, collaborate with team',
+    settings: {
+      create_tasks: true,
+      delete_tasks: false,
+      edit_all_tasks: false,
+      edit_own_tasks: true,
+      edit_timeline: false,
+      invite_members: false,
+      delete_members: false,
+      manage_roles: false,
+      manage_positions: false,
+      create_documents: true,
+      delete_documents: false,
+      chat: true
+    }
+  },
+  {
+    rolename: 'Viewer',
+    description: 'Can only view project content',
+    settings: {
+      create_tasks: false,
+      delete_tasks: false,
+      edit_all_tasks: false,
+      edit_own_tasks: false,
+      edit_timeline: false,
+      invite_members: false,
+      delete_members: false,
+      manage_roles: false,
+      manage_positions: false,
+      create_documents: false,
+      delete_documents: false,
+      chat: false
+    }
+  }
+];
+
+// 默认职位配置
+const defaultPositions = [
+  {
+    positionname: 'Project Manager',
+    description: 'Responsible for overall project planning and coordination'
+  },
+  {
+    positionname: 'Frontend Developer',
+    description: 'Develops user interface and client-side functionality'
+  },
+  {
+    positionname: 'Backend Developer',
+    description: 'Develops server-side logic and database management'
+  },
+  {
+    positionname: 'UI/UX Designer',
+    description: 'Designs user interface and user experience'
+  },
+  {
+    positionname: 'QA Engineer',
+    description: 'Ensures software quality through testing'
+  },
+  {
+    positionname: 'DevOps Engineer',
+    description: 'Manages deployment and infrastructure operations'
+  }
+];
+
 router.post('/', async (req, res, next) => {
   try {
     const { name, description, owner_id, assignee_ids, progress, total_hours } = req.body;
@@ -158,12 +262,33 @@ router.post('/', async (req, res, next) => {
       });
     }
 
+    // 创建项目
     const result = await query(
       `INSERT INTO projects (name, description, owner_id, assignee_ids, progress, total_hours)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [name, description, owner_id, assignee_ids || [], progress || 0, total_hours || 0]
     );
+
+    const projectId = result.rows[0].id;
+
+    // 创建默认角色
+    for (const role of defaultRoles) {
+      await query(
+        `INSERT INTO project_roles (project_id, rolename, description, settings)
+         VALUES ($1, $2, $3, $4)`,
+        [projectId, role.rolename, role.description, role.settings]
+      );
+    }
+
+    // 创建默认职位
+    for (const position of defaultPositions) {
+      await query(
+        `INSERT INTO project_positions (project_id, positionname, description)
+         VALUES ($1, $2, $3)`,
+        [projectId, position.positionname, position.description]
+      );
+    }
 
     res.status(201).json({
       success: true,
