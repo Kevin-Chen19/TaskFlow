@@ -61,7 +61,7 @@
           class="cardsItem"
           v-for="item in MyProjects.slice(MyPageNum * 3, (MyPageNum + 1) * 3)"
           :key="item.id"
-          @click="open(item.projectName)"
+          @click="switchProject(item)"
         >
           <ProjectCard :project="item"></ProjectCard>
         </div>
@@ -111,7 +111,7 @@
             (JoinPageNum + 1) * 3,
           )"
           :key="item.id"
-          @click="open(item.projectName)"
+          @click="switchProject(item)"
         >
           <ProjectCard :project="item"></ProjectCard>
         </div>
@@ -237,13 +237,17 @@ import ProjectCard from "@/components/projectCard.vue";
 import Velocity from "@/components/velocity.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useUserStore } from "@/stores/userStore";
+import { useOtherStore } from "@/stores/otherStore";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { getProjectsByOwner, getProjectsByMember, uploadAvatar } from "@/api";
 import { Plus } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 const { t } = useI18n();
 const userStore = useUserStore();
+const otherStore = useOtherStore();
+const router = useRouter();
 
 // 用户编辑表单数据
 const userForm = reactive({
@@ -379,12 +383,35 @@ const handleAvatarChange = async (file: any) => {
     ElMessage.error('头像上传失败');
   }
 }
-const open = (name: string) => {
- ElMessageBox.confirm(t('me.Areyousureto') + ` ${name}?`, t('me.SwitchProject'), {
-    confirmButtonText: t('OK'),
-    cancelButtonText: t('cancel'),
-    type: 'warning'
-  })
+// 切换项目
+const switchProject = (project: Project) => {
+  const projectId = Number(project.id);
+  const projectName = project.projectName;
+
+  // 判断是否是当前项目
+  if (projectId === otherStore.currentProjectId) {
+    ElMessage.info(t('me.AlreadyInProject'));
+    return;
+  }
+
+  // 确认切换
+  ElMessageBox.confirm(
+    t('me.Areyousureto') + ` "${projectName}" ?`,
+    t('me.SwitchProject'),
+    {
+      confirmButtonText: t('OK'),
+      cancelButtonText: t('cancel'),
+      type: 'warning'
+    }
+  ).then(() => {
+    // 执行项目切换
+    otherStore.setCurrentProject(projectId, projectName);
+    ElMessage.success(t('me.SwitchSuccess'));
+    // 跳转到项目首页
+    router.push('/dashboard');
+  }).catch(() => {
+    // 取消切换
+  });
 };
 
 // 打开编辑对话框,初始化表单数据

@@ -292,7 +292,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useTasksStore, type Task } from "@/stores/tasksStore";
 import { AlertCircle, CheckCircle } from "lucide-vue-next";
@@ -354,17 +354,28 @@ const showPriority = (priority: number) => {
 const allTasks = reactive<Task[]>([]);
 //获取项目的全部任务
 const getAllTasks = async() => {
+  const projectId = otherStore.currentProjectId;
+  if (!projectId) return;
+
   try{
+    // 清空现有数据
+    allTasks.splice(0, allTasks.length);
+
     const res = await getTasks({
-  project_id: otherStore.currentProjectId.value
-});
+      project_id: projectId
+    });
     if(res.success){
-      allTasks.splice(0, allTasks.length, ...res.data);
+      allTasks.push(...res.data);
     }
   }catch(e){
     console.log('获取任务失败', e);
   }
 }
+
+// 监听项目变化，重新加载任务数据
+watch(() => otherStore.projectChangeTrigger, () => {
+  getAllTasks();
+});
 // 筛选条件
 const filters = ref({
   assignee: [] as number[],

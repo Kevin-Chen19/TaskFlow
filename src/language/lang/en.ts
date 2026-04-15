@@ -260,6 +260,8 @@ export default {
     EmailAddress: 'Email Address',
     Areyousureto: 'Are you sure to switch the current project to',
     SwitchProject: 'Switch Project',
+    AlreadyInProject: 'Already in this project',
+    SwitchSuccess: 'Project switched successfully',
   },
   newPeojectCard:{
     ProjectName: 'Project Name...',

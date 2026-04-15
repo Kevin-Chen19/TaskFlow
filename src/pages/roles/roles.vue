@@ -338,7 +338,7 @@ const addSubmit = async (kind: string) => {
       ],
     };
 
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     let result;
 
     if (editMode.value && currentEditRoleId.value) {
@@ -400,7 +400,7 @@ const deleteRole = async (role: RoleItem) => {
 // 加载项目角色数据
 const loadRoles = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Roles 页面加载角色，项目ID:', projectId);
     
     if (!projectId) {
@@ -418,7 +418,7 @@ const loadRoles = async () => {
 // 加载项目职位数据
 const loadPositions = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Roles 页面加载职位，项目ID:', projectId);
     
     if (!projectId) {
@@ -448,7 +448,7 @@ const loadPositions = async () => {
 // 新增或编辑项目职位
 const addPosition = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
 
     if (editMode.value && currentEditPositionId.value) {
       // 编辑职位

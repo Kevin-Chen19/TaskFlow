@@ -259,6 +259,8 @@ export default {
     EmailAddress: "邮箱地址",
     Areyousureto: "你确定要切换当前项目为",
     SwitchProject: "切换项目",
+    AlreadyInProject: "当前已处于该项目中",
+    SwitchSuccess: "项目切换成功",
   },
   newPeojectCard: {
     ProjectName: "项目名称",

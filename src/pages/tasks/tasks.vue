@@ -598,7 +598,7 @@ const handleSubmit = async() => {
     ); // 深拷贝
     componentData.due_date = formatDate(new Date(componentData.due_date));
     componentData.creator_id = userStore.user.userId;
-    componentData.project_id = otherStore.currentProjectId.value;
+    componentData.project_id = otherStore.currentProjectId;
     //发送网络请求添加新任务
     const res = await createTask(componentData);
     if(res.success){
@@ -665,7 +665,7 @@ const submitEdit = async() => {
 //获取项目的全部任务
 const getAllTasks = async() => {
   try{
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Tasks 页面获取任务，项目ID:', projectId);
     
     if (!projectId) {

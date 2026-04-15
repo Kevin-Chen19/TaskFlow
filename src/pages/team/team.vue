@@ -299,7 +299,7 @@ const removeMember = async () => {
   }
 
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     if (!projectId) {
       ElMessage.warning('当前没有选择项目');
       return;
@@ -366,7 +366,7 @@ const submitInvite = async () => {
     return;
   }
 
-  const projectId = otherStore.currentProjectId.value;
+  const projectId = otherStore.currentProjectId;
   if (!projectId) {
     ElMessage.warning('当前没有选择项目');
     return;
@@ -411,7 +411,7 @@ const submitInvite = async () => {
 // 加载项目成员数据
 const loadProjectMembers = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Team 页面加载成员，项目ID:', projectId);
     
     if (!projectId) {

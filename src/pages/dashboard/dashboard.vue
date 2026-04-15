@@ -382,7 +382,7 @@ const handleSubmit = async () => {
       
       // 给 store 更新一点时间，然后刷新当前页面数据
       setTimeout(async () => {
-        console.log('开始加载新项目数据，项目ID:', otherStore.currentProjectId.value);
+        console.log('开始加载新项目数据，项目ID:', otherStore.currentProjectId);
         // 重新加载所有项目相关数据
         await loadAllProjectData();
         
@@ -408,7 +408,7 @@ const handleSubmit = async () => {
 
 // 加载所有项目相关数据
 const loadAllProjectData = async () => {
-  const projectId = otherStore.currentProjectId.value;
+  const projectId = otherStore.currentProjectId;
   console.log('加载项目数据，项目ID:', projectId);
   
   if (!projectId) {
@@ -438,7 +438,7 @@ const submitNote = async () => {
   console.log(noteContent);
   try {
     const res = await createNote({
-      project_id: otherStore.currentProjectId.value,
+      project_id: otherStore.currentProjectId,
       creator_id: userStore.user.userId,
       description: noteContent.value,
       status: false,
@@ -617,7 +617,7 @@ const saveMilestone = async () => {
     // 新增模式：创建新里程碑
     try {
       const res = await createMilestone({
-        project_id: otherStore.currentProjectId.value,
+        project_id: otherStore.currentProjectId,
         content: milestoneData.content,
         due_date: formattedDate,
       });
@@ -660,7 +660,7 @@ const saveMilestone = async () => {
 };
 const getNote = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Dashboard 加载笔记，项目ID:', projectId);
     
     if (!projectId) {
@@ -697,7 +697,7 @@ const changeNoteStatus = async (id: number, index: number) => {
 // 加载里程碑数据
 const loadMilestones = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Dashboard 加载里程碑，项目ID:', projectId);
     
     if (!projectId) {
@@ -731,7 +731,7 @@ const loadMilestones = async () => {
 // 加载项目统计数据
 const loadProjectStats = async () => {
   try {
-    const projectId = otherStore.currentProjectId.value;
+    const projectId = otherStore.currentProjectId;
     console.log('Dashboard 加载统计数据，项目ID:', projectId);
     
     if (!projectId) {
