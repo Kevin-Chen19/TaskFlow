@@ -13,6 +13,7 @@
           :topLeftImg="TimeIcon"
           :bodyContent="$t('Dashboard.totalHours')"
           :footerContent="`${projectStats.total_hours}h`"
+          :showMenu="false"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -21,6 +22,9 @@
           topLeftBgc="rgba(167, 234, 167, 0.777)"
           :bodyContent="$t('Dashboard.tasksProgress')"
           :footerContent="`${projectStats.completed_tasks}/${projectStats.total_tasks}`"
+          :showMenu="false"
+          :clickable="true"
+          @click="goToTasks()"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -29,6 +33,9 @@
           topLeftBgc="#f5e5d3a5"
           :bodyContent="$t('Dashboard.earlyWarning')"
           :footerContent="String(projectStats.warning_tasks)"
+          :showMenu="false"
+          :clickable="true"
+          @click="goToTasks('warning')"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -37,6 +44,9 @@
           topLeftBgc="rgba(227, 158, 158, 0.739)"
           :bodyContent="$t('Dashboard.expiredTasks')"
           :footerContent="String(projectStats.expired_tasks)"
+          :showMenu="false"
+          :clickable="true"
+          @click="goToTasks('expired')"
         ></CardTamp>
       </div>
     </div>
@@ -231,6 +241,7 @@ import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
 import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
 import {
   getNotes,
   createNote,
@@ -247,6 +258,7 @@ import {
   getUserById,
 } from "@/api";
 const otherStore = useOtherStore();
+const router = useRouter();
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
 const TimeLineDialogVisible = ref(false);
@@ -432,6 +444,18 @@ const loadAllProjectData = async () => {
 };
 const addNote = () => {
   noteDialogVisible.value = true;
+};
+
+// 跳转到任务页面
+const goToTasks = (filterType?: string) => {
+  const query: any = {};
+  if (filterType) {
+    query.filter = filterType;
+  }
+  router.push({
+    path: '/tasks',
+    query
+  });
 };
 
 const openNewProjectDialog = () => {

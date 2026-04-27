@@ -272,10 +272,12 @@ import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import { getTasks, updateTask, createTask, deleteTask } from "@/api"
 const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
+const route = useRoute();
 const centerDialogVisible = ref(false);
 const ifAll = ref(true);
 const MessageDialogVisible = ref(false);
@@ -703,8 +705,65 @@ const showPriority = (priority: number) => {
 }
 onMounted(() => {
   //获取项目的全部任务
-  loadTasksData()
+  loadTasksData().then(() => {
+    // 根据路由参数自动筛选
+    handleRouteFilter();
+  });
 });
+
+// 处理路由参数筛选
+const handleRouteFilter = () => {
+  const filterType = route.query.filter as string;
+  console.log('任务页面收到筛选参数:', filterType);
+  
+  if (!filterType) return;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  switch (filterType) {
+    case 'warning':
+      // 预警任务：3天内到期且未完成
+      filterLabel.value = 'TimeLine';
+      const warningStart = new Date(today);
+      const warningEnd = new Date(today);
+      warningEnd.setDate(warningEnd.getDate() + 3);
+      TimeLineValue.value = [warningStart, warningEnd];
+      
+      // 手动筛选未完成的任务
+      tasks.splice(0, tasks.length);
+      tasks.push(...allTasks.filter((task: any) => {
+        if (task.progress === 100) return false; // 排除已完成
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date);
+        return dueDate >= today && dueDate <= warningEnd;
+      }));
+      showTasks.splice(0, showTasks.length);
+      showTasks.push(...tasks.slice(0, 9));
+      total.value = Math.ceil(tasks.length / 9);
+      pageNumber.value = 1;
+      
+      ElMessage.info(`已筛选出 ${tasks.length} 个预警任务`);
+      break;
+      
+    case 'expired':
+      // 逾期任务：已过期且未完成
+      tasks.splice(0, tasks.length);
+      tasks.push(...allTasks.filter((task: any) => {
+        if (task.progress === 100) return false; // 排除已完成
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date);
+        return dueDate < today;
+      }));
+      showTasks.splice(0, showTasks.length);
+      showTasks.push(...tasks.slice(0, 9));
+      total.value = Math.ceil(tasks.length / 9);
+      pageNumber.value = 1;
+      
+      ElMessage.info(`已筛选出 ${tasks.length} 个逾期任务`);
+      break;
+  }
+};
 
 // 加载任务数据
 const loadTasksData = async () => {

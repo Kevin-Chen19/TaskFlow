@@ -329,6 +329,19 @@ watch(
   },
   { deep: true }
 );
+
+// 监听路由变化，自动更新菜单选中状态
+watch(
+  () => router.currentRoute.value.path,
+  (newPath) => {
+    // 从路径中提取页面名称，如 /tasks -> tasks
+    const pathName = newPath.split('/')[1];
+    if (pathName) {
+      which.value = pathName;
+    }
+  },
+  { immediate: true }
+);
 const signOut = () => {
   // 调用 loginStore 的 logout 方法清除登录状态
   const loginStore = useLoginStore();

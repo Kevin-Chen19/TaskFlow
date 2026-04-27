@@ -1,5 +1,5 @@
 <template>
-  <div class="card-container" @click="handleClick">
+  <div class="card-container" :class="{ clickable: clickable }" @click="handleClick">
     <!-- 顶部区域 -->
     <slot name="header">
       <div class="card-top">
@@ -9,7 +9,7 @@
             alt="左侧图标"
           />
         </div>
-        <div class="card-top_right">
+        <div class="card-top_right" v-if="showMenu">
           <el-dropdown trigger="click" @command="handleCommand">
              <img src="@/assets/icons/菜单.png" alt="菜单图标" @click.stop>
             <template #dropdown>
@@ -73,6 +73,14 @@ const props = defineProps({
   topRightImg: {
     type: String,
     default: "",
+  },
+  showMenu: {
+    type: Boolean,
+    default: true,
+  },
+  clickable: {
+    type: Boolean,
+    default: false,
   },
 
   // 中间区域
@@ -145,6 +153,12 @@ const handleCommand = (command: string) => {
 </script>
 
 <style scoped lang="scss">
+.card-container.clickable {
+  cursor: pointer;
+}
+.card-container.clickable:hover {
+  opacity: 0.9;
+}
 .card-top {
   width: 100%;
   display: flex;
