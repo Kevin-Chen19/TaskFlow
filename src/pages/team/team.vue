@@ -178,6 +178,7 @@ import { useOtherStore } from "@/stores/otherStore";
 import { ref, computed, onMounted, onUnmounted, reactive, watch } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getProjectPositions } from "@/api";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -197,38 +198,20 @@ const inviteData = reactive({
   roleContent:"",
   positionContent:""
 })
-const roles = [
-  {
-    label:"viewer",
-    value:"viewer"
-  },
-  {
-    label:"contributor",
-    value:"contributor"
-  },
-   {
-    label:"manager",
-    value:"manager"
-  }
-]
-const positions = [
-  {
-    label:"Front-end Lead",
-    value:"Front-end Lead"
-  },
-  {
-    label:"Backend Lead",
-    value:"Backend Lead"
-  },
-   {
-    label:"UI Designer",
-    value:"UI Designer"
-  },
-   {
-    label:"DevOps",
-    value:"DevOps"
-  }
-]
+// 角色和职位选项改为计算属性，从 store 获取
+const roles = computed(() => {
+  return roleStore.allRoles.map(role => ({
+    label: role.roleName,
+    value: role.roleName
+  }));
+});
+
+const positions = computed(() => {
+  return roleStore.allpositions.map(pos => ({
+    label: pos.positionName,
+    value: pos.positionName
+  }));
+});
 // 根据屏幕宽度计算抽屉宽度
 const drawerWidth = computed(() => {
   if (windowWidth.value < 768) {
@@ -419,15 +402,42 @@ const loadProjectMembers = async () => {
       return;
     }
 
-    await userStore.getProjectMember(projectId);
+    // 并行加载成员、角色和职位数据
+    await Promise.all([
+      userStore.getProjectMember(projectId),
+      roleStore.loadRoles(projectId),
+      loadPositions(projectId)
+    ]);
 
     // 将 userStore.usersTable 中的数据复制到 showUsers
     showUsers.splice(0, showUsers.length, ...userStore.usersTable);
     console.log('Team 页面加载成员完成，数量:', showUsers.length);
+    console.log('角色选项:', roles.value);
+    console.log('职位选项:', positions.value);
   } catch (error) {
     console.error('Team 页面加载项目成员失败:', error);
   }
 }
+
+// 加载项目职位数据
+const loadPositions = async (projectId: number) => {
+  try {
+    const res: any = await getProjectPositions({ project_id: projectId });
+    if (res.success && res.data) {
+      roleStore.allpositions.splice(0, roleStore.allpositions.length, 
+        ...res.data.map((item: any) => ({
+          id: item.id,
+          positionName: item.positionname,
+          positionMess: item.description,
+          count: 0
+        }))
+      );
+      console.log('职位数据加载完成:', roleStore.allpositions);
+    }
+  } catch (error) {
+    console.error('加载职位数据失败:', error);
+  }
+};
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
