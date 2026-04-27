@@ -121,13 +121,15 @@
     <el-input
       v-model="newRoleData.roleDescription"
       style="width: 100%"
-      maxlength="20"
+      :maxlength="isChinese(newRoleData.roleDescription) ? 20 : 100"
       :placeholder="$t('pleaseEnterContent')"
-      show-word-limit
       resize="none"
       word-limit-position="outside"
       type="textarea"
     />
+    <div class="word-limit-tip">
+      {{ getWordCount(newRoleData.roleDescription) }} / {{ isChinese(newRoleData.roleDescription) ? '20字' : '20 words' }}
+    </div>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="rolesDialogVisible = false" class="cancelBtn">
@@ -156,13 +158,15 @@
     <el-input
       v-model="newPositionData.positionDescription"
       style="width: 100%"
-      maxlength="20"
+      :maxlength="isChinese(newPositionData.positionDescription) ? 20 : 100"
       :placeholder="$t('pleaseEnterContent')"
-      show-word-limit
       resize="none"
       word-limit-position="outside"
       type="textarea"
     />
+    <div class="word-limit-tip">
+      {{ getWordCount(newPositionData.positionDescription) }} / {{ isChinese(newPositionData.positionDescription) ? '20字' : '20 words' }}
+    </div>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="positionsDialogVisible = false" class="cancelBtn">
@@ -192,6 +196,27 @@ import { debounce } from 'lodash-es';
 const t = i18n.global.t
 const roleStore = useRoleStore();
 const otherStore = useOtherStore();
+
+// 判断文本是否主要是中文
+const isChinese = (text: string): boolean => {
+  if (!text) return true; // 默认为中文限制
+  const chineseChars = text.match(/[\u4e00-\u9fa5]/g);
+  if (!chineseChars) return false;
+  return chineseChars.length / text.length > 0.5; // 中文字符占比超过50%认为是中文
+};
+
+// 获取字数/单词数
+const getWordCount = (text: string): number => {
+  if (!text) return 0;
+  if (isChinese(text)) {
+    // 中文字符数
+    const chineseChars = text.match(/[\u4e00-\u9fa5]/g);
+    return chineseChars ? chineseChars.length : 0;
+  } else {
+    // 英文单词数（按空格分割）
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  }
+};
 const chooseWhich = ref(0);
 const rolesDialogVisible = ref(false);
 const positionsDialogVisible = ref(false);
@@ -314,35 +339,47 @@ const addSubmit = async (kind: string) => {
       ElMessage.warning('请输入角色名称');
       return;
     }
-
-    const roleData: RoleItem = {
-      roleName: newRoleData.roleName,
-      roleMess: newRoleData.roleDescription,
-      tasksData: [
-        { label: 'CreateTasks', value: false },
-        { label: 'DeleteTasks', value: false },
-        { label: 'EditAllTasks', value: false },
-        { label: 'EditOwnTasks', value: false },
-        { label: 'EditProjectMilestones', value: false },
-      ],
-      membersData: [
-        { label: 'InviteMembers', value: false },
-        { label: 'DeleteMembers', value: false },
-        { label: 'ManageRoles', value: false },
-        { label: 'ManagePositions', value: false },
-      ],
-      documentsData: [
-        { label: 'CreateDocuments', value: false },
-        { label: 'DeleteAllDocuments', value: false },
-        { label: 'Chat', value: false },
-      ],
-    };
+    
+    // 验证描述字数
+    const descCount = getWordCount(newRoleData.roleDescription);
+    const descLimit = isChinese(newRoleData.roleDescription) ? 20 : 20;
+    if (descCount > descLimit) {
+      ElMessage.warning(isChinese(newRoleData.roleDescription) ? 
+        `描述不能超过20个中文字符` : 
+        `Description cannot exceed 20 words`);
+      return;
+    }
 
     const projectId = otherStore.currentProjectId;
     let result;
 
     if (editMode.value && currentEditRoleId.value) {
-      // 编辑角色
+      // 编辑角色 - 保留原有权限配置
+      const existingRole = roleStore.allRoles.find(r => r.id === currentEditRoleId.value);
+      const roleData: RoleItem = {
+        roleName: newRoleData.roleName,
+        roleMess: newRoleData.roleDescription,
+        // 保留原有权限配置，如果没有则使用默认值
+        tasksData: existingRole?.tasksData || [
+          { label: 'CreateTasks', value: false },
+          { label: 'DeleteTasks', value: false },
+          { label: 'EditAllTasks', value: false },
+          { label: 'EditOwnTasks', value: false },
+          { label: 'EditProjectMilestones', value: false },
+        ],
+        membersData: existingRole?.membersData || [
+          { label: 'InviteMembers', value: false },
+          { label: 'DeleteMembers', value: false },
+          { label: 'ManageRoles', value: false },
+          { label: 'ManagePositions', value: false },
+        ],
+        documentsData: existingRole?.documentsData || [
+          { label: 'CreateDocuments', value: false },
+          { label: 'DeleteAllDocuments', value: false },
+          { label: 'Chat', value: false },
+        ],
+      };
+      
       result = await roleStore.updateRole(currentEditRoleId.value, roleData);
       if (result.success) {
         ElMessage.success('角色更新成功');
@@ -350,7 +387,30 @@ const addSubmit = async (kind: string) => {
         ElMessage.error(result.message || '角色更新失败');
       }
     } else {
-      // 新增角色
+      // 新增角色 - 使用默认权限配置
+      const roleData: RoleItem = {
+        roleName: newRoleData.roleName,
+        roleMess: newRoleData.roleDescription,
+        tasksData: [
+          { label: 'CreateTasks', value: false },
+          { label: 'DeleteTasks', value: false },
+          { label: 'EditAllTasks', value: false },
+          { label: 'EditOwnTasks', value: false },
+          { label: 'EditProjectMilestones', value: false },
+        ],
+        membersData: [
+          { label: 'InviteMembers', value: false },
+          { label: 'DeleteMembers', value: false },
+          { label: 'ManageRoles', value: false },
+          { label: 'ManagePositions', value: false },
+        ],
+        documentsData: [
+          { label: 'CreateDocuments', value: false },
+          { label: 'DeleteAllDocuments', value: false },
+          { label: 'Chat', value: false },
+        ],
+      };
+      
       result = await roleStore.createRole(projectId, roleData);
       if (result.success) {
         ElMessage.success('角色创建成功');
@@ -449,6 +509,16 @@ const loadPositions = async () => {
 const addPosition = async () => {
   try {
     const projectId = otherStore.currentProjectId;
+    
+    // 验证描述字数
+    const descCount = getWordCount(newPositionData.positionDescription);
+    const descLimit = isChinese(newPositionData.positionDescription) ? 20 : 20;
+    if (descCount > descLimit) {
+      ElMessage.warning(isChinese(newPositionData.positionDescription) ? 
+        `描述不能超过20个中文字符` : 
+        `Description cannot exceed 20 words`);
+      return;
+    }
 
     if (editMode.value && currentEditPositionId.value) {
       // 编辑职位
@@ -688,5 +758,12 @@ watch(() => otherStore.projectChangeTrigger, () => {
 }
 .confirmBtn:hover {
   background-color: #029140;
+}
+.word-limit-tip {
+  text-align: right;
+  font-size: 0.75rem;
+  color: #909399;
+  margin-top: 0.25rem;
+  padding-right: 0.5rem;
 }
 </style>
