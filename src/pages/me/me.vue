@@ -134,24 +134,24 @@
             <div class="timeBox">{{ $t('me.Last30Day') }}</div>
           </div>
           <div class="echarsBox">
-            <Velocity></Velocity>
+            <Velocity :data="performanceData.taskVelocity" :labels="performanceData.weekLabels"></Velocity>
           </div>
         </div>
         <div class="analyticsRight">
           <div class="rightItem1">
             <div>
               <div class="smallTips">{{ $t('me.OntimeCompletion') }}</div>
-              <div class="rateNumber">94%</div>
+              <div class="rateNumber">{{ performanceData.onTimeRate }}%</div>
             </div>
             <div class="progressBox">
               <el-progress
                 type="dashboard"
-                :percentage="94"
+                :percentage="performanceData.onTimeRate"
                 width="70"
                 color="#9256f5"
               >
                 <template #default="{ percentage }">
-                  <span style="font-size: 1.2rem; font-weight: 600">A+</span>
+                  <span style="font-size: 1.2rem; font-weight: 600">{{ getRateGrade(performanceData.onTimeRate) }}</span>
                 </template>
               </el-progress>
             </div>
@@ -160,7 +160,7 @@
             <div class="Line_two" style="align-items: center">
               <div>
                 <div class="smallTips">{{ $t('me.Numberoftasks') }}</div>
-                <div class="rateNumber">25</div>
+                <div class="rateNumber">{{ performanceData.completedTasks }}</div>
               </div>
               <div class="icon_Box">
                 <img src="@/assets/icons/闪电.png" alt="闪电图标" />
@@ -169,12 +169,12 @@
             <div class="longBox">
               <el-progress
                 :show-text="false"
-                :percentage="userStore.user.percentage"
+                :percentage="performanceData.completionRate"
                 :stroke-width="16"
                 color="#9256f5"
               />
             </div>
-            <div class="bottomTip">{{ $t('me.ratereached') }} {{userStore.user.percentage}}%</div>
+            <div class="bottomTip">{{ $t('me.ratereached') }} {{ performanceData.completionRate }}% ({{ performanceData.completedTasks }}/{{ performanceData.totalTasks }})</div>
           </div>
         </div>
       </div>
@@ -235,12 +235,11 @@
 //任务完成量折线图；工作按时完成率；工作项数量；工作完成率；
 import ProjectCard from "@/components/projectCard.vue";
 import Velocity from "@/components/velocity.vue";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { getProjectsByOwner, getProjectsByMember, uploadAvatar } from "@/api";
-import { Plus } from '@element-plus/icons-vue'
+import { getProjectsByOwner, getProjectsByMember, uploadAvatar, getTasks } from "@/api";
 import type { UploadProps } from 'element-plus'
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -265,7 +264,6 @@ const initUserForm = () => {
   userForm.signature = userStore.user.signature;
 };
 
-import avatarImg from "@/assets/pics/用户头像.jpg";
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
 
 interface Project {
@@ -285,6 +283,16 @@ const JoinProjects = reactive<Project[]>([]);
 const avator = ref('');
 const avatorFile = ref<File | null>(null);
 const defaultPic = ref(defaultAvatarImg)
+
+// 绩效分析数据
+const performanceData = reactive({
+  taskVelocity: [0, 0, 0, 0], // 最近4周的任务完成量
+  weekLabels: ['Week1', 'Week2', 'Week3', 'Week4'],
+  onTimeRate: 0, // 按时完成率
+  totalTasks: 0, // 任务总数
+  completedTasks: 0, // 已完成任务数
+  completionRate: 0 // 完成率
+});
 
 // 加载用户项目数据
 const loadUserProjects = async () => {
@@ -327,7 +335,156 @@ const loadUserProjects = async () => {
 
 onMounted(() => {
   loadUserProjects();
+  loadPerformanceData();
 });
+
+// 监听项目变化，重新加载绩效数据
+watch(() => otherStore.projectChangeTrigger, () => {
+  loadPerformanceData();
+});
+
+// 计算最近4周的周标签
+const getWeekLabels = () => {
+  const labels = [];
+  const today = new Date();
+  for (let i = 3; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i * 7);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    labels.push(`${month}/${day}`);
+  }
+  return labels;
+};
+
+// 获取周的开始日期（周一）
+const getWeekStart = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+// 根据按时完成率获取评级
+const getRateGrade = (rate: number) => {
+  if (rate >= 90) return 'A+';
+  if (rate >= 80) return 'A';
+  if (rate >= 70) return 'B+';
+  if (rate >= 60) return 'B';
+  if (rate >= 50) return 'C';
+  return 'D';
+};
+
+// 加载绩效数据
+const loadPerformanceData = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    const userId = parseInt(userStore.user.userId);
+    
+    if (!projectId || !userId) {
+      console.warn('缺少项目ID或用户ID，无法加载绩效数据');
+      return;
+    }
+
+    // 获取项目的所有任务
+    const res = await getTasks({ project_id: projectId });
+    if (!res.success || !res.data) {
+      return;
+    }
+
+    const tasks = res.data;
+    const now = new Date();
+    
+    // 获取当前用户负责的任务（作为执行者的任务）
+    const userTasks = tasks.filter((task: any) => 
+      task.assignee_ids && task.assignee_ids.includes(userId)
+    );
+
+    // 统计任务总数（只统计负责的任务）
+    performanceData.totalTasks = userTasks.length;
+    
+    // 统计当前用户负责且已完成的任务数（进度100%且是当前用户的任务）
+    const completedTasks = userTasks.filter((task: any) => 
+      task.progress === 100 && 
+      (task.assignee_ids && task.assignee_ids.includes(userId))
+    );
+    performanceData.completedTasks = completedTasks.length;
+    
+    // 计算完成率
+    performanceData.completionRate = performanceData.totalTasks > 0 
+      ? Math.round((performanceData.completedTasks / performanceData.totalTasks) * 100)
+      : 0;
+
+    // 计算按时完成率（只统计负责的任务中在截止日期前完成的）
+    const tasksWithDueDate = userTasks.filter((task: any) => task.due_date && task.progress === 100);
+    const onTimeTasks = tasksWithDueDate.filter((task: any) => {
+      // 使用 completed_at 作为完成时间
+      const completeTime = task.completed_at || task.updated_at;
+      if (!completeTime) return false;
+      const completedDate = new Date(completeTime);
+      const dueDate = new Date(task.due_date);
+      return completedDate <= dueDate;
+    });
+    
+    performanceData.onTimeRate = tasksWithDueDate.length > 0
+      ? Math.round((onTimeTasks.length / tasksWithDueDate.length) * 100)
+      : 100; // 如果没有设置截止日期的任务，默认为100%
+
+    // 计算最近4周的任务完成量
+    const weekData = [0, 0, 0, 0];
+    const weekStarts: Date[] = [];
+    
+    // 获取最近4周的开始日期
+    for (let i = 3; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i * 7);
+      weekStarts.push(getWeekStart(date));
+    }
+
+    // 统计每周完成的负责的任务数
+    const completedUserTasks = userTasks.filter((task: any) => task.progress === 100);
+    console.log('已完成的负责任务:', completedUserTasks.length, completedUserTasks);
+    
+    completedUserTasks.forEach((task: any) => {
+      // 优先使用 completed_at 作为完成时间，其次是 updated_at
+      const completeTimeField = task.completed_at || task.updated_at;
+      if (!completeTimeField) {
+        console.log('任务缺少时间字段:', task);
+        return;
+      }
+      
+      const completedDate = new Date(completeTimeField);
+      console.log('任务完成时间:', task.title, completeTimeField, completedDate);
+      
+      for (let i = 0; i < 4; i++) {
+        const weekStart = weekStarts[i];
+        if (!weekStart) continue;
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        
+        if (completedDate >= weekStart && completedDate < weekEnd) {
+          weekData[i]++;
+          console.log(`任务计入第${i + 1}周:`, weekStart.toLocaleDateString(), '-', weekEnd.toLocaleDateString());
+          break;
+        }
+      }
+    });
+
+    performanceData.taskVelocity = weekData;
+    performanceData.weekLabels = getWeekLabels();
+    
+    console.log('绩效数据加载完成:', {
+      ...performanceData,
+      weekData,
+      weekStarts: weekStarts.map(d => d.toLocaleDateString())
+    });
+  } catch (error) {
+    console.error('加载绩效数据失败:', error);
+  }
+};
 const changeShow = (type: string, pageNum: number, action: string) => {
   if (type === "my") {
     let totalPage = Math.ceil(MyProjects.length / 3);

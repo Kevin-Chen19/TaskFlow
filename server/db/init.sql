@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   assignee_ids INTEGER[],
   due_date TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
   start_date TIMESTAMP,
   progress INTEGER DEFAULT 0,
   priority INTEGER DEFAULT 0

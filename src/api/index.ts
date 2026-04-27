@@ -858,3 +858,20 @@ export const deleteProjectDocument = (id: number) => {
 export const getDocumentDownloadUrl = (id: number) => {
   return `http://localhost:3000/api/project-documents/download/${id}`
 }
+
+// ==================== 用户绩效相关接口 ====================
+
+/**
+ * 获取用户在项目中的绩效统计
+ */
+export const getUserPerformance = (params: {
+  user_id: number
+  project_id: number
+  days?: number
+}): Promise<ApiResponse> => {
+  return request({
+    url: '/tasks/user-performance',
+    method: 'get',
+    params
+  })
+}

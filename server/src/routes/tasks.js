@@ -289,6 +289,31 @@ router.put("/:id", async (req, res, next) => {
       priority,
     } = req.body;
 
+    // 先查询当前任务的进度
+    const currentTaskResult = await query(
+      "SELECT progress FROM tasks WHERE id = $1",
+      [id]
+    );
+
+    if (currentTaskResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "任务不存在",
+      });
+    }
+
+    const currentProgress = currentTaskResult.rows[0].progress;
+    let completedAtValue = null;
+
+    // 如果进度从非100%变为100%，设置完成时间
+    if (progress === 100 && currentProgress !== 100) {
+      completedAtValue = new Date().toISOString();
+    }
+    // 如果进度从100%变为非100%，清除完成时间
+    else if (progress !== 100 && currentProgress === 100) {
+      completedAtValue = null;
+    }
+
     const result = await query(
       `UPDATE tasks
        SET title = COALESCE($1, title),
@@ -297,7 +322,9 @@ router.put("/:id", async (req, res, next) => {
            due_date = COALESCE($4, due_date),
            start_date = COALESCE($5, start_date),
            progress = COALESCE($6, progress),
-           priority = COALESCE($7, priority)
+           priority = COALESCE($7, priority),
+           completed_at = COALESCE($9, completed_at),
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $8
        RETURNING *`,
       [
@@ -309,15 +336,9 @@ router.put("/:id", async (req, res, next) => {
         progress,
         priority,
         id,
+        completedAtValue,
       ],
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "任务不存在",
-      });
-    }
 
     res.json({
       success: true,
