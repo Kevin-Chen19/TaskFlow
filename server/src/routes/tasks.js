@@ -4,6 +4,39 @@ import { query } from "../config/database.js";
 const router = express.Router();
 
 /**
+ * 计算并更新项目进度
+ * @param {number} projectId - 项目ID
+ */
+const updateProjectProgress = async (projectId) => {
+  try {
+    // 获取项目下所有任务的进度平均值
+    const result = await query(
+      `SELECT COALESCE(AVG(progress), 0) as avg_progress, COUNT(*) as task_count
+       FROM tasks 
+       WHERE project_id = $1`,
+      [projectId]
+    );
+
+    const avgProgress = Math.round(result.rows[0].avg_progress) || 0;
+    const taskCount = parseInt(result.rows[0].task_count) || 0;
+
+    // 更新项目进度
+    await query(
+      `UPDATE projects 
+       SET progress = $1 
+       WHERE id = $2`,
+      [avgProgress, projectId]
+    );
+
+    console.log(`项目 ${projectId} 进度已更新: ${avgProgress}% (基于 ${taskCount} 个任务)`);
+    return avgProgress;
+  } catch (error) {
+    console.error(`更新项目 ${projectId} 进度失败:`, error);
+    throw error;
+  }
+};
+
+/**
  * @swagger
  * /api/tasks:
  *   get:
@@ -205,6 +238,9 @@ router.post("/", async (req, res, next) => {
       ],
     );
 
+    // 自动更新项目进度
+    await updateProjectProgress(project_id);
+
     res.status(201).json({
       success: true,
       message: "任务创建成功",
@@ -289,9 +325,9 @@ router.put("/:id", async (req, res, next) => {
       priority,
     } = req.body;
 
-    // 先查询当前任务的进度
+    // 先查询当前任务的进度和项目ID
     const currentTaskResult = await query(
-      "SELECT progress FROM tasks WHERE id = $1",
+      "SELECT progress, project_id FROM tasks WHERE id = $1",
       [id]
     );
 
@@ -303,6 +339,7 @@ router.put("/:id", async (req, res, next) => {
     }
 
     const currentProgress = currentTaskResult.rows[0].progress;
+    const projectId = currentTaskResult.rows[0].project_id;
     let completedAtValue = null;
 
     // 如果进度从非100%变为100%，设置完成时间
@@ -340,6 +377,9 @@ router.put("/:id", async (req, res, next) => {
       ],
     );
 
+    // 自动更新项目进度
+    await updateProjectProgress(projectId);
+
     res.json({
       success: true,
       message: "任务更新成功",
@@ -376,16 +416,28 @@ router.put("/:id", async (req, res, next) => {
 router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await query("DELETE FROM tasks WHERE id = $1 RETURNING id", [
-      id,
-    ]);
-
-    if (result.rows.length === 0) {
+    
+    // 先查询任务所属的项目ID
+    const taskResult = await query(
+      "SELECT project_id FROM tasks WHERE id = $1",
+      [id]
+    );
+    
+    if (taskResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: "任务不存在",
       });
     }
+    
+    const projectId = taskResult.rows[0].project_id;
+    
+    const result = await query("DELETE FROM tasks WHERE id = $1 RETURNING id", [
+      id,
+    ]);
+
+    // 自动更新项目进度
+    await updateProjectProgress(projectId);
 
     res.json({ success: true, message: "任务删除成功" });
   } catch (error) {

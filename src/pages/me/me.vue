@@ -338,9 +338,10 @@ onMounted(() => {
   loadPerformanceData();
 });
 
-// 监听项目变化，重新加载绩效数据
+// 监听项目变化，重新加载绩效数据和项目列表
 watch(() => otherStore.projectChangeTrigger, () => {
   loadPerformanceData();
+  loadUserProjects();
 });
 
 // 计算最近4周的周标签
