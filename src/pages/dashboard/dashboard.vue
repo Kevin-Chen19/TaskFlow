@@ -107,8 +107,8 @@
           <div class="noteItemBox teamBox">
             <div
               class="noteItem"
-              v-for="item in userStore.usersTable"
-              :key="item.name"
+              v-for="item in memberProgress"
+              :key="item.userId"
             >
               <div class="userPic">
                 <img :src="item.pic" alt="用户头像" />
@@ -116,7 +116,7 @@
               <div class="userInfo">
                 <div class="userName">{{ item.name }}</div>
                 <div class="userOthers">
-                  <div class="postion">{{ item.postion }}</div>
+                  <div class="postion">{{ item.position }}</div>
                   <div class="progress">
                     <el-progress
                       :percentage="item.percentage"
@@ -226,9 +226,6 @@ import taskIcon from "@/assets/icons/任务.png";
 import ExpiredIcon from "@/assets/icons/逾期.png";
 import WarningIcon from "@/assets/icons/预警.png";
 import user1 from "@/assets/pics/用户头像.jpg";
-import user2 from "@/assets/pics/用户2.jpg";
-import user3 from "@/assets/pics/用户3.jpg";
-import user4 from "@/assets/pics/用户4.jpg";
 import { useOtherStore } from "@/stores/otherStore";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
@@ -245,6 +242,9 @@ import {
   updateMilestone,
   deleteMilestone,
   createProject,
+  getTasks,
+  getProjectMembers,
+  getUserById,
 } from "@/api";
 const otherStore = useOtherStore();
 const centerDialogVisible = ref(false);
@@ -283,6 +283,9 @@ interface ActivityType {
 
 const activities = reactive<ActivityType[]>([]);
 const notes = reactive<any[]>([]);
+
+// 成员进度数据
+const memberProgress = reactive<any[]>([]);
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
     return "#909399";
@@ -424,6 +427,7 @@ const loadAllProjectData = async () => {
     loadMilestones(),
     getNote(),
     loadProjectStats(),
+    loadMemberProgress(),
   ]);
 };
 const addNote = () => {
@@ -753,6 +757,104 @@ const loadProjectStats = async () => {
   }
 };
 
+// 加载成员进度数据
+const loadMemberProgress = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    console.log('Dashboard 加载成员进度，项目ID:', projectId);
+    
+    if (!projectId) {
+      console.warn('Dashboard: 当前没有选择项目，跳过成员进度加载');
+      return;
+    }
+
+    // 并行获取项目成员和任务数据
+    const [membersRes, tasksRes] = await Promise.all([
+      getProjectMembers(projectId),
+      getTasks({ project_id: projectId })
+    ]);
+
+    if (!membersRes.success || !membersRes.data) {
+      console.warn('获取项目成员失败');
+      return;
+    }
+
+    const members = membersRes.data;
+    const tasks = tasksRes.success && tasksRes.data ? tasksRes.data : [];
+    
+    console.log('项目成员:', members);
+    console.log('项目任务:', tasks);
+
+    // 计算每个成员的任务进度
+    const memberProgressData = await Promise.all(
+      members.map(async (member: any) => {
+        const userId = member.user_id;
+        console.log('处理成员:', userId, member);
+        
+        // 获取用户详细信息
+        let userInfo = {
+          name: `用户${userId}`,
+          pic: user1,
+          position: member.position || '成员'
+        };
+        
+        try {
+          const userRes = await getUserById(userId);
+          if (userRes.success && userRes.data) {
+            userInfo.name = userRes.data.fullname || userRes.data.name || userInfo.name;
+            userInfo.pic = userRes.data.avatar_url || userInfo.pic;
+          }
+        } catch (e) {
+          console.log(`获取用户 ${userId} 信息失败`, e);
+        }
+
+        // 计算该成员负责的任务进度
+        console.log('检查任务分配, userId:', userId, '类型:', typeof userId);
+        console.log('所有任务的assignee_ids:', tasks.map((t: any) => ({ id: t.id, assignee_ids: t.assignee_ids, title: t.title })));
+        
+        const memberTasks = tasks.filter((task: any) => {
+          const hasAssignee = task.assignee_ids && Array.isArray(task.assignee_ids);
+          if (!hasAssignee) {
+            console.log('任务没有assignee_ids:', task.id, task.title);
+            return false;
+          }
+          // 注意：assignee_ids可能是字符串数组，需要转换
+          const assignees = task.assignee_ids.map((id: any) => Number(id));
+          const isAssigned = assignees.includes(Number(userId));
+          console.log(`任务 ${task.id} 分配给:`, assignees, '检查用户:', userId, '结果:', isAssigned);
+          return isAssigned;
+        });
+
+        console.log(`成员 ${userId} 负责的任务:`, memberTasks.length, memberTasks);
+
+        let percentage = 0;
+        if (memberTasks.length > 0) {
+          const totalProgress = memberTasks.reduce((sum: number, task: any) => 
+            sum + (task.progress || 0), 0
+          );
+          percentage = Math.round(totalProgress / memberTasks.length);
+          console.log(`成员 ${userId} 进度计算:`, totalProgress, '/', memberTasks.length, '=', percentage);
+        }
+
+        return {
+          userId,
+          name: userInfo.name,
+          pic: userInfo.pic,
+          position: userInfo.position,
+          percentage,
+          taskCount: memberTasks.length
+        };
+      })
+    );
+
+    // 更新成员进度数据
+    memberProgress.splice(0, memberProgress.length, ...memberProgressData);
+    console.log('Dashboard 成员进度加载完成:', memberProgressData);
+  } catch (error) {
+    console.error('加载成员进度失败:', error);
+  }
+};
+
 // 组件挂载时初始化显示属性
 onMounted(() => {
   // 等待 userStore 初始化完成后再获取数据
@@ -760,6 +862,7 @@ onMounted(() => {
     loadMilestones(); // 加载里程碑数据
     getNote(); // 获取便签
     loadProjectStats(); // 加载项目统计
+    loadMemberProgress(); // 加载成员进度
   };
 
   if (userStore.user.userId) {
