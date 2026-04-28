@@ -150,8 +150,8 @@ router.get('/:id', async (req, res, next) => {
 // 默认角色配置
 const defaultRoles = [
   {
-    rolename: 'Project Owner',
-    description: 'Full control over the project',
+    rolename: '项目创建者',
+    description: '拥有项目所有权限',
     settings: {
       create_tasks: true,
       delete_tasks: true,
@@ -168,8 +168,8 @@ const defaultRoles = [
     }
   },
   {
-    rolename: 'Project Manager',
-    description: 'Can manage project tasks and members',
+    rolename: '项目经理',
+    description: '可以管理项目任务与成员',
     settings: {
       create_tasks: true,
       delete_tasks: true,
@@ -186,8 +186,8 @@ const defaultRoles = [
     }
   },
   {
-    rolename: 'Developer',
-    description: 'Can create and edit tasks, collaborate with team',
+    rolename: '参与者',
+    description: '可以参与项目任务，但权限受限',
     settings: {
       create_tasks: true,
       delete_tasks: false,
@@ -204,8 +204,8 @@ const defaultRoles = [
     }
   },
   {
-    rolename: 'Viewer',
-    description: 'Can only view project content',
+    rolename: '观察者',
+    description: '只能查看项目内容，无法参与编辑',
     settings: {
       create_tasks: false,
       delete_tasks: false,
@@ -226,28 +226,28 @@ const defaultRoles = [
 // 默认职位配置
 const defaultPositions = [
   {
-    positionname: 'Project Manager',
-    description: 'Responsible for overall project planning and coordination'
+    positionname: '项目经理',
+    description: '负责项目整体规划和管理'
   },
   {
-    positionname: 'Frontend Developer',
-    description: 'Develops user interface and client-side functionality'
+    positionname: '前端开发',
+    description: '负责用户界面和交互开发'
   },
   {
-    positionname: 'Backend Developer',
-    description: 'Develops server-side logic and database management'
+    positionname: '后端开发',
+    description: '负责服务器端逻辑和数据库管理'
   },
   {
-    positionname: 'UI/UX Designer',
-    description: 'Designs user interface and user experience'
+    positionname: 'UI/UX设计师',
+    description: '负责用户界面和用户体验设计'
   },
   {
-    positionname: 'QA Engineer',
-    description: 'Ensures software quality through testing'
+    positionname: '测试工程师',
+    description: '通过测试确保软件质量'
   },
   {
-    positionname: 'DevOps Engineer',
-    description: 'Manages deployment and infrastructure operations'
+    positionname: '运维工程师',
+    description: '负责部署和基础设施运营'
   }
 ];
 
