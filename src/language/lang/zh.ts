@@ -1,3 +1,4 @@
+
 export default {
   language: "中文",
   loginPage: {
@@ -18,13 +19,14 @@ export default {
     haveanaccount: "我已经有一个账号？",
     Signin: "登录",
     Forgotpassword: "忘记密码？",
-    FullName: '全名',
-    Email: '邮箱地址',
-    ConfirmPassword: '确认密码',
+    FullName: "全名",
+    Email: "邮箱地址",
+    ConfirmPassword: "确认密码",
   },
   Dashboard: {
     dashboard: "项目总览",
     pageTip: "一览项目的总体进展。",
+    logs: "日志",
     totalHours: "总工时",
     tasksProgress: "任务进度",
     earlyWarning: "预警",
@@ -48,6 +50,41 @@ export default {
     CreateProjectFailed: "创建项目失败",
     ProjectNameRequired: "请输入项目名称",
     UserNotLoggedIn: "用户未登录，请先登录",
+    // 活动日志相关
+    activityLog: "项目活动日志",
+    activityLogSubtitle: "项目的重要变更记录",
+    searchActivity: "搜索活动...",
+    filter: "筛选",
+    export: "导出",
+    activity: "活动",
+    date: "日期",
+    performer: "执行者",
+    category: "分类",
+    showingActivities: "显示 {current} / {total} 条活动",
+    loadMore: "加载更多",
+    noActivityLogs: "暂无活动日志",
+    categoryLabel: {
+      member: "成员",
+      role: "角色",
+      permission: "权限",
+      status: "状态",
+      milestone: "里程碑",
+      position: "职位"
+    },
+    activityText: {
+      addMember: "添加新成员",
+      addMemberDesc: "{name} 被添加到项目中",
+      updateRole: "更新角色",
+      updateRoleDesc: "将 {user} 的角色从 '{oldRole}' 更改为 '{newRole}'",
+      revokePermission: "撤销权限",
+      revokePermissionDesc: "移除了标准用户的删除权限",
+      changeStatus: "更改项目状态",
+      changeStatusDesc: "项目状态从 '{oldStatus}' 更改为 '{newStatus}'",
+      addMilestone: "添加里程碑",
+      addMilestoneDesc: "添加了里程碑: {name}",
+      updatePosition: "更新职位",
+      updatePositionDesc: "将 {user} 的职位更新为 {position}"
+    }
   },
   main: {
     currentProject: "当前项目",

@@ -328,6 +328,42 @@ export const getProjectStats = (projectId: number): Promise<ApiResponse> => {
   })
 }
 
+// ==================== 活动日志相关接口 ====================
+
+/**
+ * 获取项目活动日志
+ */
+export const getActivityLogs = (params: {
+  project_id: number
+  category?: string
+  search?: string
+  page?: number
+  limit?: number
+}): Promise<ApiResponse> => {
+  return request({
+    url: '/activity-logs',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 创建活动日志
+ */
+export const createActivityLog = (data: {
+  project_id: number
+  user_id?: number
+  category: string
+  title: string
+  description?: string
+}): Promise<ApiResponse> => {
+  return request({
+    url: '/activity-logs',
+    method: 'post',
+    data
+  })
+}
+
 // ==================== 通知相关接口 ====================
 
 /**

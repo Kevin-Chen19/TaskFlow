@@ -10,10 +10,12 @@
     <div class="cards">
       <div class="cardItem">
         <CardTamp
-          :topLeftImg="TimeIcon"
-          :bodyContent="$t('Dashboard.totalHours')"
+          :topLeftImg="LogIcon"
+          :bodyContent="$t('Dashboard.logs')"
           :footerContent="`${projectStats.total_hours}h`"
           :showMenu="false"
+          :clickable="true"
+          @click="openActivityLog"
         ></CardTamp>
       </div>
       <div class="cardItem">
@@ -225,13 +227,17 @@
       </div>
     </template>
   </el-dialog>
+
+  <!-- 活动日志弹窗 -->
+  <ActivityLog v-model="activityLogVisible" :project-id="otherStore.currentProjectId" />
 </template>
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import CardTamp from "../../components/cardTamp.vue";
 import NewProjectCard from "../../components/newProjectCard.vue";
-import TimeIcon from "@/assets/icons/时间.png";
+import ActivityLog from "../../components/ActivityLog.vue";
+import LogIcon from "@/assets/icons/日志.png";
 import taskIcon from "@/assets/icons/任务.png";
 import ExpiredIcon from "@/assets/icons/逾期.png";
 import WarningIcon from "@/assets/icons/预警.png";
@@ -262,11 +268,17 @@ const router = useRouter();
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
 const TimeLineDialogVisible = ref(false);
+const activityLogVisible = ref(false);
 const userStore = useUserStore();
 const noteContent = ref("");
 const isEditingMilestone = ref(false);
 const editingMilestoneIndex = ref(-1);
 const { t } = useI18n();
+
+// 打开活动日志弹窗
+const openActivityLog = () => {
+  activityLogVisible.value = true;
+};
 const milestoneData = reactive({
   content: "",
   dueLine: "",

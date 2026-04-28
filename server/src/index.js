@@ -22,6 +22,7 @@ import projectPositionsRoutes from './routes/projectPositions.js';
 import projectFoldersRoutes from './routes/projectFolders.js';
 import projectDocumentsRoutes from './routes/projectDocuments.js';
 import milestonesRoutes from './routes/milestones.js';
+import activityLogsRoutes from './routes/activityLogs.js';
 import { verifyToken } from './utils/jwtUtils.js';
 import { createClient } from 'redis';
 
@@ -104,6 +105,7 @@ app.use('/api/project-positions', projectPositionsRoutes);
 app.use('/api/project-folders', projectFoldersRoutes);
 app.use('/api/project-documents', projectDocumentsRoutes);
 app.use('/api/milestones', milestonesRoutes);
+app.use('/api/activity-logs', activityLogsRoutes);
 
 // 404 处理
 app.use((req, res) => {
