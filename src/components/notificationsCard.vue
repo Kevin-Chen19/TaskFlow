@@ -158,9 +158,9 @@ const handleAcceptInvite = async () => {
     const result = await response.json();
 
     if (result.success) {
-      // 标记通知为已读
-      await notificationStore.markAsRead(props.notification.id);
       ElMessage.success('已接受邀请，加入项目成功');
+      // 删除通知
+      await notificationStore.deleteNotification(props.notification.id);
       emit('accept-invite', props.notification);
       
       // 刷新页面以显示新加入的项目
@@ -178,8 +178,8 @@ const handleAcceptInvite = async () => {
 
 // 拒绝项目邀请
 const handleRejectInvite = async () => {
-  // 简单标记为已读即可（不添加到项目成员）
-  await notificationStore.markAsRead(props.notification.id);
+  // 删除通知
+  await notificationStore.deleteNotification(props.notification.id);
   ElMessage.info('已拒绝邀请');
   emit('reject-invite', props.notification);
 };
