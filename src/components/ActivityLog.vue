@@ -88,8 +88,14 @@
         <el-button @click="dialogVisible = false" class="cancel-btn">
           {{ $t('cancel') }}
         </el-button>
-        <el-button type="primary" class="load-more-btn">
-          {{ $t('Dashboard.loadMore') }}
+        <el-button 
+          type="primary" 
+          class="load-more-btn"
+          :disabled="!hasMore || loading"
+          :loading="loading"
+          @click="loadMore"
+        >
+          {{ hasMore ? $t('Dashboard.loadMore') : $t('Dashboard.noMore') }}
         </el-button>
       </div>
     </div>
@@ -136,7 +142,8 @@ const loading = ref(false);
 const activities = ref<ActivityItem[]>([]);
 const total = ref(0);
 const page = ref(1);
-const limit = ref(20);
+const limit = ref(10);
+const hasMore = ref(true);
 
 // 活动类型
 interface ActivityItem {
@@ -150,8 +157,14 @@ interface ActivityItem {
 }
 
 // 加载活动日志
-const loadActivityLogs = async () => {
+const loadActivityLogs = async (isLoadMore = false) => {
   if (!props.projectId) return;
+  
+  // 如果不是加载更多，重置页码
+  if (!isLoadMore) {
+    page.value = 1;
+    activities.value = [];
+  }
   
   loading.value = true;
   try {
@@ -163,8 +176,22 @@ const loadActivityLogs = async () => {
     });
     
     if (res.success && res.data) {
-      activities.value = res.data;
-      total.value = (res as any).pagination?.total || 0;
+      const newData = res.data;
+      const pagination = (res as any).pagination;
+      
+      if (isLoadMore) {
+        // 追加数据
+        activities.value.push(...newData);
+      } else {
+        // 替换数据
+        activities.value = newData;
+      }
+      
+      total.value = pagination?.total || 0;
+      
+      // 判断是否还有更多数据
+      const currentTotal = activities.value.length;
+      hasMore.value = currentTotal < total.value;
     }
   } catch (error) {
     console.error('加载活动日志失败:', error);
@@ -174,17 +201,23 @@ const loadActivityLogs = async () => {
   }
 };
 
+// 加载更多数据
+const loadMore = async () => {
+  if (loading.value || !hasMore.value) return;
+  page.value++;
+  await loadActivityLogs(true);
+};
+
 // 监听弹窗打开时加载数据
 watch(() => props.modelValue, (newVal) => {
   if (newVal && props.projectId) {
-    loadActivityLogs();
+    loadActivityLogs(false);
   }
 });
 
 // 监听搜索词变化
 watch(searchQuery, () => {
-  page.value = 1;
-  loadActivityLogs();
+  loadActivityLogs(false);
 });
 
 

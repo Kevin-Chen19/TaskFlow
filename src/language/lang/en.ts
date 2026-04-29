@@ -62,6 +62,7 @@ export default {
     category: "Category",
     showingActivities: "Showing {current} of {total} activities",
     loadMore: "Load More",
+    noMore: "No More",
     noActivityLogs: "No activity logs",
     categoryLabel: {
       member: "Member",

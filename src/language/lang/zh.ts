@@ -62,6 +62,7 @@ export default {
     category: "分类",
     showingActivities: "显示 {current} / {total} 条活动",
     loadMore: "加载更多",
+    noMore: "没有更多了",
     noActivityLogs: "暂无活动日志",
     categoryLabel: {
       member: "成员",
