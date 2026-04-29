@@ -336,13 +336,15 @@ const getInitials = (name: string) => {
 
 .activity-list {
   max-height: 400px;
-  overflow-y: auto;
+  overflow: auto;
   border-radius: 0 0 8px 8px;
 }
 
 .activity-table {
-  width: 100%;
+  width: auto;
+  min-width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 
   thead {
     position: sticky;
@@ -360,12 +362,14 @@ const getInitials = (name: string) => {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid #e2e1ef;
+    white-space: nowrap;
   }
 
   td {
     padding: 16px;
     border-bottom: 1px solid #e2e1ef;
     vertical-align: middle;
+    white-space: nowrap;
   }
 
   tbody tr {
@@ -386,20 +390,19 @@ const getInitials = (name: string) => {
 }
 
 .col-activity {
-  width: 45%;
+  min-width: 300px;
 }
 
 .col-date {
-  width: 25%;
-  white-space: nowrap;
+  min-width: 150px;
 }
 
 .col-performer {
-  width: 15%;
+  min-width: 120px;
 }
 
 .col-category {
-  width: 15%;
+  min-width: 100px;
 }
 
 .activity-info {
@@ -462,14 +465,13 @@ const getInitials = (name: string) => {
   font-weight: 500;
   color: #191b25;
   margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .activity-desc {
   font-size: 12px;
   color: #747688;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .col-date {
@@ -481,6 +483,7 @@ const getInitials = (name: string) => {
   display: flex;
   align-items: center;
   gap: 10px;
+  white-space: nowrap;
 }
 
 .performer-avatar {
@@ -503,6 +506,7 @@ const getInitials = (name: string) => {
 .performer-name {
   font-size: 14px;
   color: #191b25;
+  white-space: nowrap;
 }
 
 .category-tag {
