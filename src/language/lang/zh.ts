@@ -69,7 +69,8 @@ export default {
       permission: "权限",
       status: "状态",
       milestone: "里程碑",
-      position: "职位"
+      position: "职位",
+      file: "文件"
     },
     activityText: {
       addMember: "添加新成员",

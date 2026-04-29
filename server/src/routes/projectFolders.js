@@ -1,7 +1,21 @@
 import express from 'express';
 import { query } from '../config/database.js';
+import { authenticateToken } from '../utils/jwtUtils.js';
 
 const router = express.Router();
+
+// 记录活动日志的辅助函数
+const logActivity = async (project_id, user_id, title, description) => {
+  try {
+    await query(
+      `INSERT INTO activity_logs (project_id, user_id, category, title, description)
+       VALUES ($1, $2, 'file', $3, $4)`,
+      [project_id, user_id, title, description]
+    );
+  } catch (error) {
+    console.error('记录活动日志失败:', error);
+  }
+};
 
 /**
  * @swagger
@@ -429,39 +443,56 @@ router.put('/:id/restore', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id/permanent', async (req, res, next) => {
+router.delete('/:id/permanent', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
+    const user_id = req.user.userId;
     const fs = await import('fs');
     const pathModule = await import('path');
     const { fileURLToPath } = await import('url');
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = pathModule.dirname(__filename);
 
-    // 递归获取所有子文件夹ID
+    // 先获取文件夹信息用于日志记录
+    const folderResult = await query(
+      'SELECT * FROM project_folders WHERE id = $1',
+      [id]
+    );
+
+    if (folderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '文件夹不存在'
+      });
+    }
+
+    const rootFolder = folderResult.rows[0];
+    const project_id = rootFolder.project_id;
+
+    // 递归获取所有子文件夹ID和名称
     const getAllFolderIds = async (folderId) => {
-      const folderIds = [folderId];
+      const folders = [{ id: folderId }];
       const children = await query(
-        'SELECT id FROM project_folders WHERE parent_folder_id = $1',
+        'SELECT id, name FROM project_folders WHERE parent_folder_id = $1',
         [folderId]
       );
       for (const child of children.rows) {
-        const childIds = await getAllFolderIds(child.id);
-        folderIds.push(...childIds);
+        const childFolders = await getAllFolderIds(child.id);
+        folders.push(...childFolders);
       }
-      return folderIds;
+      return folders;
     };
 
-    // 递归获取所有子文件ID和路径
-    const getAllDocumentIds = async (folderId) => {
-      const docIds = [];
+    // 递归获取所有子文件信息
+    const getAllDocuments = async (folderId) => {
+      const docs = [];
       // 获取当前文件夹的直接文档
-      const docs = await query(
-        'SELECT id, file_url FROM project_documents WHERE parent_folder_id = $1',
+      const directDocs = await query(
+        'SELECT id, name, file_url FROM project_documents WHERE parent_folder_id = $1',
         [folderId]
       );
-      for (const doc of docs.rows) {
-        docIds.push(doc);
+      for (const doc of directDocs.rows) {
+        docs.push(doc);
       }
       // 获取子文件夹的文档
       const children = await query(
@@ -469,18 +500,40 @@ router.delete('/:id/permanent', async (req, res, next) => {
         [folderId]
       );
       for (const child of children.rows) {
-        const childDocs = await getAllDocumentIds(child.id);
-        docIds.push(...childDocs);
+        const childDocs = await getAllDocuments(child.id);
+        docs.push(...childDocs);
       }
-      return docIds;
+      return docs;
     };
 
-    // 获取所有文件夹ID
-    const allFolderIds = await getAllFolderIds(parseInt(id));
+    // 获取所有文件夹
+    const allFolders = await getAllFolderIds(parseInt(id));
+    const allFolderIds = allFolders.map(f => f.id);
 
-    // 获取所有文档信息并删除
+    // 获取所有文档信息并记录日志
+    const allDocs = await getAllDocuments(parseInt(id));
+
+    // 记录文件夹删除日志
+    await logActivity(
+      project_id,
+      user_id,
+      '删除文件夹',
+      `彻底删除了文件夹："${rootFolder.name}"（包含 ${allDocs.length} 个文件）`
+    );
+
+    // 记录每个被删除的文件日志
+    for (const doc of allDocs) {
+      await logActivity(
+        project_id,
+        user_id,
+        '删除文件',
+        `彻底删除了文件："${doc.name}"`
+      );
+    }
+
+    // 删除所有文档的物理文件和数据库记录
     for (const folderId of allFolderIds) {
-      const docs = await getAllDocumentIds(folderId);
+      const docs = await getAllDocuments(folderId);
       for (const doc of docs) {
         // 删除物理文件
         const filePath = pathModule.join(__dirname, '../../uploads', pathModule.basename(doc.file_url));
@@ -494,7 +547,6 @@ router.delete('/:id/permanent', async (req, res, next) => {
 
     // 从最深层开始删除文件夹（先删子文件夹再删父文件夹）
     const sortedFolderIds = allFolderIds.sort((a, b) => {
-      // 需要按照从深到浅的顺序删除
       return b - a;
     });
 

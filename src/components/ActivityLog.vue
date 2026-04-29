@@ -109,7 +109,9 @@ import {
   CircleCheck,
   User,
   Briefcase,
-  Setting
+  Setting,
+  Document,
+  Folder
 } from '@element-plus/icons-vue';
 import { getActivityLogs } from '@/api';
 
@@ -144,7 +146,7 @@ interface ActivityItem {
   created_at: string;
   performer_name: string;
   performer_avatar?: string;
-  category: 'member' | 'role' | 'permission' | 'status' | 'milestone' | 'position';
+  category: 'member' | 'role' | 'permission' | 'status' | 'milestone' | 'position' | 'file';
 }
 
 // 加载活动日志
@@ -195,7 +197,8 @@ const getActivityIcon = (category: string) => {
     permission: Lock,
     status: Refresh,
     milestone: CircleCheck,
-    position: Briefcase
+    position: Briefcase,
+    file: Document
   };
   return iconMap[category] || User;
 };
@@ -208,7 +211,8 @@ const getCategoryLabel = (category: string) => {
     permission: t('Dashboard.categoryLabel.permission'),
     status: t('Dashboard.categoryLabel.status'),
     milestone: t('Dashboard.categoryLabel.milestone'),
-    position: t('Dashboard.categoryLabel.position')
+    position: t('Dashboard.categoryLabel.position'),
+    file: t('Dashboard.categoryLabel.file')
   };
   return labelMap[category] || category;
 };
@@ -453,6 +457,11 @@ const getInitials = (name: string) => {
     background: #b9c7df;
     color: #3a485b;
   }
+
+  &.icon-file {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
 }
 
 .activity-text {
@@ -545,6 +554,11 @@ const getInitials = (name: string) => {
   &.tag-position {
     background: rgba(185, 199, 223, 0.5);
     color: #3a485b;
+  }
+
+  &.tag-file {
+    background: rgba(227, 242, 253, 0.8);
+    color: #1976d2;
   }
 }
 

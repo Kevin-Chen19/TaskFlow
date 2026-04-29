@@ -3,11 +3,25 @@ import { query } from '../config/database.js';
 import upload from '../utils/upload.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { authenticateToken } from '../utils/jwtUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+// 记录活动日志的辅助函数
+const logActivity = async (project_id, user_id, title, description) => {
+  try {
+    await query(
+      `INSERT INTO activity_logs (project_id, user_id, category, title, description)
+       VALUES ($1, $2, 'file', $3, $4)`,
+      [project_id, user_id, title, description]
+    );
+  } catch (error) {
+    console.error('记录活动日志失败:', error);
+  }
+};
 
 /**
  * @swagger
@@ -465,11 +479,12 @@ router.put('/:id/restore', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id/permanent', async (req, res, next) => {
+router.delete('/:id/permanent', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
+    const user_id = req.user.userId;
 
-    // 先获取文件信息，用于删除物理文件
+    // 先获取文件信息，用于删除物理文件和记录日志
     const docResult = await query(
       'SELECT * FROM project_documents WHERE id = $1',
       [id]
@@ -493,6 +508,14 @@ router.delete('/:id/permanent', async (req, res, next) => {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
+
+    // 记录活动日志
+    await logActivity(
+      file.project_id,
+      user_id,
+      '删除文件',
+      `彻底删除了文件："${file.name}"`
+    );
 
     res.json({ success: true, message: '文档彻底删除成功' });
   } catch (error) {

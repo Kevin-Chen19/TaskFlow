@@ -69,7 +69,8 @@ export default {
       permission: "Permission",
       status: "Status",
       milestone: "Milestone",
-      position: "Position"
+      position: "Position",
+      file: "File"
     },
     activityText: {
       addMember: "Added new team member",
