@@ -1,7 +1,21 @@
 import express from 'express';
 import { query } from '../config/database.js';
+import { authenticateToken } from '../utils/jwtUtils.js';
 
 const router = express.Router();
+
+// 记录活动日志的辅助函数
+const logActivity = async (project_id, user_id, title, description) => {
+  try {
+    await query(
+      `INSERT INTO activity_logs (project_id, user_id, category, title, description)
+       VALUES ($1, $2, 'member', $3, $4)`,
+      [project_id, user_id, title, description]
+    );
+  } catch (error) {
+    console.error('记录活动日志失败:', error);
+  }
+};
 
 /**
  * @swagger
@@ -184,10 +198,11 @@ router.get('/project/:projectId', async (req, res, next) => {
  *       400:
  *         description: 参数错误
  */
-router.post('/:projectId/invite', async (req, res, next) => {
+router.post('/:projectId/invite', authenticateToken, async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const { email, role, position } = req.body;
+    const { email, role, position, sender_name } = req.body;
+    const senderId = req.user.userId; // 从token获取发送者ID
 
     if (!email) {
       return res.status(400).json({
@@ -227,7 +242,6 @@ router.post('/:projectId/invite', async (req, res, next) => {
     const project = projectResult.rows[0];
 
     // 不能邀请自己
-    const senderId = req.body.sender_id || null;
     if (invitedUser.id === senderId) {
       return res.status(400).json({
         success: false,
@@ -265,6 +279,14 @@ router.post('/:projectId/invite', async (req, res, next) => {
 
     const notification = notificationResult.rows[0];
 
+    // 记录活动日志 - 发送邀请时记录
+    await logActivity(
+      projectId,
+      senderId,
+      '邀请成员',
+      `"${sender_name || '系统'}"邀请了"${invitedUser.fullname}"加入项目${position ? '，职位：' + position : ''}${role ? '，角色：' + role : ''}`
+    );
+
     // 通过 Socket.io 推送通知
     const io = req.app.get('io');
     const redis = req.app.get('redis');
@@ -275,7 +297,7 @@ router.post('/:projectId/invite', async (req, res, next) => {
     if (socketId) {
       io.to(`user:${invitedUser.id}`).emit('notification:new', {
         ...notification,
-        sender_name: req.body.sender_name || '系统',
+        sender_name: sender_name || '系统',
         sender_avatar: req.body.sender_avatar || null
       });
       console.log(`📢 项目邀请通知推送给用户 ${invitedUser.id}`);
@@ -332,9 +354,10 @@ router.post('/:projectId/invite', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateToken, async (req, res, next) => {
   try {
     const { project_id, user_id, role, position, is_active } = req.body;
+    const operator_id = req.user.userId;
 
     if (!project_id || !user_id) {
       return res.status(400).json({
@@ -382,6 +405,9 @@ router.post('/', async (req, res, next) => {
         );
       }
     }
+
+    // 注意：成员加入的日志在发送邀请时已经记录，这里不再重复记录
+    // 如果需要记录接受邀请的操作，可以在这里添加另一条日志
 
     res.status(201).json({
       success: true,
@@ -480,13 +506,14 @@ router.put('/:id', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
+    const operator_id = req.user.userId;
 
-    // 先获取成员信息，用于后续更新 projects 表
+    // 先获取成员信息，用于后续更新 projects 表和记录日志
     const memberResult = await query(
-      'SELECT project_id, user_id FROM project_members WHERE id = $1',
+      'SELECT pm.project_id, pm.user_id, u.fullname FROM project_members pm LEFT JOIN users u ON pm.user_id = u.id WHERE pm.id = $1',
       [id]
     );
 
@@ -501,7 +528,16 @@ router.delete('/:id', async (req, res, next) => {
 
     // 同步更新 projects 表的 assignee_ids 字段
     if (memberResult.rows.length > 0) {
-      const { project_id, user_id } = memberResult.rows[0];
+      const { project_id, user_id, fullname } = memberResult.rows[0];
+      
+      // 记录活动日志
+      await logActivity(
+        project_id,
+        operator_id,
+        '移除成员',
+        `成员"${fullname || '未知用户'}"被移出项目`
+      );
+      
       const projectResult = await query(
         'SELECT assignee_ids FROM projects WHERE id = $1',
         [project_id]
