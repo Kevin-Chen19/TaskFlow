@@ -364,6 +364,35 @@ export const createActivityLog = (data: {
   })
 }
 
+/**
+ * 导出活动日志为Excel
+ */
+export const exportActivityLogs = async (params: {
+  project_id: number
+  search?: string
+}): Promise<Blob> => {
+  const token = localStorage.getItem('token')
+  const queryParams = new URLSearchParams()
+  queryParams.append('project_id', params.project_id.toString())
+  if (params.search) {
+    queryParams.append('search', params.search)
+  }
+  
+  const response = await fetch(`http://localhost:3000/api/activity-logs/export?${queryParams}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || '导出失败')
+  }
+  
+  return response.blob()
+}
+
 // ==================== 通知相关接口 ====================
 
 /**

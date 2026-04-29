@@ -21,7 +21,7 @@
         />
       </div>
       <div class="toolbar-actions">
-        <el-button class="toolbar-btn">
+        <el-button class="toolbar-btn" @click="handleExport" :loading="exporting">
           <el-icon><Download /></el-icon>
           {{ $t('Dashboard.export') }}
         </el-button>
@@ -119,7 +119,7 @@ import {
   Document,
   Folder
 } from '@element-plus/icons-vue';
-import { getActivityLogs } from '@/api';
+import { getActivityLogs, exportActivityLogs } from '@/api';
 
 const { t } = useI18n();
 
@@ -139,6 +139,7 @@ const dialogVisible = computed({
 
 const searchQuery = ref('');
 const loading = ref(false);
+const exporting = ref(false);
 const activities = ref<ActivityItem[]>([]);
 const total = ref(0);
 const page = ref(1);
@@ -265,6 +266,36 @@ const formatDate = (dateStr: string) => {
 // 获取姓名首字母
 const getInitials = (name: string) => {
   return name.charAt(0).toUpperCase();
+};
+
+// 导出日志
+const handleExport = async () => {
+  if (!props.projectId) return;
+  
+  exporting.value = true;
+  try {
+    const blob = await exportActivityLogs({
+      project_id: props.projectId,
+      search: searchQuery.value || undefined
+    });
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `activity_logs_${props.projectId}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('导出失败:', error);
+    ElMessage.error('导出失败，请稍后重试');
+  } finally {
+    exporting.value = false;
+  }
 };
 </script>
 
