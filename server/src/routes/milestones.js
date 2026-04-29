@@ -1,7 +1,21 @@
 import express from 'express';
 import { query } from '../config/database.js';
+import { authenticateToken } from '../utils/jwtUtils.js';
 
 const router = express.Router();
+
+// 记录活动日志的辅助函数
+const logActivity = async (project_id, user_id, title, description) => {
+  try {
+    await query(
+      `INSERT INTO activity_logs (project_id, user_id, category, title, description)
+       VALUES ($1, $2, 'milestone', $3, $4)`,
+      [project_id, user_id, title, description]
+    );
+  } catch (error) {
+    console.error('记录活动日志失败:', error);
+  }
+};
 
 /**
  * @swagger
@@ -106,9 +120,10 @@ router.get('/', async (req, res, next) => {
  *       201:
  *         description: 创建成功
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateToken, async (req, res, next) => {
   try {
     const { project_id, content, due_date } = req.body;
+    const user_id = req.user.userId;
 
     if (!project_id || !content || !due_date) {
       return res.status(400).json({
@@ -120,6 +135,14 @@ router.post('/', async (req, res, next) => {
     const result = await query(
       'INSERT INTO milestones (project_id, content, due_date) VALUES ($1, $2, $3) RETURNING *',
       [project_id, content, due_date]
+    );
+
+    // 记录活动日志
+    await logActivity(
+      project_id,
+      user_id,
+      '添加里程碑',
+      `添加了里程碑："${content}"`
     );
 
     res.status(201).json({
@@ -160,22 +183,39 @@ router.post('/', async (req, res, next) => {
  *       200:
  *         description: 更新成功
  */
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content, due_date } = req.body;
+    const user_id = req.user.userId;
+
+    // 先获取原里程碑信息用于日志记录
+    const oldResult = await query(
+      'SELECT * FROM milestones WHERE id = $1',
+      [id]
+    );
+
+    if (oldResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '里程碑不存在'
+      });
+    }
+
+    const oldMilestone = oldResult.rows[0];
 
     const result = await query(
       'UPDATE milestones SET content = COALESCE($1, content), due_date = COALESCE($2, due_date) WHERE id = $3 RETURNING *',
       [content, due_date, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '里程碑不存在'
-      });
-    }
+    // 记录活动日志
+    await logActivity(
+      oldMilestone.project_id,
+      user_id,
+      '更新里程碑',
+      `更新了里程碑："${oldMilestone.content}"`
+    );
 
     res.json({
       success: true,
@@ -203,17 +243,35 @@ router.put('/:id', async (req, res, next) => {
  *       200:
  *         description: 删除成功
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await query('DELETE FROM milestones WHERE id = $1 RETURNING id', [id]);
+    const user_id = req.user.userId;
 
-    if (result.rows.length === 0) {
+    // 先获取里程碑信息用于日志记录
+    const oldResult = await query(
+      'SELECT * FROM milestones WHERE id = $1',
+      [id]
+    );
+
+    if (oldResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: '里程碑不存在'
       });
     }
+
+    const oldMilestone = oldResult.rows[0];
+
+    const result = await query('DELETE FROM milestones WHERE id = $1 RETURNING id', [id]);
+
+    // 记录活动日志
+    await logActivity(
+      oldMilestone.project_id,
+      user_id,
+      '删除里程碑',
+      `删除了里程碑："${oldMilestone.content}"`
+    );
 
     res.json({ success: true, message: '里程碑删除成功' });
   } catch (error) {
