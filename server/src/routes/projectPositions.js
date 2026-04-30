@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../config/database.js';
 import { authenticateToken } from '../utils/jwtUtils.js';
+import { checkManagePositionsPermission } from '../middleware/permissionMiddleware.js';
 
 const router = express.Router();
 
@@ -90,7 +91,7 @@ router.get('/', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.post('/', authenticateToken, async (req, res, next) => {
+router.post('/', authenticateToken, checkManagePositionsPermission, async (req, res, next) => {
   try {
     const { project_id, positionname, description } = req.body;
     const user_id = req.user.userId;
@@ -156,7 +157,7 @@ router.post('/', authenticateToken, async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.put('/:id', authenticateToken, async (req, res, next) => {
+router.put('/:id', authenticateToken, checkManagePositionsPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { positionname, description } = req.body;
@@ -223,7 +224,7 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id', authenticateToken, async (req, res, next) => {
+router.delete('/:id', authenticateToken, checkManagePositionsPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const user_id = req.user.userId;

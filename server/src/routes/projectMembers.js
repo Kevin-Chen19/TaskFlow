@@ -2,6 +2,12 @@ import express from 'express';
 import { query } from '../config/database.js';
 import { authenticateToken } from '../utils/jwtUtils.js';
 import { getUserPermissions } from '../utils/permissionUtils.js';
+import {
+  checkInviteMemberPermission,
+  checkDeleteMemberPermission,
+  checkManageRolesPermission,
+  checkManagePositionsPermission
+} from '../middleware/permissionMiddleware.js';
 
 const router = express.Router();
 
@@ -199,7 +205,7 @@ router.get('/project/:projectId', async (req, res, next) => {
  *       400:
  *         description: 参数错误
  */
-router.post('/:projectId/invite', authenticateToken, async (req, res, next) => {
+router.post('/:projectId/invite', authenticateToken, checkInviteMemberPermission, async (req, res, next) => {
   try {
     const { projectId } = req.params;
     const { email, role, position, sender_name } = req.body;
@@ -489,6 +495,36 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
     const memberName = oldMember.fullname;
     const projectId = oldMember.project_id;
 
+    // 权限检查：修改角色需要 manage_roles 权限，修改职位需要 manage_positions 权限
+    const permissions = await getUserPermissions(projectId, operatorId);
+    
+    if (!permissions) {
+      return res.status(403).json({
+        success: false,
+        message: '您不是该项目的成员'
+      });
+    }
+
+    // 检查是否有修改角色的权限
+    if (role !== undefined && role !== oldRole) {
+      if (!permissions.isOwner && !permissions.canManageRoles) {
+        return res.status(403).json({
+          success: false,
+          message: '您没有权限修改成员角色'
+        });
+      }
+    }
+
+    // 检查是否有修改职位的权限
+    if (position !== undefined && position !== oldPosition) {
+      if (!permissions.isOwner && !permissions.canManagePositions) {
+        return res.status(403).json({
+          success: false,
+          message: '您没有权限修改成员职位'
+        });
+      }
+    }
+
     const result = await query(
       'UPDATE project_members SET role = COALESCE($1, role), position = COALESCE($2, position), is_active = COALESCE($3, is_active) WHERE id = $4 RETURNING *',
       [role, position, is_active, id]
@@ -542,7 +578,7 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id', authenticateToken, async (req, res, next) => {
+router.delete('/:id', authenticateToken, checkDeleteMemberPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const operator_id = req.user.userId;

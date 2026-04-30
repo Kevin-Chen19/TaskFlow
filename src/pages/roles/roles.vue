@@ -22,10 +22,10 @@
           {{ $t("roles.PositionTitles") }}
         </div>
       </div>
-      <div v-if="chooseWhich == 0" class="addBtn" @click="addOne('Role')">
+      <div v-if="chooseWhich == 0 && permissionStore.canManageRoles" class="addBtn" @click="addOne('Role')">
         + {{ $t("roles.AddNewRole") }}
       </div>
-      <div v-if="chooseWhich == 1" class="addBtn" @click="addOne('Position')">
+      <div v-if="chooseWhich == 1 && permissionStore.canManagePositions" class="addBtn" @click="addOne('Position')">
         + {{ $t("roles.AddNewPosition") }}
       </div>
     </div>
@@ -37,7 +37,7 @@
       >
         <div class="roleHeader">
           <div class="roleTitle">{{ item.roleName }}</div>
-          <div class="roleActions">
+          <div v-if="permissionStore.canManageRoles" class="roleActions">
             <el-icon @click="addOne('Role', roleStore.allRoles[index])" class="actionIcon">
               <Edit />
             </el-icon>
@@ -59,6 +59,7 @@
               v-model="roleStore.allRoles[index].tasksData[subIndex].value"
               style="--el-switch-on-color: #2eb867"
               @change="() => updatePermission(roleStore.allRoles[index], index)"
+              :disabled="!permissionStore.canManageRoles"
             />
           </div>
           <div class="roleItem_Kind">{{ $t("roles.TEAMPEOPLE") }}</div>
@@ -72,6 +73,7 @@
               v-model="roleStore.allRoles[index].membersData[subIndex].value"
               style="--el-switch-on-color: #2eb867"
               @change="() => updatePermission(roleStore.allRoles[index], index)"
+              :disabled="!permissionStore.canManageRoles"
             />
           </div>
           <div class="roleItem_Kind">{{ $t("roles.COLLABORATION") }}</div>
@@ -85,6 +87,7 @@
               v-model="roleStore.allRoles[index].documentsData[subIndex].value"
               style="--el-switch-on-color: #2eb867"
               @change="() => updatePermission(roleStore.allRoles[index], index)"
+              :disabled="!permissionStore.canManageRoles"
             />
           </div>
         </div>
@@ -99,8 +102,8 @@
         :fileName="item.positionName"
         :fileTime="item.positionMess"
         :fileSize="item.count + $t('roles.members')"
-        @edit="editPosition(item)"
-        @delete="deletePosition(item)"
+        @edit="permissionStore.canManagePositions && editPosition(item)"
+        @delete="permissionStore.canManagePositions && deletePosition(item)"
       />
     </div>
   </div>
@@ -184,18 +187,20 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, reactive, onMounted, computed, watch, onUnmounted } from "vue";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 import { Edit, Delete } from "@element-plus/icons-vue";
 import FileCard from "@/components/fileCard.vue";
 import { useRoleStore, type RoleItem } from "@/stores/roleStore";
 import { useOtherStore } from "@/stores/otherStore";
+import { usePermissionStore } from "@/stores/permissionStore";
 import { getProjectPositions, createProjectPosition, updateProjectPosition, deleteProjectPosition } from "@/api";
 import i18n from '@/language';
 import { debounce } from 'lodash-es';
 const t = i18n.global.t
 const roleStore = useRoleStore();
 const otherStore = useOtherStore();
+const permissionStore = usePermissionStore();
 
 // 判断文本是否主要是中文
 const isChinese = (text: string): boolean => {
@@ -595,15 +600,36 @@ const deletePosition = async (position: any) => {
 };
 
 onMounted(() => {
+  // 加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
   loadRoles();
   loadPositions();
+  // 监听页面可见性变化，刷新权限
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    permissionStore.refreshPermissions();
+  }
+};
 
 // 监听项目变化，重新加载数据并清空旧数据
 watch(() => otherStore.projectChangeTrigger, () => {
   // 清空旧数据
   roleStore.allRoles.splice(0, roleStore.allRoles.length);
   roleStore.allpositions.splice(0, roleStore.allpositions.length);
+  // 重新加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
   // 加载新数据
   loadRoles();
   loadPositions();

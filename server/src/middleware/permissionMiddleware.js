@@ -91,15 +91,45 @@ export const createPermissionMiddleware = (permissionKey, errorMessage = '没有
 
       let projectId = req.body?.project_id || req.params?.projectId || req.query?.project_id;
       
-      // 如果没有 project_id，但有任务ID，则从数据库查询 project_id
+      // 如果没有 project_id，但有ID参数，则尝试从各个表中查询 project_id
       if (!projectId && req.params?.id) {
+        const id = req.params.id;
+        
+        // 尝试从 tasks 表查询
         const taskResult = await query(
           'SELECT project_id, creator_id FROM tasks WHERE id = $1',
-          [req.params.id]
+          [id]
         );
         if (taskResult.rows.length > 0) {
           projectId = taskResult.rows[0].project_id;
           req.taskCreatorId = taskResult.rows[0].creator_id;
+        } else {
+          // 尝试从 project_roles 表查询
+          const roleResult = await query(
+            'SELECT project_id FROM project_roles WHERE id = $1',
+            [id]
+          );
+          if (roleResult.rows.length > 0) {
+            projectId = roleResult.rows[0].project_id;
+          } else {
+            // 尝试从 project_positions 表查询
+            const positionResult = await query(
+              'SELECT project_id FROM project_positions WHERE id = $1',
+              [id]
+            );
+            if (positionResult.rows.length > 0) {
+              projectId = positionResult.rows[0].project_id;
+            } else {
+              // 尝试从 milestones 表查询
+              const milestoneResult = await query(
+                'SELECT project_id FROM milestones WHERE id = $1',
+                [id]
+              );
+              if (milestoneResult.rows.length > 0) {
+                projectId = milestoneResult.rows[0].project_id;
+              }
+            }
+          }
         }
       }
       
@@ -308,3 +338,35 @@ export const checkDeleteTaskPermission = async (req, res, next) => {
     });
   }
 };
+
+/**
+ * 检查邀请成员权限
+ */
+export const checkInviteMemberPermission = createPermissionMiddleware(
+  'canInviteMembers',
+  '您没有权限邀请成员加入项目'
+);
+
+/**
+ * 检查删除成员权限
+ */
+export const checkDeleteMemberPermission = createPermissionMiddleware(
+  'canDeleteMembers',
+  '您没有权限删除项目成员'
+);
+
+/**
+ * 检查管理角色权限
+ */
+export const checkManageRolesPermission = createPermissionMiddleware(
+  'canManageRoles',
+  '您没有权限管理项目角色'
+);
+
+/**
+ * 检查管理职位权限
+ */
+export const checkManagePositionsPermission = createPermissionMiddleware(
+  'canManagePositions',
+  '您没有权限管理项目职位'
+);

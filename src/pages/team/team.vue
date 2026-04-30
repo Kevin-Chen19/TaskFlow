@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="teamBox">
-      <div class="teamItem addItem" @click="inviteDialogVisible = true">
+      <div v-if="permissionStore.canInviteMembers" class="teamItem addItem" @click="inviteDialogVisible = true">
         <div class="addBox">
           <img src="@/assets/icons/加号.png" alt="加号" />
         </div>
@@ -77,6 +77,7 @@
           :placeholder="$t('taskCard.Select')"
           style="width: 100%"
           class="drawer_select"
+          :disabled="!permissionStore.canManagePositions"
         >
           <el-option
             v-for="item in positions"
@@ -93,6 +94,7 @@
           :placeholder="$t('taskCard.Select')"
           style="width: 100%"
           class="drawer_select"
+          :disabled="!permissionStore.canManageRoles"
         >
           <el-option
             v-for="item in roles"
@@ -115,8 +117,8 @@
     </div>
     <template #footer>
       <div class="chatBtn">{{ $t('team.Chat') }}</div>
-      <div class="chatBtn saveBtn" @click="saveMemberChanges">{{ $t('save') }}</div>
-      <div class="chatBtn removeBtn" @click="removeMember">{{ $t('team.RemoveMember') }}</div>
+      <div v-if="canEditMember" class="chatBtn saveBtn" @click="saveMemberChanges">{{ $t('save') }}</div>
+      <div v-if="permissionStore.canDeleteMembers" class="chatBtn removeBtn" @click="removeMember">{{ $t('team.RemoveMember') }}</div>
     </template>
   </el-drawer>
   <el-dialog
@@ -189,6 +191,7 @@
 import { Search } from "@element-plus/icons-vue";
 import { useUserStore, type UserItem } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
+import { usePermissionStore } from "@/stores/permissionStore";
 import { ref, computed, onMounted, onUnmounted, reactive, watch } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -196,6 +199,7 @@ import { getProjectPositions, updateProjectMember } from "@/api";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
+const permissionStore = usePermissionStore();
 const searchValue = ref("");
 const showDrawer = ref(false);
 const inviteDialogVisible = ref(false);
@@ -254,6 +258,11 @@ const roleOptions = [
     label: "viewer",
   },
 ];
+
+// 计算属性：是否可以编辑成员（角色或职位）
+const canEditMember = computed(() => {
+  return permissionStore.canManageRoles || permissionStore.canManagePositions;
+});
 const chooseUser = (user: UserItem) => {
   drawerUser.name = user.name;
   drawerUser.pic = user.pic;
@@ -455,17 +464,35 @@ const loadPositions = async (projectId: number) => {
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
+  // 加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
   loadProjectMembers();
+  // 监听页面可见性变化，刷新权限
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    permissionStore.refreshPermissions();
+  }
+};
 
 // 监听项目变化，重新加载成员数据
 watch(() => otherStore.projectChangeTrigger, () => {
   // 清空现有数据
   showUsers.splice(0, showUsers.length);
+  // 重新加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
   // 加载新数据
   loadProjectMembers();
 });

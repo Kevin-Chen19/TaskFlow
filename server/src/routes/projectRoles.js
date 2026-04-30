@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../config/database.js';
 import { authenticateToken } from '../utils/jwtUtils.js';
+import { checkManageRolesPermission } from '../middleware/permissionMiddleware.js';
 
 const router = express.Router();
 
@@ -111,7 +112,7 @@ router.get('/', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.post('/', authenticateToken, async (req, res, next) => {
+router.post('/', authenticateToken, checkManageRolesPermission, async (req, res, next) => {
   try {
     const { project_id, rolename, description, settings } = req.body;
     const user_id = req.user.userId;
@@ -179,7 +180,7 @@ router.post('/', authenticateToken, async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.put('/:id', authenticateToken, async (req, res, next) => {
+router.put('/:id', authenticateToken, checkManageRolesPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { rolename, description, settings } = req.body;
@@ -264,7 +265,7 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id', authenticateToken, async (req, res, next) => {
+router.delete('/:id', authenticateToken, checkManageRolesPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const user_id = req.user.userId;
