@@ -272,13 +272,19 @@ router.post('/', async (req, res, next) => {
 
     const projectId = result.rows[0].id;
 
-    // 创建默认角色
+    // 创建默认角色，并记录创建者角色的ID
+    let creatorRoleId = null;
     for (const role of defaultRoles) {
-      await query(
+      const roleResult = await query(
         `INSERT INTO project_roles (project_id, rolename, description, settings)
-         VALUES ($1, $2, $3, $4)`,
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
         [projectId, role.rolename, role.description, role.settings]
       );
+      // 记录"项目创建者"角色的ID
+      if (role.rolename === '项目创建者') {
+        creatorRoleId = roleResult.rows[0].id;
+      }
     }
 
     // 创建默认职位
@@ -289,6 +295,14 @@ router.post('/', async (req, res, next) => {
         [projectId, position.positionname, position.description]
       );
     }
+
+    // 将项目创建者添加到 project_members 表
+    // 创建者默认使用"项目创建者"角色和"项目经理"职位
+    await query(
+      `INSERT INTO project_members (project_id, user_id, role, position, is_active)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [projectId, owner_id, '项目创建者', '项目经理', true]
+    );
 
     res.status(201).json({
       success: true,
