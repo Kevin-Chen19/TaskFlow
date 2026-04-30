@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../config/database.js';
 import { authenticateToken } from '../utils/jwtUtils.js';
+import { getUserPermissions } from '../utils/permissionUtils.js';
 
 const router = express.Router();
 
@@ -592,6 +593,48 @@ router.delete('/:id', authenticateToken, async (req, res, next) => {
 
     res.json({ success: true, message: '项目成员删除成功' });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 获取当前用户在项目中的权限
+ */
+router.get('/permissions/:projectId', authenticateToken, async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user.userId;
+
+    const permissions = await getUserPermissions(parseInt(projectId), userId);
+
+    if (!permissions) {
+      return res.status(403).json({
+        success: false,
+        message: '您不是该项目的成员'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        isOwner: permissions.isOwner,
+        permissions: {
+          canEditMilestones: permissions.canEditMilestones,
+          canCreateTasks: permissions.canCreateTasks,
+          canDeleteTasks: permissions.canDeleteTasks,
+          canEditAllTasks: permissions.canEditAllTasks,
+          canEditOwnTasks: permissions.canEditOwnTasks,
+          canInviteMembers: permissions.canInviteMembers,
+          canDeleteMembers: permissions.canDeleteMembers,
+          canManageRoles: permissions.canManageRoles,
+          canManagePositions: permissions.canManagePositions,
+          canCreateDocuments: permissions.canCreateDocuments,
+          canDeleteDocuments: permissions.canDeleteDocuments,
+        }
+      }
+    });
+  } catch (error) {
+    console.error('获取用户权限失败:', error);
     next(error);
   }
 });

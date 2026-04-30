@@ -57,7 +57,11 @@
         <span class="MiddleTitle">{{ $t("Dashboard.projectMilestones") }}</span>
         <div class="Line_two" style="margin-bottom: 1.5rem">
           <span style="color: #909cad">{{ $t("Dashboard.phases_key") }}</span>
-          <span class="GanttSty" @click="addMilestone">{{
+          <span 
+            v-if="permissionStore.canEditMilestones" 
+            class="GanttSty" 
+            @click="addMilestone"
+          >{{
             $t("Dashboard.addMilEvent")
           }}</span>
         </div>
@@ -74,12 +78,15 @@
           >
             <span
               style="font-size: larger; cursor: pointer"
-              @click="editMilestone(index)"
+              @click="permissionStore.canEditMilestones && editMilestone(index)"
               >{{ $t("Dashboard.phase") }}{{ index + 1 }}:
               {{ activity.content }}</span
             >
-            <el-icon @click="handleDeleteMilestone(index)" class="delete-icon"
-              ><Delete
+            <el-icon 
+              v-if="permissionStore.canEditMilestones"
+              @click="handleDeleteMilestone(index)" 
+              class="delete-icon"
+            ><Delete
             /></el-icon>
           </el-timeline-item>
         </el-timeline>
@@ -232,7 +239,7 @@
   <ActivityLog v-model="activityLogVisible" :project-id="otherStore.currentProjectId" />
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from "vue";
+import { ref, reactive, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import CardTamp from "../../components/cardTamp.vue";
 import NewProjectCard from "../../components/newProjectCard.vue";
@@ -243,6 +250,7 @@ import ExpiredIcon from "@/assets/icons/逾期.png";
 import WarningIcon from "@/assets/icons/预警.png";
 import user1 from "@/assets/pics/用户头像.jpg";
 import { useOtherStore } from "@/stores/otherStore";
+import { usePermissionStore } from "@/stores/permissionStore";
 import { Check, Refresh, Delete } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/userStore";
 import type { TimelineItemProps } from "element-plus";
@@ -264,6 +272,7 @@ import {
   getUserById,
 } from "@/api";
 const otherStore = useOtherStore();
+const permissionStore = usePermissionStore();
 const router = useRouter();
 const centerDialogVisible = ref(false);
 const noteDialogVisible = ref(false);
@@ -442,16 +451,19 @@ const handleSubmit = async () => {
 const loadAllProjectData = async () => {
   const projectId = otherStore.currentProjectId;
   console.log('加载项目数据，项目ID:', projectId);
-  
+
   if (!projectId) {
     console.warn('当前没有选择项目，跳过数据加载');
     return;
   }
-  
+
   // 清空旧数据
   activities.splice(0, activities.length);
   notes.splice(0, notes.length);
-  
+
+  // 加载用户权限
+  await permissionStore.loadPermissions(projectId);
+
   await Promise.all([
     loadMilestones(),
     getNote(),
@@ -900,10 +912,7 @@ const loadMemberProgress = async () => {
 onMounted(() => {
   // 等待 userStore 初始化完成后再获取数据
   const initData = () => {
-    loadMilestones(); // 加载里程碑数据
-    getNote(); // 获取便签
-    loadProjectStats(); // 加载项目统计
-    loadMemberProgress(); // 加载成员进度
+    loadAllProjectData(); // 加载所有项目数据（包括权限）
   };
 
   if (userStore.user.userId) {
@@ -921,7 +930,23 @@ onMounted(() => {
       clearInterval(checkUserId);
     }, 3000);
   }
+
+  // 监听页面可见性变化，当用户切换回页面时刷新权限
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    // 页面变为可见，刷新权限
+    permissionStore.refreshPermissions();
+  }
+};
 
 // 监听项目变化，重新加载数据
 watch(() => otherStore.projectChangeTrigger, () => {

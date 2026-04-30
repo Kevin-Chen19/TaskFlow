@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../config/database.js';
 import { authenticateToken } from '../utils/jwtUtils.js';
+import { checkMilestonePermission } from '../middleware/permissionMiddleware.js';
 
 const router = express.Router();
 
@@ -120,7 +121,7 @@ router.get('/', async (req, res, next) => {
  *       201:
  *         description: 创建成功
  */
-router.post('/', authenticateToken, async (req, res, next) => {
+router.post('/', authenticateToken, checkMilestonePermission, async (req, res, next) => {
   try {
     const { project_id, content, due_date } = req.body;
     const user_id = req.user.userId;
@@ -183,7 +184,7 @@ router.post('/', authenticateToken, async (req, res, next) => {
  *       200:
  *         description: 更新成功
  */
-router.put('/:id', authenticateToken, async (req, res, next) => {
+router.put('/:id', authenticateToken, checkMilestonePermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content, due_date } = req.body;
@@ -243,7 +244,7 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
  *       200:
  *         description: 删除成功
  */
-router.delete('/:id', authenticateToken, async (req, res, next) => {
+router.delete('/:id', authenticateToken, checkMilestonePermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const user_id = req.user.userId;
