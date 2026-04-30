@@ -148,15 +148,15 @@ router.get('/:id', async (req, res, next) => {
  *         description: 请求参数错误
  */
 // 默认角色配置
+// 注意：delete_tasks 和 edit_own_tasks 已从权限配置中移除
+// 任务创建者默认拥有编辑和删除自己任务的权限
 const defaultRoles = [
   {
     rolename: '项目创建者',
     description: '拥有项目所有权限',
     settings: {
       create_tasks: true,
-      delete_tasks: true,
       edit_all_tasks: true,
-      edit_own_tasks: true,
       edit_timeline: true,
       invite_members: true,
       delete_members: true,
@@ -171,9 +171,7 @@ const defaultRoles = [
     description: '可以管理项目任务与成员',
     settings: {
       create_tasks: true,
-      delete_tasks: true,
       edit_all_tasks: true,
-      edit_own_tasks: true,
       edit_timeline: true,
       invite_members: true,
       delete_members: true,
@@ -188,9 +186,7 @@ const defaultRoles = [
     description: '可以参与项目任务，但权限受限',
     settings: {
       create_tasks: true,
-      delete_tasks: false,
       edit_all_tasks: false,
-      edit_own_tasks: true,
       edit_timeline: false,
       invite_members: false,
       delete_members: false,
@@ -205,9 +201,7 @@ const defaultRoles = [
     description: '只能查看项目内容，无法参与编辑',
     settings: {
       create_tasks: false,
-      delete_tasks: false,
       edit_all_tasks: false,
-      edit_own_tasks: false,
       edit_timeline: false,
       invite_members: false,
       delete_members: false,

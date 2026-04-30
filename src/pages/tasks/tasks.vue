@@ -18,7 +18,7 @@
         >
           {{ $t('taskPage.allTasks') }}
         </div>
-        <div class="new_task" @click="openNewTaskDialog">+ {{ $t('taskPage.addNewTask') }}</div>
+        <div v-if="permissionStore.canCreateTasks" class="new_task" @click="openNewTaskDialog">+ {{ $t('taskPage.addNewTask') }}</div>
       </div>
     </div>
     <div class="filterBox">
@@ -207,17 +207,17 @@
     <div class="topLine">
       <div>
         <div style="color:black;">{{ $t('taskPage.taskProgress') }}</div>
-        <div v-if="ifCreator">{{ $t('taskPage.dragToUpdate') }}</div>
+        <div v-if="canUpdateProgress">{{ $t('taskPage.dragToUpdate') }}</div>
       </div>
       <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.progress}}%</div>
     </div>
     <el-progress
-      v-if="!ifAssignee && !ifCreator"
+      v-if="!canUpdateProgress"
       :color="customColorMethod"
       :percentage="MessageTask.progress"
       :show-text="false"
     />
-    <el-slider v-if="ifAssignee || ifCreator" v-model="MessageTask.progress" />
+    <el-slider v-if="canUpdateProgress" v-model="MessageTask.progress" />
     <div class="bottomTip">
       <div>{{ $t('taskPage.notStarted') }}</div>
       <div>{{ $t('taskPage.Completed') }}</div>
@@ -257,26 +257,28 @@
   </div>
   <template #footer>
     <div class="footerBox">
-      <div v-if="ifCreator" class="editBtn" @click="EditMessage">{{ $t('Edit') }}</div>
-      <div v-if="ifAssignee || ifCreator" class="saveBtn" @click="SaveMessage">{{ $t('save') }}</div>
-      <div v-if="ifCreator" class="closeBtn" @click="handleDelete">{{ $t('Delete') }}</div>
-      <div v-if="!ifAssignee && !ifCreator" class="editBtn" @click="MessageDialogVisible = false">{{ $t('Close') }}</div>
+      <div v-if="canEditTask" class="editBtn" @click="EditMessage">{{ $t('Edit') }}</div>
+      <div v-if="canUpdateProgress" class="saveBtn" @click="SaveMessage">{{ $t('save') }}</div>
+      <div v-if="canDeleteTask" class="closeBtn" @click="handleDelete">{{ $t('Delete') }}</div>
+      <div v-if="!canEditTask && !canUpdateProgress && !canDeleteTask" class="editBtn" @click="MessageDialogVisible = false">{{ $t('Close') }}</div>
     </div>
   </template>
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, reactive, onMounted, computed, watch, onUnmounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import TaskCard from "@/components/taskCard.vue";
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
+import { usePermissionStore } from "@/stores/permissionStore";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { getTasks, updateTask, createTask, deleteTask } from "@/api"
 const { t } = useI18n();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
+const permissionStore = usePermissionStore();
 const route = useRoute();
 const centerDialogVisible = ref(false);
 const ifAll = ref(true);
@@ -371,6 +373,24 @@ const ifCreator = computed(() => {
 const ifAssignee = computed(() => {
   return MessageTask.assignee_ids.includes(userStore.user.userId);
 })
+
+// 任务权限计算属性
+// 规则：任务创建者默认拥有编辑和删除权限；有 canEditAllTasks 权限的可以编辑任何任务
+const canEditTask = computed(() => {
+  // 有编辑所有任务的权限
+  if (permissionStore.canEditAllTasks) return true;
+  // 是任务创建者（创建者默认拥有编辑权限）
+  if (ifCreator.value) return true;
+  return false;
+});
+
+// 删除任务权限与编辑任务权限相同
+const canDeleteTask = canEditTask;
+
+const canUpdateProgress = computed(() => {
+  // 有编辑所有任务的权限，或者是任务负责人/创建者
+  return permissionStore.canEditAllTasks || ifAssignee.value || ifCreator.value;
+});
 const customColorMethod = (percentage: number) => {
   if (percentage < 30) {
     return "#909399";
@@ -704,12 +724,31 @@ const showPriority = (priority: number) => {
   }
 }
 onMounted(() => {
+  // 加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
+  
   //获取项目的全部任务
   loadTasksData().then(() => {
     // 根据路由参数自动筛选
     handleRouteFilter();
   });
+  
+  // 监听页面可见性变化，刷新权限
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    permissionStore.refreshPermissions();
+  }
+};
 
 // 处理路由参数筛选
 const handleRouteFilter = () => {
@@ -781,6 +820,10 @@ const loadTasksData = async () => {
 
 // 监听项目变化，重新加载数据
 watch(() => otherStore.projectChangeTrigger, () => {
+  // 重新加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
   loadTasksData();
 });
 const handlePageChange = (page: number) => {

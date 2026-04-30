@@ -360,11 +360,10 @@ const addSubmit = async (kind: string) => {
         roleName: newRoleData.roleName,
         roleMess: newRoleData.roleDescription,
         // 保留原有权限配置，如果没有则使用默认值
+        // 注意：DeleteTasks 和 EditOwnTasks 已从权限配置中移除
         tasksData: existingRole?.tasksData || [
           { label: 'CreateTasks', value: false },
-          { label: 'DeleteTasks', value: false },
           { label: 'EditAllTasks', value: false },
-          { label: 'EditOwnTasks', value: false },
           { label: 'EditProjectMilestones', value: false },
         ],
         membersData: existingRole?.membersData || [
@@ -387,14 +386,14 @@ const addSubmit = async (kind: string) => {
       }
     } else {
       // 新增角色 - 使用默认权限配置
+      // 注意：DeleteTasks 和 EditOwnTasks 已从权限配置中移除
+      // 任务创建者默认拥有编辑和删除自己任务的权限
       const roleData: RoleItem = {
         roleName: newRoleData.roleName,
         roleMess: newRoleData.roleDescription,
         tasksData: [
           { label: 'CreateTasks', value: false },
-          { label: 'DeleteTasks', value: false },
           { label: 'EditAllTasks', value: false },
-          { label: 'EditOwnTasks', value: false },
           { label: 'EditProjectMilestones', value: false },
         ],
         membersData: [

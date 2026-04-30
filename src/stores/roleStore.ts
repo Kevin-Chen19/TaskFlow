@@ -31,9 +31,7 @@ const transformBackendRole = (backendRole: any): RoleItem => {
     roleMess: backendRole.description || '',
     tasksData: [
       { label: 'CreateTasks', value: settings.create_tasks || false },
-      { label: 'DeleteTasks', value: settings.delete_tasks || false },
       { label: 'EditAllTasks', value: settings.edit_all_tasks || false },
-      { label: 'EditOwnTasks', value: settings.edit_own_tasks || false },
       { label: 'EditProjectMilestones', value: settings.edit_timeline || false },
     ],
     membersData: [
@@ -53,10 +51,9 @@ const transformBackendRole = (backendRole: any): RoleItem => {
 const transformRoleToSettings = (role: RoleItem) => {
   return {
     create_tasks: role.tasksData[0]?.value || false,
-    delete_tasks: role.tasksData[1]?.value || false,
-    edit_all_tasks: role.tasksData[2]?.value || false,
-    edit_own_tasks: role.tasksData[3]?.value || false,
-    edit_timeline: role.tasksData[4]?.value || false,
+    edit_all_tasks: role.tasksData[1]?.value || false,
+    edit_timeline: role.tasksData[2]?.value || false,
+    // 注意：delete_tasks 和 edit_own_tasks 已移除，默认任务创建者拥有完全权限
     invite_members: role.membersData[0]?.value || false,
     delete_members: role.membersData[1]?.value || false,
     manage_roles: role.membersData[2]?.value || false,

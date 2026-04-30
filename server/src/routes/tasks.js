@@ -1,5 +1,10 @@
 import express from "express";
 import { query } from "../config/database.js";
+import { authenticateToken } from "../utils/jwtUtils.js";
+import {
+  checkCreateTaskPermission,
+  checkEditTaskPermission
+} from "../middleware/permissionMiddleware.js";
 
 const router = express.Router();
 
@@ -200,7 +205,7 @@ router.get("/:id", async (req, res, next) => {
  *       400:
  *         description: 请求参数错误
  */
-router.post("/", async (req, res, next) => {
+router.post("/", authenticateToken, checkCreateTaskPermission, async (req, res, next) => {
   try {
     const {
       title,
@@ -312,7 +317,7 @@ router.post("/", async (req, res, next) => {
  *       404:
  *         description: 任务不存在
  */
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", authenticateToken, checkEditTaskPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -324,6 +329,9 @@ router.put("/:id", async (req, res, next) => {
       progress,
       priority,
     } = req.body;
+
+    // 检查用户权限级别
+    const canEditFullTask = req.canEditFullTask === true;
 
     // 先查询当前任务的进度和项目ID
     const currentTaskResult = await query(
@@ -351,31 +359,47 @@ router.put("/:id", async (req, res, next) => {
       completedAtValue = null;
     }
 
-    const result = await query(
-      `UPDATE tasks
-       SET title = COALESCE($1, title),
-           description = COALESCE($2, description),
-           assignee_ids = COALESCE($3, assignee_ids),
-           due_date = COALESCE($4, due_date),
-           start_date = COALESCE($5, start_date),
-           progress = COALESCE($6, progress),
-           priority = COALESCE($7, priority),
-           completed_at = COALESCE($9, completed_at),
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8
-       RETURNING *`,
-      [
-        title,
-        description,
-        assignee_ids,
-        due_date,
-        start_date,
-        progress,
-        priority,
-        id,
-        completedAtValue,
-      ],
-    );
+    let result;
+
+    if (canEditFullTask) {
+      // 有完整编辑权限的用户可以更新所有字段
+      result = await query(
+        `UPDATE tasks
+         SET title = COALESCE($1, title),
+             description = COALESCE($2, description),
+             assignee_ids = COALESCE($3, assignee_ids),
+             due_date = COALESCE($4, due_date),
+             start_date = COALESCE($5, start_date),
+             progress = COALESCE($6, progress),
+             priority = COALESCE($7, priority),
+             completed_at = COALESCE($9, completed_at),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $8
+         RETURNING *`,
+        [
+          title,
+          description,
+          assignee_ids,
+          due_date,
+          start_date,
+          progress,
+          priority,
+          id,
+          completedAtValue,
+        ],
+      );
+    } else {
+      // 只有部分权限的用户（被分配者）只能更新进度
+      result = await query(
+        `UPDATE tasks
+         SET progress = COALESCE($1, progress),
+             completed_at = COALESCE($2, completed_at),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3
+         RETURNING *`,
+        [progress, completedAtValue, id]
+      );
+    }
 
     // 自动更新项目进度
     await updateProjectProgress(projectId);
@@ -413,7 +437,7 @@ router.put("/:id", async (req, res, next) => {
  *       404:
  *         description: 任务不存在
  */
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", authenticateToken, checkEditTaskPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     

@@ -33,9 +33,7 @@ export const getUserPermissions = async (projectId, userId) => {
       isOwner: true,
       canEditMilestones: true,
       canCreateTasks: true,
-      canDeleteTasks: true,
       canEditAllTasks: true,
-      canEditOwnTasks: true,
       canInviteMembers: true,
       canDeleteMembers: true,
       canManageRoles: true,
@@ -71,13 +69,12 @@ export const getUserPermissions = async (projectId, userId) => {
   }
   
   // 解析权限设置
+  // 注意：delete_tasks 和 edit_own_tasks 已移除，任务创建者默认拥有编辑和删除自己任务的权限
   return {
     isOwner: false,
     canEditMilestones: settings.edit_timeline === true,
     canCreateTasks: settings.create_tasks === true,
-    canDeleteTasks: settings.delete_tasks === true,
     canEditAllTasks: settings.edit_all_tasks === true,
-    canEditOwnTasks: settings.edit_own_tasks === true,
     canInviteMembers: settings.invite_members === true,
     canDeleteMembers: settings.delete_members === true,
     canManageRoles: settings.manage_roles === true,

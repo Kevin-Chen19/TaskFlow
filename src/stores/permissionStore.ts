@@ -5,9 +5,7 @@ import { ref, computed } from 'vue';
 export const PERMISSIONS = {
   EDIT_MILESTONES: 'canEditMilestones',
   CREATE_TASKS: 'canCreateTasks',
-  DELETE_TASKS: 'canDeleteTasks',
   EDIT_ALL_TASKS: 'canEditAllTasks',
-  EDIT_OWN_TASKS: 'canEditOwnTasks',
   INVITE_MEMBERS: 'canInviteMembers',
   DELETE_MEMBERS: 'canDeleteMembers',
   MANAGE_ROLES: 'canManageRoles',
@@ -32,16 +30,8 @@ export const usePermissionStore = defineStore('permission', () => {
     return isProjectOwner.value || userPermissions.value?.canCreateTasks === true;
   });
 
-  const canDeleteTasks = computed(() => {
-    return isProjectOwner.value || userPermissions.value?.canDeleteTasks === true;
-  });
-
   const canEditAllTasks = computed(() => {
     return isProjectOwner.value || userPermissions.value?.canEditAllTasks === true;
-  });
-
-  const canEditOwnTasks = computed(() => {
-    return isProjectOwner.value || userPermissions.value?.canEditOwnTasks === true;
   });
 
   const canInviteMembers = computed(() => {
@@ -124,9 +114,7 @@ export const usePermissionStore = defineStore('permission', () => {
     // Getters
     canEditMilestones,
     canCreateTasks,
-    canDeleteTasks,
     canEditAllTasks,
-    canEditOwnTasks,
     canInviteMembers,
     canDeleteMembers,
     canManageRoles,
