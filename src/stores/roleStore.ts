@@ -45,7 +45,6 @@ const transformBackendRole = (backendRole: any): RoleItem => {
     documentsData: [
       { label: 'CreateDocuments', value: settings.create_documents || false },
       { label: 'DeleteAllDocuments', value: settings.delete_documents || false },
-      { label: 'Chat', value: settings.chat || false },
     ],
   };
 };
@@ -64,7 +63,6 @@ const transformRoleToSettings = (role: RoleItem) => {
     manage_positions: role.membersData[3]?.value || false,
     create_documents: role.documentsData[0]?.value || false,
     delete_documents: role.documentsData[1]?.value || false,
-    chat: role.documentsData[2]?.value || false,
   };
 };
 

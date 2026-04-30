@@ -163,8 +163,7 @@ const defaultRoles = [
       manage_roles: true,
       manage_positions: true,
       create_documents: true,
-      delete_documents: true,
-      chat: true
+      delete_documents: true
     }
   },
   {
@@ -181,8 +180,7 @@ const defaultRoles = [
       manage_roles: true,
       manage_positions: true,
       create_documents: true,
-      delete_documents: false,
-      chat: true
+      delete_documents: false
     }
   },
   {
@@ -199,8 +197,7 @@ const defaultRoles = [
       manage_roles: false,
       manage_positions: false,
       create_documents: true,
-      delete_documents: false,
-      chat: true
+      delete_documents: false
     }
   },
   {
@@ -217,8 +214,7 @@ const defaultRoles = [
       manage_roles: false,
       manage_positions: false,
       create_documents: false,
-      delete_documents: false,
-      chat: false
+      delete_documents: false
     }
   }
 ];

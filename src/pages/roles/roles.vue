@@ -376,7 +376,6 @@ const addSubmit = async (kind: string) => {
         documentsData: existingRole?.documentsData || [
           { label: 'CreateDocuments', value: false },
           { label: 'DeleteAllDocuments', value: false },
-          { label: 'Chat', value: false },
         ],
       };
       
@@ -407,7 +406,6 @@ const addSubmit = async (kind: string) => {
         documentsData: [
           { label: 'CreateDocuments', value: false },
           { label: 'DeleteAllDocuments', value: false },
-          { label: 'Chat', value: false },
         ],
       };
       
