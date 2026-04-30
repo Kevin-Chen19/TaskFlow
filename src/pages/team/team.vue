@@ -71,7 +71,21 @@
         {{ $t(drawerUser.status || '') }}
       </div>
       <div class="drawer_title">{{ $t('team.POSITION') }}</div>
-      <div class="drawer_title drawer_Position">{{ drawerUser.postion }}</div>
+      <div class="drawer_title drawer_Position">
+        <el-select
+          v-model="drawerUser.postion"
+          :placeholder="$t('taskCard.Select')"
+          style="width: 100%"
+          class="drawer_select"
+        >
+          <el-option
+            v-for="item in positions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </div>
       <div class="drawer_title">{{ $t('projects.ROLE') }}</div>
       <div class="drawer_title drawer_Position">
         <el-select
@@ -81,10 +95,10 @@
           class="drawer_select"
         >
           <el-option
-            v-for="item in roleStore.allRoles"
-            :key="item.roleName"
-            :label="item.roleName"
-            :value="item.roleName"
+            v-for="item in roles"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
           />
         </el-select>
       </div>
@@ -101,7 +115,7 @@
     </div>
     <template #footer>
       <div class="chatBtn">{{ $t('team.Chat') }}</div>
-      <div class="chatBtn saveBtn">{{ $t('save') }}</div>
+      <div class="chatBtn saveBtn" @click="saveMemberChanges">{{ $t('save') }}</div>
       <div class="chatBtn removeBtn" @click="removeMember">{{ $t('team.RemoveMember') }}</div>
     </template>
   </el-drawer>
@@ -178,7 +192,7 @@ import { useOtherStore } from "@/stores/otherStore";
 import { ref, computed, onMounted, onUnmounted, reactive, watch } from "vue";
 import { useRoleStore } from "@/stores/roleStore";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getProjectPositions } from "@/api";
+import { getProjectPositions, updateProjectMember } from "@/api";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
 const otherStore = useOtherStore();
@@ -455,6 +469,73 @@ watch(() => otherStore.projectChangeTrigger, () => {
   // 加载新数据
   loadProjectMembers();
 });
+
+// 保存成员变更
+const saveMemberChanges = async () => {
+  if (!drawerUser.userId) {
+    ElMessage.warning('用户信息不存在');
+    return;
+  }
+
+  try {
+    const projectId = otherStore.currentProjectId;
+    if (!projectId) {
+      ElMessage.warning('当前没有选择项目');
+      return;
+    }
+
+    // 获取成员记录 ID
+    const token = localStorage.getItem('token');
+    const memberResponse = await fetch(`/api/project-members?project_id=${projectId}&user_id=${drawerUser.userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const memberResult = await memberResponse.json();
+    if (!memberResult.success || !memberResult.data || memberResult.data.length === 0) {
+      ElMessage.error('未找到该成员记录');
+      return;
+    }
+
+    const memberId = memberResult.data[0].id;
+    const originalRole = memberResult.data[0].role;
+    const originalPosition = memberResult.data[0].position;
+
+    // 检查是否有变更
+    const hasRoleChanged = drawerUser.role !== originalRole;
+    const hasPositionChanged = drawerUser.postion !== originalPosition;
+
+    if (!hasRoleChanged && !hasPositionChanged) {
+      ElMessage.info('没有需要保存的变更');
+      showDrawer.value = false;
+      return;
+    }
+
+    // 更新成员信息
+    const updateData: any = {};
+    if (hasRoleChanged) {
+      updateData.role = drawerUser.role;
+    }
+    if (hasPositionChanged) {
+      updateData.position = drawerUser.postion;
+    }
+
+    const res: any = await updateProjectMember(memberId, updateData);
+
+    if (res.success) {
+      ElMessage.success('成员信息已更新');
+      showDrawer.value = false;
+      // 刷新成员列表
+      await loadProjectMembers();
+    } else {
+      ElMessage.error(res.message || '更新失败');
+    }
+  } catch (error) {
+    console.error('保存成员变更失败:', error);
+    ElMessage.error('保存失败，请稍后重试');
+  }
+};
 </script>
 <style scoped lang="scss">
 .searchInput {

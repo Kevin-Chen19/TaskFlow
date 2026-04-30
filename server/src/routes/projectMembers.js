@@ -459,21 +459,56 @@ router.post('/', authenticateToken, async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { role, position, is_active } = req.body;
+    const operatorId = req.user.userId;
+
+    // 先获取成员原始信息
+    const oldMemberResult = await query(
+      `SELECT pm.*, u.fullname, u.email, p.name as project_name, p.id as project_id
+       FROM project_members pm
+       JOIN users u ON pm.user_id = u.id
+       JOIN projects p ON pm.project_id = p.id
+       WHERE pm.id = $1`,
+      [id]
+    );
+
+    if (oldMemberResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '项目成员不存在'
+      });
+    }
+
+    const oldMember = oldMemberResult.rows[0];
+    const oldRole = oldMember.role;
+    const oldPosition = oldMember.position;
+    const memberName = oldMember.fullname;
+    const projectId = oldMember.project_id;
 
     const result = await query(
       'UPDATE project_members SET role = COALESCE($1, role), position = COALESCE($2, position), is_active = COALESCE($3, is_active) WHERE id = $4 RETURNING *',
       [role, position, is_active, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '项目成员不存在'
-      });
+    // 记录变更日志
+    const changes = [];
+    if (role !== undefined && role !== oldRole) {
+      changes.push(`角色从"${oldRole || '无'}"变更为"${role}"`);
+    }
+    if (position !== undefined && position !== oldPosition) {
+      changes.push(`职位从"${oldPosition || '无'}"变更为"${position}"`);
+    }
+
+    if (changes.length > 0) {
+      await logActivity(
+        projectId,
+        operatorId,
+        '更新成员信息',
+        `"${memberName}"的${changes.join('，')}`
+      );
     }
 
     res.json({
