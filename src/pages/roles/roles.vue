@@ -194,7 +194,7 @@ import FileCard from "@/components/fileCard.vue";
 import { useRoleStore, type RoleItem } from "@/stores/roleStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { usePermissionStore } from "@/stores/permissionStore";
-import { getProjectPositions, createProjectPosition, updateProjectPosition, deleteProjectPosition } from "@/api";
+import { getProjectPositions, createProjectPosition, updateProjectPosition, deleteProjectPosition, getProjectMembers } from "@/api";
 import i18n from '@/language';
 import { debounce } from 'lodash-es';
 const t = i18n.global.t
@@ -488,16 +488,30 @@ const loadPositions = async () => {
       return;
     }
     
-    const positionRes = await getProjectPositions({
-      project_id: projectId,
-    });
+    // 并行加载职位和成员数据
+    const [positionRes, membersRes] = await Promise.all([
+      getProjectPositions({
+        project_id: projectId,
+      }),
+      getProjectMembers(projectId)
+    ]);
+    
+    // 统计每个职位的成员数量
+    const positionCounts: Record<string, number> = {};
+    if (membersRes.success && membersRes.data) {
+      membersRes.data.forEach((member: any) => {
+        const position = member.position || '未分配职位';
+        positionCounts[position] = (positionCounts[position] || 0) + 1;
+      });
+    }
+    
     if (positionRes.success && positionRes.data) {
       roleStore.allpositions.splice(0, roleStore.allpositions.length,
         ...positionRes.data.map((item: any) => ({
           id: item.id,
           positionName: item.positionname,
           positionMess: item.description,
-          count: 0
+          count: positionCounts[item.positionname] || 0
         }))
       );
       console.log('Roles 页面加载职位完成，数量:', roleStore.allpositions.length);
