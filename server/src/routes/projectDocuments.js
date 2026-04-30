@@ -4,6 +4,10 @@ import upload from '../utils/upload.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { authenticateToken } from '../utils/jwtUtils.js';
+import {
+  checkCreateDocumentPermission,
+  checkDeleteDocumentPermission
+} from '../middleware/permissionMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -127,7 +131,7 @@ router.get('/', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.post('/upload', upload.single('file'), async (req, res, next) => {
+router.post('/upload', authenticateToken, upload.single('file'), checkCreateDocumentPermission, async (req, res, next) => {
   try {
     console.log('=== 文件上传请求 ===');
     console.log('req.file:', req.file);
@@ -245,7 +249,7 @@ router.post('/upload', upload.single('file'), async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateToken, checkCreateDocumentPermission, async (req, res, next) => {
   try {
     const { project_id, parent_folder_id, name, creator_id } = req.body;
 
@@ -347,7 +351,7 @@ router.put('/:id', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateToken, checkDeleteDocumentPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const result = await query(
@@ -388,7 +392,7 @@ router.delete('/:id', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.put('/:id/restore', async (req, res, next) => {
+router.put('/:id/restore', authenticateToken, checkDeleteDocumentPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -479,7 +483,7 @@ router.put('/:id/restore', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id/permanent', authenticateToken, async (req, res, next) => {
+router.delete('/:id/permanent', authenticateToken, checkDeleteDocumentPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const user_id = req.user.userId;

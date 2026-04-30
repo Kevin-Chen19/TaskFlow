@@ -1,6 +1,10 @@
 import express from 'express';
 import { query } from '../config/database.js';
 import { authenticateToken } from '../utils/jwtUtils.js';
+import {
+  checkCreateDocumentPermission,
+  checkDeleteDocumentPermission
+} from '../middleware/permissionMiddleware.js';
 
 const router = express.Router();
 
@@ -120,7 +124,7 @@ router.get('/', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateToken, checkCreateDocumentPermission, async (req, res, next) => {
   try {
     const { project_id, parent_folder_id, name, creator_id } = req.body;
 
@@ -222,7 +226,7 @@ router.put('/:id', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateToken, checkDeleteDocumentPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
     const result = await query(
@@ -263,7 +267,7 @@ router.delete('/:id', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.put('/:id/bin', async (req, res, next) => {
+router.put('/:id/bin', authenticateToken, checkDeleteDocumentPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -326,7 +330,7 @@ router.put('/:id/bin', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.put('/:id/restore', async (req, res, next) => {
+router.put('/:id/restore', authenticateToken, checkDeleteDocumentPermission, async (req, res, next) => {
   try {
     const { id } = req.params;
 

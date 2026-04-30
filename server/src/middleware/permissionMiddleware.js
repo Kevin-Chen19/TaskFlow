@@ -370,3 +370,97 @@ export const checkManagePositionsPermission = createPermissionMiddleware(
   'canManagePositions',
   '您没有权限管理项目职位'
 );
+
+/**
+ * 检查创建文档权限
+ */
+export const checkCreateDocumentPermission = createPermissionMiddleware(
+  'canCreateDocuments',
+  '您没有权限创建文档'
+);
+
+/**
+ * 检查删除文档权限
+ * 规则：
+ * 1. 有 canDeleteDocuments 权限的可以删除任何文档
+ * 2. 文档创建者默认可以删除自己的文档
+ */
+export const checkDeleteDocumentPermission = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: '未登录'
+      });
+    }
+
+    let projectId = req.body?.project_id || req.params?.projectId || req.query?.project_id;
+    let documentCreatorId = null;
+    
+    // 如果没有 project_id，但有文档ID，则从数据库查询 project_id 和创建者ID
+    if (!projectId && req.params?.id) {
+      // 尝试从 project_documents 表查询
+      const docResult = await query(
+        'SELECT project_id, creator_id FROM project_documents WHERE id = $1',
+        [req.params.id]
+      );
+      if (docResult.rows.length > 0) {
+        projectId = docResult.rows[0].project_id;
+        documentCreatorId = docResult.rows[0].creator_id;
+      } else {
+        // 尝试从 project_folders 表查询
+        const folderResult = await query(
+          'SELECT project_id, creator_id FROM project_folders WHERE id = $1',
+          [req.params.id]
+        );
+        if (folderResult.rows.length > 0) {
+          projectId = folderResult.rows[0].project_id;
+          documentCreatorId = folderResult.rows[0].creator_id;
+        }
+      }
+    }
+    
+    if (!projectId) {
+      return res.status(400).json({
+        success: false,
+        message: '项目ID不能为空'
+      });
+    }
+
+    const permissions = await getUserPermissions(parseInt(projectId), userId);
+    
+    if (!permissions) {
+      return res.status(403).json({
+        success: false,
+        message: '您不是该项目的成员'
+      });
+    }
+
+    // 检查是否有删除所有文档的权限
+    if (hasPermission(permissions, 'canDeleteDocuments')) {
+      req.userPermissions = permissions;
+      return next();
+    }
+
+    // 文档创建者默认可以删除自己的文档
+    if (documentCreatorId === userId) {
+      req.userPermissions = permissions;
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: '您没有权限删除此文档'
+    });
+    
+  } catch (error) {
+    console.error('权限检查失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '权限检查失败',
+      error: error.message
+    });
+  }
+};

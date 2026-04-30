@@ -38,7 +38,7 @@
           </div>
         </div>
         <div class="spaceLine"></div>
-        <div class="iconBox uploadBox" @click="openUploadDialog" v-if="!ifBin && !isSearching">
+        <div class="iconBox uploadBox" @click="openUploadDialog" v-if="!ifBin && !isSearching && permissionStore.canCreateDocuments">
           <img src="@/assets/icons/上传文件.png" alt="上传文件图标" />
           <div>{{ $t("projects.uploadFile") }}</div>
         </div>
@@ -83,7 +83,7 @@
       </div>
       <div
         class="createFolderBox"
-        v-show="ifShowCreateBox"
+        v-show="ifShowCreateBox && permissionStore.canCreateDocuments"
         @click="createFolder"
       >
         <img src="@/assets/icons/新建文件夹.png" alt="新建文件夹图标" />
@@ -117,7 +117,7 @@
       </el-tree>
     </div>
     <div class="emptyBox" v-if="ifEmpty">{{ $t("noMatchFound") }}</div>
-    <div class="dropBox" v-if="!ifBin && !isSearching">
+    <div class="dropBox" v-if="!ifBin && !isSearching && permissionStore.canCreateDocuments">
       <el-upload
         class="upload-demo"
         drag
@@ -221,10 +221,11 @@ import { useNotificationStore } from "@/stores/notificationStore";
 import { useUserStore } from "@/stores/userStore";
 import { useFileStore } from "@/stores/fileStore";
 import { useOtherStore } from "@/stores/otherStore";
+import { usePermissionStore } from "@/stores/permissionStore";
 import type {
   TreeInstance,
 } from "element-plus";
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, reactive, onMounted, computed, watch, onUnmounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search } from "@element-plus/icons-vue";
 
@@ -233,6 +234,7 @@ const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const fileStore = useFileStore();
 const otherStore = useOtherStore();
+const permissionStore = usePermissionStore();
 
 const renameDialogVisible = ref(false);
 const notificationDialogVisible = ref(false);
@@ -276,12 +278,31 @@ const currentFolderId = computed(() => {
 onMounted(() => {
   const projectId = otherStore.currentProjectId
   if (projectId) {
+    // 加载权限
+    permissionStore.loadPermissions(projectId);
     fileStore.loadProjectFiles(projectId)
   }
+  // 监听页面可见性变化，刷新权限
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 })
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    permissionStore.refreshPermissions();
+  }
+};
 
 // 监听项目变化
 watch(() => otherStore.projectChangeTrigger, () => {
+  // 重新加载权限
+  if (otherStore.currentProjectId) {
+    permissionStore.loadPermissions(otherStore.currentProjectId);
+  }
   fileStore.loadProjectFiles(otherStore.currentProjectId)
 })
 
@@ -493,6 +514,15 @@ const sendDocumentUploadNotification = async (uploadedFiles: any[]) => {
   }
 }
 
+// 检查是否有删除文档的权限（有删除所有文档权限或是文件创建者）
+const canDeleteFile = (file: any): boolean => {
+  // 有删除所有文档的权限
+  if (permissionStore.canDeleteDocuments) return true;
+  // 是文件创建者
+  if (file.fileMaker === userStore.user.name) return true;
+  return false;
+};
+
 // 处理菜单文件命令
 const handleCommand = async (file: any, command: string) => {
   console.log("Received command:", command, file);
@@ -505,6 +535,11 @@ const handleCommand = async (file: any, command: string) => {
     currentFileId.value = file.id;
     renameDialogVisible.value = true;
   } else if (command === "delete") {
+    // 检查删除权限
+    if (!canDeleteFile(file)) {
+      ElMessage.error('您没有权限删除此文档');
+      return;
+    }
     // 移动到回收站
     const result = await fileStore.moveToBin(file.id)
     if (result.success) {
@@ -513,6 +548,11 @@ const handleCommand = async (file: any, command: string) => {
       ElMessage.error(result.message || '删除失败')
     }
   } else if (command === "restore") {
+    // 检查恢复权限（与删除权限相同）
+    if (!canDeleteFile(file)) {
+      ElMessage.error('您没有权限恢复此文档');
+      return;
+    }
     // 恢复文件
     const result = await fileStore.restoreFile(file.id)
     if (result.success) {
@@ -526,6 +566,11 @@ const handleCommand = async (file: any, command: string) => {
     mentionsDate.note = '';
     notificationDialogVisible.value = true;
   } else if (command === "deletePermanently") {
+    // 检查删除权限
+    if (!canDeleteFile(file)) {
+      ElMessage.error('您没有权限删除此文档');
+      return;
+    }
     // 彻底删除
     try {
       await ElMessageBox.confirm('确定要彻底删除该文件吗？此操作不可恢复', '提示', {
