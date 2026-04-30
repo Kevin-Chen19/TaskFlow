@@ -92,9 +92,53 @@ const projectData = reactive<projectData>({
   assignee: []
 });
 
-//初始组价时将userStore.usersTable赋值给showTable
+//初始组件时过滤掉当前用户，将userStore.usersTable赋值给showTable
 onMounted(() => {
-  showTable.push(...userStore.usersTable);
+  // 等待 userStore 初始化完成
+  const initShowTable = () => {
+    const currentUserId = userStore.user?.userId;
+    console.log('当前用户ID:', currentUserId, '类型:', typeof currentUserId);
+    console.log('所有用户:', userStore.usersTable);
+    
+    if (!currentUserId) {
+      console.warn('当前用户ID未获取到，无法过滤');
+      showTable.push(...userStore.usersTable);
+      return;
+    }
+    
+    const filteredUsers = userStore.usersTable.filter(user => {
+      // 统一转换为数字进行比较
+      const userIdNum = Number(user.userId);
+      const currentUserIdNum = Number(currentUserId);
+      const isCurrentUser = userIdNum === currentUserIdNum;
+      console.log(`用户 ${user.name} (ID: ${user.userId}, 类型: ${typeof user.userId}) - 是当前用户: ${isCurrentUser}`);
+      return !isCurrentUser;
+    });
+    
+    console.log('过滤后的用户:', filteredUsers);
+    showTable.splice(0, showTable.length, ...filteredUsers);
+  };
+  
+  // 如果 userId 已经存在，直接执行
+  if (userStore.user?.userId) {
+    initShowTable();
+  } else {
+    // 否则等待一段时间再尝试
+    const checkInterval = setInterval(() => {
+      if (userStore.user?.userId) {
+        clearInterval(checkInterval);
+        initShowTable();
+      }
+    }, 100);
+    
+    // 最多等待 3 秒
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      if (showTable.length === 0) {
+        initShowTable();
+      }
+    }, 3000);
+  }
 });
 onUnmounted(() => {
   //退出时清空表单全部数据
@@ -105,9 +149,62 @@ onUnmounted(() => {
   projectData.assignee = [];
   console.log("清空了");
 });
+// 发送项目邀请通知
+const sendProjectInvites = async (projectId: string, projectName: string) => {
+  const token = localStorage.getItem('token');
+  const currentUser = userStore.user;
+  
+  // 获取被选中的用户ID列表
+  const selectedUserIds = projectData.assignee;
+  
+  if (selectedUserIds.length === 0) {
+    console.log('没有选择任何成员邀请');
+    return;
+  }
+  
+  console.log('发送项目邀请给:', selectedUserIds);
+  
+  // 为每个选中的用户发送邀请通知
+  for (const userId of selectedUserIds) {
+    try {
+      const response = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'project_invite',
+          title: `项目邀请：${projectName}`,
+          message: `您被邀请加入新项目"${projectName}"`,
+          sender_id: currentUser?.userId,
+          receiver_id: parseInt(userId),
+          project_id: parseInt(projectId),
+          data: JSON.stringify({ 
+            role: 'member', 
+            position: '',
+            sender_name: currentUser?.fullname || currentUser?.name || '系统',
+            sender_avatar: currentUser?.avatar_url || ''
+          })
+        })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        console.log(`已向用户 ${userId} 发送项目邀请通知`);
+      } else {
+        console.error(`向用户 ${userId} 发送邀请失败:`, result.message);
+      }
+    } catch (error) {
+      console.error(`发送邀请给用户 ${userId} 时出错:`, error);
+    }
+  }
+};
+
 // 暴露方法和数据给父组件
 defineExpose({
   projectData,
+  sendProjectInvites
 });
 const changeGot = (userId: string) => {
   const index = projectData.assignee.indexOf(userId);
@@ -118,19 +215,27 @@ const changeGot = (userId: string) => {
   }
 };
 const toFind = () => {
-  console.log(searchValue.value);
+  console.log('搜索值:', searchValue.value);
+  const currentUserId = Number(userStore.user?.userId);
+  console.log('当前用户ID:', currentUserId);
+  
   if (searchValue.value === "") {
-    showTable.splice(0, showTable.length, ...userStore.usersTable);
+    const filteredUsers = userStore.usersTable.filter(user => Number(user.userId) !== currentUserId);
+    console.log('清空搜索，过滤后用户:', filteredUsers);
+    showTable.splice(0, showTable.length, ...filteredUsers);
   } else {
     let newTable = [];
     for (let item of userStore.usersTable) {
-      if (
-        item.name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
-        item.postion.toLowerCase().includes(searchValue.value.toLowerCase())
-      ) {
+      // 过滤掉当前用户，并按名称或职位搜索
+      const isCurrentUser = Number(item.userId) === currentUserId;
+      const matchesSearch = item.name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+        item.postion.toLowerCase().includes(searchValue.value.toLowerCase());
+      
+      if (!isCurrentUser && matchesSearch) {
         newTable.push(item);
       }
     }
+    console.log('搜索过滤后用户:', newTable);
     // 将newTable赋值给showTable
     showTable.splice(0, showTable.length, ...newTable);
   }

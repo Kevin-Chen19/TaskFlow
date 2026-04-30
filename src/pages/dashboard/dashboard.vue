@@ -401,6 +401,11 @@ const handleSubmit = async () => {
       
       console.log('项目创建成功，ID:', newProjectId, '名称:', newProjectName);
       
+      // 发送项目邀请通知给选中的成员
+      if (newProjectCardRef.value?.sendProjectInvites) {
+        await newProjectCardRef.value.sendProjectInvites(newProjectId.toString(), newProjectName);
+      }
+      
       // 先关闭对话框，避免用户重复点击
       centerDialogVisible.value = false;
       
