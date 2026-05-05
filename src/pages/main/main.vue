@@ -210,7 +210,7 @@ import { useOtherStore } from "@/stores/otherStore";
 import { useLoginStore } from "@/stores/loginStore";
 import { Close } from "@element-plus/icons-vue";
 import i18n from "@/language";
-import { getProjectById } from "@/api";
+import { getProjectById, getProjectsByMember } from "@/api";
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const otherStore = useOtherStore();
@@ -305,10 +305,20 @@ onMounted(async () => {
   loginStore.restoreAuth();
   // 然后初始化 userStore
   userStore.initUser();
-  userStore.getProjectMember(otherStore.currentProjectId);
   
   // 获取当前用户ID
   const currentUserId = loginStore.user?.id || userStore.user?.userId;
+  
+  // 初始化项目（从本地存储或获取用户项目列表）
+  if (currentUserId) {
+    await initializeUserProject(currentUserId);
+  }
+  
+  // 加载当前项目的成员
+  if (otherStore.currentProjectId) {
+    userStore.getProjectMember(otherStore.currentProjectId);
+  }
+  
   if (currentUserId) {
     // 先获取总数（不过滤日期），用于判断是否有更早期的数据
     await notificationStore.fetchNotifications(currentUserId, undefined, 1, 1, false, 0);
@@ -320,6 +330,43 @@ onMounted(async () => {
   
   loadCurrentProjectName();
 });
+
+// 初始化用户项目
+const initializeUserProject = async (userId: number) => {
+  try {
+    // 1. 尝试从本地存储加载上次打开的项目ID
+    const lastProjectId = otherStore.loadLastProjectFromStorage();
+    
+    if (lastProjectId) {
+      // 验证该项目是否存在且用户有权限访问
+      const res = await getProjectById(lastProjectId);
+      if (res.success && res.data) {
+        otherStore.currentProjectId = lastProjectId;
+        otherStore.currentProjectName = res.data.name || '';
+        console.log('从本地存储恢复项目:', lastProjectId, res.data.name);
+        return;
+      }
+    }
+    
+    // 2. 如果本地存储没有或项目不存在，获取用户参与的项目列表
+    const projectsRes = await getProjectsByMember(userId);
+    if (projectsRes.success && projectsRes.data && projectsRes.data.length > 0) {
+      // 使用第一个项目
+      const firstProject = projectsRes.data[0];
+      otherStore.currentProjectId = firstProject.id;
+      otherStore.currentProjectName = firstProject.name || '';
+      // 保存到本地存储
+      localStorage.setItem('taskflow_last_project_id', String(firstProject.id));
+      console.log('自动选择第一个项目:', firstProject.id, firstProject.name);
+    } else {
+      // 3. 新用户没有参与任何项目的情况
+      console.log('用户没有参与任何项目');
+      // 可以在这里显示一个创建项目的引导
+    }
+  } catch (error) {
+    console.error('初始化项目失败:', error);
+  }
+};
 
 // 监听通知列表变化，自动更新显示
 watch(
