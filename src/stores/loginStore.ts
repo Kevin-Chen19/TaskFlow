@@ -66,6 +66,8 @@ export const useLoginStore = defineStore('login', () => {
     isLoggedIn.value = false
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    // 清除记录的项目ID
+    localStorage.removeItem('taskflow_last_project_id')
   }
 
   // 从 localStorage 恢复登录状态
