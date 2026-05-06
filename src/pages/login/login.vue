@@ -60,7 +60,7 @@
 
           <!-- 验证码 -->
           <el-form-item
-            v-if="loginStore.ifSignUp || loginStore.ifForgot"
+            v-if="loginStore.ifSignUp || loginStore.ifForgot || isCodeLogin"
             :label="$t('loginPage.Identifying')"
             prop="identifyingNumber"
           >
@@ -71,20 +71,65 @@
               :prefix-icon="ChatDotRound"
             >
               <template #append>
-                <div class="btn_getCode">{{ $t('loginPage.getCode') }}</div>
+                <div 
+                  class="btn_getCode" 
+                  :class="{ 'btn_disabled': countdown > 0 }"
+                  @click="handleGetCode"
+                >
+                  {{ countdown > 0 ? `${countdown}s` : $t('loginPage.getCode') }}
+                </div>
               </template>
             </el-input>
           </el-form-item>
 
-          <!-- 密码 -->
+          <!-- 登录方式切换 -->
+          <div v-if="!loginStore.ifSignUp && !loginStore.ifForgot" class="smallTips oneLine">
+            <span class="PointStyle" @click="toggleLoginMode">
+              {{ isCodeLogin ? '密码登录' : '验证码登录' }}
+            </span>
+          </div>
+
+          <!-- 密码（登录和注册时显示） -->
           <el-form-item
-            v-if="!loginStore.ifForgot"
+            v-if="!loginStore.ifForgot && !isCodeLogin"
             :label="$t('loginPage.Password')"
             prop="password"
           >
             <el-input
               v-model="ruleForm.password"
               :placeholder="$t('loginPage.EnterPassword')"
+              type="password"
+              autocomplete="off"
+              :prefix-icon="Lock"
+              :show-password="true"
+            />
+          </el-form-item>
+
+          <!-- 新密码（忘记密码时显示） -->
+          <el-form-item
+            v-if="loginStore.ifForgot"
+            :label="$t('loginPage.NewPassword')"
+            prop="password"
+          >
+            <el-input
+              v-model="ruleForm.password"
+              :placeholder="$t('loginPage.EnterNewPassword')"
+              type="password"
+              autocomplete="off"
+              :prefix-icon="Lock"
+              :show-password="true"
+            />
+          </el-form-item>
+
+          <!-- 确认新密码（忘记密码时显示） -->
+          <el-form-item
+            v-if="loginStore.ifForgot"
+            :label="$t('loginPage.ConfirmNewPassword')"
+            prop="confirmPassword"
+          >
+            <el-input
+              v-model="ruleForm.confirmPassword"
+              :placeholder="$t('loginPage.EnterConfirmNewPassword')"
               type="password"
               autocomplete="off"
               :prefix-icon="Lock"
@@ -178,6 +223,12 @@ const userStore = useUserStore();
 const ruleFormRef = ref<FormInstance>();
 const loading = ref(false);
 
+// 验证码登录模式
+const isCodeLogin = ref(false);
+// 倒计时
+const countdown = ref(0);
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
 // 媒体查询
 const isMobile = ref(false)
 const breakpoint = 768 // 设定断点值，比如768px
@@ -267,6 +318,14 @@ const rules = computed<FormRules>(() => {
     };
   }
 
+  // 忘记密码时需要验证确认密码
+  if (loginStore.ifForgot) {
+    return {
+      ...baseRules,
+      confirmPassword: [{ validator: validateConfirmPassword, trigger: "blur" }],
+    };
+  }
+
   return baseRules;
 });
 
@@ -292,20 +351,91 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       loading.value = true;
       try {
         if (loginStore.ifSignUp) {
-          // 注册
-          await loginStore.register({
-            phone: ruleForm.phoneNumber,
-            fullname: ruleForm.fullname,
-            email: ruleForm.email,
-            password: ruleForm.password,
+          // 注册 - 需要验证码
+          const response = await fetch('/api/auth/register-with-code', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              phone: ruleForm.phoneNumber,
+              fullname: ruleForm.fullname,
+              email: ruleForm.email,
+              password: ruleForm.password,
+              code: ruleForm.identifyingNumber
+            })
           });
-          ElMessage.success('注册成功，请登录');
-          loginStore.ifSignUp = false;
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            ElMessage.success('注册成功，请登录');
+            loginStore.ifSignUp = false;
+            // 清空表单
+            ruleForm.identifyingNumber = '';
+          } else {
+            ElMessage.error(result.message || '注册失败');
+          }
         } else if (loginStore.ifForgot) {
-          // 忘记密码（暂未实现）
-          ElMessage.info('忘记密码功能待实现');
+          // 忘记密码 - 需要验证码
+          const response = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              phone: ruleForm.phoneNumber,
+              code: ruleForm.identifyingNumber,
+              newPassword: ruleForm.password
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            ElMessage.success('密码重置成功，请登录');
+            loginStore.ifForgot = false;
+            loginStore.ifSignUp = false;
+            ruleForm.identifyingNumber = '';
+            ruleForm.password = '';
+            ruleForm.confirmPassword = '';
+          } else {
+            ElMessage.error(result.message || '密码重置失败');
+          }
+        } else if (isCodeLogin.value) {
+          // 验证码登录
+          const response = await fetch('/api/auth/login-with-code', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              phone: ruleForm.phoneNumber,
+              code: ruleForm.identifyingNumber
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            // 保存登录状态
+            loginStore.token = result.data.token;
+            loginStore.user = result.data;
+            loginStore.isLoggedIn = true;
+            localStorage.setItem('token', result.data.token);
+            localStorage.setItem('user', JSON.stringify(result.data));
+            
+            ElMessage.success('登录成功');
+            // 同步用户数据到 userStore
+            userStore.initUser();
+            // 连接 Socket.io
+            socketService.connect();
+            router.push('/dashboard');
+          } else {
+            ElMessage.error(result.message || '登录失败');
+          }
         } else {
-          // 登录
+          // 密码登录
           await loginStore.login({
             phone: ruleForm.phoneNumber,
             password: ruleForm.password,
@@ -319,6 +449,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
         }
       } catch (error) {
         console.error('操作失败:', error);
+        ElMessage.error('操作失败，请稍后重试');
       } finally {
         loading.value = false;
       }
@@ -330,6 +461,85 @@ const resetForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.resetFields();
 };
+
+// 切换登录方式
+const toggleLoginMode = () => {
+  isCodeLogin.value = !isCodeLogin.value;
+  // 清空密码和验证码
+  ruleForm.password = '';
+  ruleForm.identifyingNumber = '';
+};
+
+// 获取验证码
+const handleGetCode = async () => {
+  // 验证手机号
+  if (!ruleForm.phoneNumber) {
+    ElMessage.warning('请输入手机号');
+    return;
+  }
+  if (!/^1[3-9]\d{9}$/.test(ruleForm.phoneNumber)) {
+    ElMessage.warning('请输入正确的手机号');
+    return;
+  }
+  
+  // 如果正在倒计时，不处理
+  if (countdown.value > 0) return;
+  
+  try {
+    loading.value = true;
+    
+    // 确定验证码类型
+    let codeType = 'login';
+    if (loginStore.ifSignUp) {
+      codeType = 'register';
+    } else if (loginStore.ifForgot) {
+      codeType = 'reset';
+    }
+    
+    // 调用发送验证码 API
+    const response = await fetch('/api/auth/send-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone: ruleForm.phoneNumber,
+        type: codeType
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      ElMessage.success('验证码已发送');
+      // 开始倒计时
+      countdown.value = 60;
+      countdownTimer = setInterval(() => {
+        countdown.value--;
+        if (countdown.value <= 0) {
+          if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+          }
+        }
+      }, 1000);
+    } else {
+      ElMessage.error(result.message || '发送验证码失败');
+    }
+  } catch (error) {
+    console.error('发送验证码失败:', error);
+    ElMessage.error('发送验证码失败，请稍后重试');
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -396,6 +606,12 @@ const resetForm = (formEl: FormInstance | undefined) => {
 }
 .btn_getCode {
   color: #ffffff;
+  cursor: pointer;
+  user-select: none;
+}
+.btn_getCode.btn_disabled {
+  color: #a0cfff;
+  cursor: not-allowed;
 }
 .oneLine {
   display: flex;
