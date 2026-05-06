@@ -9,6 +9,9 @@ export default {
     Enteryour: "Enter your details to access your workspace.",
     PhoneNumber: "Phone Number",
     Enterphone: "Enter your phone number",
+    EnterFullName: "Enter your full name",
+    EnterEmail: "Enter your email address",
+    EnterConfirmPassword: "Enter confirm password",
     Identifying: "Identifying Number",
     EnterIdentifying: "Enter your identifying number",
     getCode: "getCode",
@@ -103,6 +106,8 @@ export default {
     TODAY: "TODAY",
     YESTERDAY: "YESTERDAY",
     Openusermenu: "Open user navigation menu",
+    noProjectNotice: "You haven't joined any project yet. Create your first project to get started",
+    createFirstProject: "Create Project",
   },
   notificationCard: {
     commented: "commented",

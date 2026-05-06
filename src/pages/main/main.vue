@@ -81,6 +81,16 @@
           </div>
         </div>
       </el-header>
+      <!-- 无项目空状态提示 -->
+      <div v-if="!otherStore.hasProject" class="empty-project-banner">
+        <div class="empty-project-content">
+          <el-icon class="empty-icon"><Info-Filled /></el-icon>
+          <span class="empty-text">{{ $t('main.noProjectNotice') }}</span>
+          <el-button type="primary" size="small" @click="openCreateProjectDialog" class="empty-btn">
+            {{ $t('main.createFirstProject') }}
+          </el-button>
+        </div>
+      </div>
       <el-container>
         <el-aside width="13vw">
           <div id="tour5"
@@ -196,6 +206,29 @@
     </div>
   </el-drawer>
   <TourComponents :mode="showTour" @finish="handleTourFinish"></TourComponents>
+  
+  <!-- 创建项目对话框 -->
+  <el-dialog
+    v-model="centerDialogVisible"
+    :title="$t('Dashboard.createProject')"
+    width="800"
+    align-center
+  >
+    <NewProjectCard
+      v-if="centerDialogVisible"
+      ref="newProjectCardRef"
+    ></NewProjectCard>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="centerDialogVisible = false" class="cancelBtn">{{
+          $t("cancel")
+        }}</el-button>
+        <el-button type="primary" @click="handleCreateProject" class="confirmBtn">
+          {{ $t("Dashboard.create_project") }}
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -208,9 +241,11 @@ import { useNotificationStore, type Notification } from "@/stores/notificationSt
 import { useUserStore } from "@/stores/userStore";
 import { useOtherStore } from "@/stores/otherStore";
 import { useLoginStore } from "@/stores/loginStore";
-import { Close } from "@element-plus/icons-vue";
+import { Close, InfoFilled } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 import i18n from "@/language";
-import { getProjectById, getProjectsByMember } from "@/api";
+import { getProjectById, getProjectsByMember, createProject } from "@/api";
+import NewProjectCard from "@/components/newProjectCard.vue";
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
 const otherStore = useOtherStore();
@@ -232,6 +267,8 @@ interface DateNotifications {
   notifications: Notification[];
 }
 const notificationsByDate = reactive<DateNotifications[]>([]);
+const centerDialogVisible = ref(false);
+const newProjectCardRef = ref<InstanceType<typeof NewProjectCard> | null>(null);
 const changeLanguage = (languageValue: string) => {
   if (languageValue === "中文") {
     i18n.global.locale.value = 'zh';
@@ -334,6 +371,9 @@ onMounted(async () => {
 // 初始化用户项目
 const initializeUserProject = async (userId: number) => {
   try {
+    // 先重置项目状态，避免显示上一个用户的数据
+    otherStore.resetProjectState();
+    
     // 1. 尝试从本地存储加载上次打开的项目ID
     const lastProjectId = otherStore.loadLastProjectFromStorage();
     
@@ -353,6 +393,7 @@ const initializeUserProject = async (userId: number) => {
     if (projectsRes.success && projectsRes.data && projectsRes.data.length > 0) {
       // 使用第一个项目
       const firstProject = projectsRes.data[0];
+      otherStore.hasProject = true;
       otherStore.currentProjectId = firstProject.id;
       otherStore.currentProjectName = firstProject.name || '';
       // 保存到本地存储
@@ -361,7 +402,7 @@ const initializeUserProject = async (userId: number) => {
     } else {
       // 3. 新用户没有参与任何项目的情况
       console.log('用户没有参与任何项目');
-      // 可以在这里显示一个创建项目的引导
+      otherStore.hasProject = false;
     }
   } catch (error) {
     console.error('初始化项目失败:', error);
@@ -520,6 +561,92 @@ const loadCurrentProjectName = async () => {
     }
   } catch (error) {
     console.error('加载项目名称失败:', error);
+  }
+};
+
+// 打开创建项目对话框
+const openCreateProjectDialog = () => {
+  centerDialogVisible.value = true;
+};
+
+// 处理创建项目提交
+const handleCreateProject = async () => {
+  if (!newProjectCardRef.value) return;
+  
+  try {
+    const projectData = newProjectCardRef.value.projectData;
+    const newProjectName = projectData.projectName?.trim();
+    
+    // 验证项目名称
+    if (!newProjectName) {
+      ElMessage({
+        message: t("Dashboard.ProjectNameRequired"),
+        type: "warning",
+      });
+      return;
+    }
+    
+    const currentUser = userStore.user;
+    if (!currentUser?.userId) {
+      ElMessage({
+        message: t("Dashboard.UserNotLoggedIn"),
+        type: "warning",
+      });
+      return;
+    }
+    
+    // 构建项目数据
+    const projectDataToSubmit = {
+      name: newProjectName,
+      description: projectData.description || "",
+      owner_id: parseInt(currentUser.userId),
+      assignee_ids: projectData.assignee?.map((id: string) => parseInt(id)) || []
+    };
+    
+    console.log('创建项目数据:', projectDataToSubmit);
+    
+    // 调用 API 创建项目
+    const res = await createProject(projectDataToSubmit);
+    
+    if (res.success && res.data) {
+      const newProjectId = res.data.id;
+      
+      // 先关闭对话框
+      centerDialogVisible.value = false;
+      
+      // 发送项目邀请通知
+      await newProjectCardRef.value.sendProjectInvites(String(newProjectId), newProjectName);
+      
+      // 更新状态：用户现在有项目了
+      otherStore.hasProject = true;
+      
+      // 切换到新项目
+      otherStore.setCurrentProject(newProjectId, newProjectName);
+      
+      // 刷新页面数据
+      await loadCurrentProjectName();
+      
+      ElMessage({
+        message: t("Dashboard.CreateProjectSuccess"),
+        type: "success",
+      });
+      
+      // 如果当前不在 dashboard 页面，跳转到 dashboard
+      if (which.value !== 'dashboard') {
+        changePage('dashboard');
+      }
+    } else {
+      ElMessage({
+        message: res.message || t("Dashboard.CreateProjectFailed"),
+        type: "error",
+      });
+    }
+  } catch (error: any) {
+    console.error("创建项目失败:", error);
+    ElMessage({
+      message: error?.response?.data?.message || error?.message || t("Dashboard.CreateProjectFailed"),
+      type: "error",
+    });
   }
 };
 </script>
@@ -767,5 +894,44 @@ const loadCurrentProjectName = async () => {
 }
 .moreBtn:hover {
   color: #135bec;
+}
+
+/* 无项目空状态横幅样式 */
+.empty-project-banner {
+  width: 100%;
+  background: linear-gradient(90deg, #909399 0%, #c0c4cc 100%);
+  padding: 0.8rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.empty-project-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.empty-icon {
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.empty-text {
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.empty-btn {
+  background-color: #fff;
+  border-color: #fff;
+  color: #606266;
+  font-weight: 500;
+}
+
+.empty-btn:hover {
+  background-color: #f5f7fa;
+  border-color: #f5f7fa;
+  color: #606266;
 }
 </style>

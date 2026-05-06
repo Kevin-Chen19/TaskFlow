@@ -16,37 +16,40 @@
       :placeholder="$t('newPeojectCard.Brieflydescribe')"
       class="description-input"
     />
-    <div class="inputName">{{ $t('newPeojectCard.InviteTeamMembers') }}</div>
-    <el-input
-      v-model="searchValue"
-      style="width: 100%"
-      :placeholder="$t('taskCard.searchByNameOr')"
-      class="search-input"
-      :prefix-icon="Search"
-      @change="toFind"
-    />
-    <div class="teamTable">
-      <div class="team_item" v-for="item in showTable" :key="item.userId">
-        <div class="noteSelect" @click="changeGot(item.userId)">
-          <img
-            v-if="projectData.assignee.includes(item.userId)"
-            src="@/assets/icons/通过.png"
-            alt="通过图标"
-          />
-        </div>
-        <div class="noteItem">
-          <div class="userPic">
-            <img :src="item.pic" alt="用户头像" />
+    <!-- 只有当用户有项目时才显示邀请成员部分 -->
+    <template v-if="otherStore.hasProject">
+      <div class="inputName">{{ $t('newPeojectCard.InviteTeamMembers') }}</div>
+      <el-input
+        v-model="searchValue"
+        style="width: 100%"
+        :placeholder="$t('taskCard.searchByNameOr')"
+        class="search-input"
+        :prefix-icon="Search"
+        @change="toFind"
+      />
+      <div class="teamTable">
+        <div class="team_item" v-for="item in showTable" :key="item.userId">
+          <div class="noteSelect" @click="changeGot(item.userId)">
+            <img
+              v-if="projectData.assignee.includes(item.userId)"
+              src="@/assets/icons/通过.png"
+              alt="通过图标"
+            />
           </div>
-          <div class="userInfo">
-            <div class="userName">{{ item.name }}</div>
-            <div class="userOthers">
-              <div class="postion">{{ item.postion }}</div>
+          <div class="noteItem">
+            <div class="userPic">
+              <img :src="item.pic" alt="用户头像" />
+            </div>
+            <div class="userInfo">
+              <div class="userName">{{ item.name }}</div>
+              <div class="userOthers">
+                <div class="postion">{{ item.postion }}</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 <script setup lang="ts">

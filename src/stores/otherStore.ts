@@ -9,6 +9,8 @@ export const useOtherStore = defineStore('other', () => {
   const currentProjectName = ref('')
   // 用于触发项目切换事件的计数器
   const projectChangeTrigger = ref(0)
+  // 用户是否有项目（用于空状态显示）
+  const hasProject = ref(true)
 
   // 设置当前项目
   const setCurrentProject = (id: number, name: string = '') => {
@@ -32,8 +34,18 @@ export const useOtherStore = defineStore('other', () => {
     return null
   }
 
+  // 重置项目状态
+  const resetProjectState = () => {
+    currentProjectId.value = 0
+    currentProjectName.value = ''
+    hasProject.value = true
+  }
+
   // 初始化项目（应用启动时调用）
   const initializeProject = async (userProjects: { id: number; name: string }[]) => {
+    // 先重置状态，避免显示上一个用户的数据
+    resetProjectState()
+    
     // 1. 尝试从本地存储加载
     const lastProjectId = loadLastProjectFromStorage()
     
@@ -43,6 +55,7 @@ export const useOtherStore = defineStore('other', () => {
       if (project) {
         currentProjectId.value = project.id
         currentProjectName.value = project.name
+        hasProject.value = true
         return project
       }
     }
@@ -52,12 +65,14 @@ export const useOtherStore = defineStore('other', () => {
       const firstProject = userProjects[0]
       currentProjectId.value = firstProject.id
       currentProjectName.value = firstProject.name
+      hasProject.value = true
       // 保存到本地存储
       localStorage.setItem(LAST_PROJECT_KEY, String(firstProject.id))
       return firstProject
     }
     
     // 3. 新用户没有项目的情况
+    hasProject.value = false
     return null
   }
 
@@ -66,8 +81,10 @@ export const useOtherStore = defineStore('other', () => {
     currentProjectId, 
     currentProjectName, 
     projectChangeTrigger, 
+    hasProject,
     setCurrentProject,
     initializeProject,
-    loadLastProjectFromStorage
+    loadLastProjectFromStorage,
+    resetProjectState
   }
 })

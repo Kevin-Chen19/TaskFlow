@@ -467,10 +467,11 @@ router.delete('/:id', async (req, res, next) => {
 router.get('/user/:userId/joined', async (req, res, next) => {
   try {
     const { userId } = req.params;
-    // 使用 PostgreSQL 的数组包含操作符 @= 检查 assignee_ids 是否包含 userId
+    // 获取用户创建的项目和加入的项目（包括作为所有者和被分配者）
+    // 按创建时间倒序排列，最近创建的项目排在前面
     const result = await query(
       `SELECT * FROM projects
-       WHERE $1 = ANY(assignee_ids) AND owner_id != $1
+       WHERE owner_id = $1 OR $1 = ANY(assignee_ids)
        ORDER BY created_at DESC`,
       [userId]
     );

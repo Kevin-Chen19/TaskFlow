@@ -9,6 +9,9 @@ export default {
     Enteryour: "输入您的信息以访问您的工作空间。",
     PhoneNumber: "手机号码",
     Enterphone: "输入您的手机号码",
+    EnterFullName: "输入您的全名",
+    EnterEmail: "输入您的邮箱地址",
+    EnterConfirmPassword: "输入确认密码",
     Identifying: "验证码",
     EnterIdentifying: "输入验证码",
     getCode: "获取验证码",
@@ -103,6 +106,8 @@ export default {
     TODAY: "今天",
     YESTERDAY: "昨天",
     Openusermenu: "打开用户菜单",
+    noProjectNotice: "您还没有加入任何项目，创建第一个项目开始使用",
+    createFirstProject: "创建项目",
   },
   notificationCard: {
     commented: "说",
