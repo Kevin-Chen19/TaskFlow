@@ -12,7 +12,7 @@
         <CardTamp
           :topLeftImg="LogIcon"
           :bodyContent="$t('Dashboard.logs')"
-          :footerContent="`${projectStats.total_hours}h`"
+          :footerContent="String(logCount)"
           :showMenu="false"
           :clickable="true"
           @click="openActivityLog"
@@ -270,6 +270,7 @@ import {
   getTasks,
   getProjectMembers,
   getUserById,
+  getActivityLogs,
 } from "@/api";
 const otherStore = useOtherStore();
 const permissionStore = usePermissionStore();
@@ -301,6 +302,9 @@ const projectStats = reactive({
   warning_tasks: 0,
   expired_tasks: 0,
 });
+
+// 日志条数
+const logCount = ref(0);
 
 interface ActivityType {
   id?: number;
@@ -460,6 +464,7 @@ const loadAllProjectData = async () => {
   // 清空旧数据
   activities.splice(0, activities.length);
   notes.splice(0, notes.length);
+  logCount.value = 0;
 
   // 加载用户权限
   await permissionStore.loadPermissions(projectId);
@@ -469,6 +474,7 @@ const loadAllProjectData = async () => {
     getNote(),
     loadProjectStats(),
     loadMemberProgress(),
+    loadLogCount(),
   ]);
 };
 const addNote = () => {
@@ -807,6 +813,25 @@ const loadProjectStats = async () => {
     }
   } catch (error) {
     console.error("加载项目统计数据失败:", error);
+  }
+};
+
+// 加载日志条数
+const loadLogCount = async () => {
+  try {
+    const projectId = otherStore.currentProjectId;
+    if (!projectId) return;
+
+    const res = await getActivityLogs({
+      project_id: projectId,
+      limit: 1,
+    });
+    if (res.success) {
+      const pagination = (res as any).pagination;
+      logCount.value = pagination?.total ?? 0;
+    }
+  } catch (error) {
+    console.error("加载日志条数失败:", error);
   }
 };
 
