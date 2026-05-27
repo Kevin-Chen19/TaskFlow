@@ -116,7 +116,6 @@
       </div>
     </div>
     <template #footer>
-      <div class="chatBtn">{{ $t('team.Chat') }}</div>
       <div v-if="canEditMember" class="chatBtn saveBtn" @click="saveMemberChanges">{{ $t('save') }}</div>
       <div v-if="permissionStore.canDeleteMembers" class="chatBtn removeBtn" @click="removeMember">{{ $t('team.RemoveMember') }}</div>
     </template>
