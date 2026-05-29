@@ -1,0 +1,3993 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow - 项目管理系统全景解读</title>
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-light: #818cf8;
+        --primary-dark: #4f46e5;
+        --bg: #0f172a;
+        --bg-card: #1e293b;
+        --bg-card-hover: #334155;
+        --text: #e2e8f0;
+        --text-dim: #94a3b8;
+        --accent-green: #22c55e;
+        --accent-blue: #3b82f6;
+        --accent-orange: #f97316;
+        --accent-red: #ef4444;
+        --accent-purple: #a855f7;
+        --accent-cyan: #06b6d4;
+        --accent-pink: #ec4899;
+        --border: #334155;
+        --radius: 12px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        overflow-x: hidden;
+      }
+
+      /* Hero Section */
+      .hero {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background:
+          radial-gradient(
+            ellipse at 30% 20%,
+            rgba(99, 102, 241, 0.15) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at 70% 80%,
+            rgba(168, 85, 247, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at 50% 50%,
+            rgba(6, 182, 212, 0.05) 0%,
+            transparent 70%
+          );
+        animation: heroGlow 15s ease-in-out infinite alternate;
+      }
+
+      @keyframes heroGlow {
+        0% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        100% {
+          transform: translate(-5%, 5%) rotate(5deg);
+        }
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 999px;
+        font-size: 0.85rem;
+        color: var(--primary-light);
+        margin-bottom: 2rem;
+      }
+
+      .hero h1 {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, #818cf8, #a855f7, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+        letter-spacing: -2px;
+      }
+
+      .hero p {
+        font-size: clamp(1.1rem, 2vw, 1.35rem);
+        color: var(--text-dim);
+        max-width: 700px;
+        margin-bottom: 2.5rem;
+      }
+
+      .hero-stats {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .hero-stat {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.2rem 2rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .hero-stat .num {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-light);
+      }
+
+      .hero-stat .label {
+        font-size: 0.85rem;
+        color: var(--text-dim);
+      }
+
+      .scroll-hint {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s ease-in-out infinite;
+        color: var(--text-dim);
+        font-size: 1.5rem;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        50% {
+          transform: translateX(-50%) translateY(10px);
+        }
+      }
+
+      /* Navigation */
+      .side-nav {
+        position: fixed;
+        right: 1.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .side-nav a {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--border);
+        transition: all 0.3s;
+        display: block;
+      }
+
+      .side-nav a:hover,
+      .side-nav a.active {
+        background: var(--primary);
+        transform: scale(1.4);
+      }
+
+      /* Section Styles */
+      .section {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 5rem 2rem;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 3.5rem;
+      }
+
+      .section-tag {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+      }
+
+      .section-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+      }
+
+      .section-header p {
+        color: var(--text-dim);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Tech Stack Cards */
+      .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .tech-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tech-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+      }
+
+      .tech-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+      }
+
+      .tech-card.frontend::before {
+        background: linear-gradient(90deg, #22c55e, #3b82f6);
+      }
+      .tech-card.backend::before {
+        background: linear-gradient(90deg, #f97316, #ef4444);
+      }
+      .tech-card.database::before {
+        background: linear-gradient(90deg, #3b82f6, #a855f7);
+      }
+      .tech-card.devtools::before {
+        background: linear-gradient(90deg, #06b6d4, #22c55e);
+      }
+
+      .tech-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .tech-card h3 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .tech-card .desc {
+        color: var(--text-dim);
+        font-size: 0.95rem;
+        margin-bottom: 1.2rem;
+      }
+
+      .tech-list {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tech-list li {
+        padding: 4px 12px;
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 6px;
+        font-size: 0.82rem;
+        color: var(--primary-light);
+      }
+
+      /* Architecture */
+      .arch-container {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 2rem;
+        align-items: start;
+      }
+
+      .arch-layer {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+      }
+
+      .arch-layer h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .arch-arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding-top: 3rem;
+      }
+
+      .arch-arrow .arrow-line {
+        font-size: 1.8rem;
+        color: var(--primary-light);
+      }
+
+      .arch-module {
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .arch-module h4 {
+        font-size: 0.95rem;
+        color: var(--primary-light);
+        margin-bottom: 0.3rem;
+      }
+
+      .arch-module p {
+        font-size: 0.82rem;
+        color: var(--text-dim);
+      }
+
+      /* Database */
+      .db-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .db-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .db-card:hover {
+        border-color: var(--accent-blue);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.1);
+      }
+
+      .db-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 1rem 1.5rem;
+        background: rgba(59, 130, 246, 0.08);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .db-card-header .table-icon {
+        font-size: 1.3rem;
+      }
+
+      .db-card-header h3 {
+        font-size: 1.05rem;
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        color: var(--accent-blue);
+      }
+
+      .db-card-body {
+        padding: 1rem 1.5rem;
+      }
+
+      .db-field {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        font-size: 0.88rem;
+      }
+
+      .db-field:last-child {
+        border-bottom: none;
+      }
+
+      .db-field .name {
+        font-family: "Fira Code", monospace;
+        color: var(--accent-cyan);
+        font-size: 0.85rem;
+      }
+
+      .db-field .type {
+        font-family: "Fira Code", monospace;
+        color: var(--accent-orange);
+        font-size: 0.78rem;
+        padding: 2px 8px;
+        background: rgba(249, 115, 22, 0.1);
+        border-radius: 4px;
+      }
+
+      .db-field .pk {
+        color: var(--accent-orange);
+        font-weight: 700;
+      }
+
+      .db-field .fk {
+        color: var(--accent-purple);
+        font-size: 0.7rem;
+      }
+
+      /* API Section */
+      .api-category {
+        margin-bottom: 2.5rem;
+      }
+
+      .api-category h3 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .api-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .api-table th {
+        background: rgba(99, 102, 241, 0.1);
+        padding: 0.8rem 1rem;
+        text-align: left;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .api-table td {
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+        font-size: 0.9rem;
+      }
+
+      .api-table tr:last-child td {
+        border-bottom: none;
+      }
+      .api-table tr:hover td {
+        background: rgba(99, 102, 241, 0.03);
+      }
+
+      .method-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        font-family: monospace;
+      }
+
+      .method-get {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+      }
+      .method-post {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+      }
+      .method-put {
+        background: rgba(249, 115, 22, 0.15);
+        color: #f97316;
+      }
+      .method-delete {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+      }
+
+      .path-text {
+        font-family: "Fira Code", monospace;
+        font-size: 0.85rem;
+        color: var(--accent-cyan);
+      }
+
+      /* Feature Cards */
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        transition: all 0.3s;
+      }
+
+      .feature-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+      }
+
+      .feature-card .feature-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature-card h3 {
+        font-size: 1.15rem;
+        margin-bottom: 0.6rem;
+      }
+
+      .feature-card p {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .feature-card ul {
+        margin-top: 0.8rem;
+        padding-left: 1.2rem;
+      }
+
+      .feature-card li {
+        color: var(--text-dim);
+        font-size: 0.88rem;
+        margin-bottom: 0.3rem;
+      }
+
+      /* File Tree */
+      .file-tree-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        overflow-x: auto;
+      }
+
+      .file-tree {
+        font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
+        font-size: 0.85rem;
+        line-height: 1.9;
+      }
+
+      .file-tree .dir {
+        color: var(--accent-blue);
+        font-weight: 600;
+      }
+
+      .file-tree .file-vue {
+        color: #22c55e;
+      }
+      .file-tree .file-ts {
+        color: #3b82f6;
+      }
+      .file-tree .file-js {
+        color: #f97316;
+      }
+      .file-tree .file-sql {
+        color: #a855f7;
+      }
+      .file-tree .file-json {
+        color: #eab308;
+      }
+      .file-tree .file-config {
+        color: #94a3b8;
+      }
+      .file-tree .file-style {
+        color: #ec4899;
+      }
+      .file-tree .file-doc {
+        color: #06b6d4;
+      }
+
+      /* Page Flow */
+      .page-flow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: center;
+      }
+
+      .page-node {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        min-width: 200px;
+        text-align: center;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .page-node:hover {
+        border-color: var(--primary);
+        transform: scale(1.05);
+      }
+
+      .page-node .page-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+      .page-node h4 {
+        font-size: 1rem;
+        margin-bottom: 0.3rem;
+      }
+      .page-node .page-route {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: var(--accent-cyan);
+      }
+
+      .page-node .page-desc {
+        font-size: 0.82rem;
+        color: var(--text-dim);
+        margin-top: 0.5rem;
+      }
+
+      .page-connector {
+        display: flex;
+        align-items: center;
+        color: var(--primary-light);
+        font-size: 1.5rem;
+        align-self: center;
+      }
+
+      /* Store Section */
+      .store-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1.2rem;
+      }
+
+      .store-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        transition: all 0.3s;
+      }
+
+      .store-card:hover {
+        border-color: var(--accent-purple);
+      }
+
+      .store-card h4 {
+        font-family: monospace;
+        font-size: 0.95rem;
+        color: var(--accent-purple);
+        margin-bottom: 0.5rem;
+      }
+
+      .store-card p {
+        font-size: 0.85rem;
+        color: var(--text-dim);
+      }
+
+      .store-card .store-size {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-top: 0.5rem;
+        opacity: 0.7;
+      }
+
+      /* Real-time Flow */
+      .realtime-flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 2rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+
+      .rt-node {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .rt-node.client {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .rt-node.server {
+        background: rgba(249, 115, 22, 0.15);
+        color: #f97316;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+      }
+      .rt-node.redis {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .rt-node.socket {
+        background: rgba(168, 85, 247, 0.15);
+        color: #a855f7;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+
+      .rt-arrow {
+        color: var(--text-dim);
+        font-size: 1.5rem;
+      }
+
+      /* Permission Matrix */
+      .perm-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        font-size: 0.88rem;
+      }
+
+      .perm-table th,
+      .perm-table td {
+        padding: 0.7rem 1rem;
+        border: 1px solid var(--border);
+        text-align: center;
+      }
+
+      .perm-table th {
+        background: rgba(99, 102, 241, 0.1);
+        font-weight: 600;
+        color: var(--primary-light);
+      }
+
+      .perm-table td:first-child {
+        text-align: left;
+        font-weight: 500;
+      }
+
+      .perm-yes {
+        color: #22c55e;
+        font-weight: 700;
+      }
+      .perm-no {
+        color: #ef4444;
+        opacity: 0.6;
+      }
+
+      /* Stats Bar */
+      .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 3rem;
+      }
+
+      .stat-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        text-align: center;
+      }
+
+      .stat-item .stat-num {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(
+          135deg,
+          var(--primary-light),
+          var(--accent-purple)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .stat-item .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        margin-top: 0.3rem;
+      }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        .arch-container {
+          grid-template-columns: 1fr;
+        }
+        .arch-arrow {
+          flex-direction: row;
+          padding: 0;
+        }
+        .arch-arrow .arrow-line {
+          transform: rotate(90deg);
+        }
+        .side-nav {
+          display: none;
+        }
+      }
+
+      /* Smooth scroll */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Animated gradient border on hover */
+      .glow-border {
+        position: relative;
+      }
+      .glow-border::after {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: calc(var(--radius) + 2px);
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--accent-purple),
+          var(--accent-pink)
+        );
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .glow-border:hover::after {
+        opacity: 0.6;
+      }
+
+      /* Timeline */
+      .timeline {
+        position: relative;
+        padding-left: 3rem;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        left: 0.8rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(
+          180deg,
+          var(--primary),
+          var(--accent-purple)
+        );
+      }
+
+      .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+
+      .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: -2.5rem;
+        top: 1.8rem;
+        width: 12px;
+        height: 12px;
+        background: var(--primary);
+        border-radius: 50%;
+        border: 2px solid var(--bg);
+      }
+
+      .timeline-item h4 {
+        color: var(--primary-light);
+        margin-bottom: 0.5rem;
+      }
+
+      .timeline-item p {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .code-block {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.2rem 1.5rem;
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 0.82rem;
+        line-height: 1.7;
+        overflow-x: auto;
+        margin: 1rem 0;
+      }
+
+      .code-keyword {
+        color: #c678dd;
+      }
+      .code-string {
+        color: #98c379;
+      }
+      .code-comment {
+        color: #5c6370;
+        font-style: italic;
+      }
+      .code-func {
+        color: #61afef;
+      }
+      .code-type {
+        color: #e5c07b;
+      }
+      .code-number {
+        color: #d19a66;
+      }
+
+      .divider {
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--border),
+          transparent
+        );
+        margin: 1rem 0;
+      }
+
+      /* ===== File Structure New Styles ===== */
+      .fs-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1rem 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+      .fs-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82rem;
+        color: var(--text-dim);
+      }
+      .fs-legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+      }
+
+      .fs-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+      @media (max-width: 900px) {
+        .fs-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .fs-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: border-color 0.3s;
+      }
+      .fs-panel:hover {
+        border-color: var(--primary);
+      }
+      .fs-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 1rem 1.5rem;
+        cursor: default;
+        user-select: none;
+      }
+      .fs-panel-header.frontend-header {
+        background: linear-gradient(
+          135deg,
+          rgba(34, 197, 94, 0.08),
+          rgba(59, 130, 246, 0.08)
+        );
+        border-bottom: 1px solid var(--border);
+      }
+      .fs-panel-header.backend-header {
+        background: linear-gradient(
+          135deg,
+          rgba(249, 115, 22, 0.08),
+          rgba(239, 68, 68, 0.08)
+        );
+        border-bottom: 1px solid var(--border);
+      }
+      .fs-panel-header.root-header {
+        background: linear-gradient(
+          135deg,
+          rgba(168, 85, 247, 0.08),
+          rgba(99, 102, 241, 0.08)
+        );
+        border-bottom: 1px solid var(--border);
+      }
+      .fs-panel-header .panel-icon {
+        font-size: 1.4rem;
+      }
+      .fs-panel-header h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+      .fs-panel-header .panel-badge {
+        margin-left: auto;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+      .fs-panel-header .panel-badge.badge-frontend {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+      }
+      .fs-panel-header .panel-badge.badge-backend {
+        background: rgba(249, 115, 22, 0.15);
+        color: #f97316;
+      }
+      .fs-panel-header .panel-badge.badge-root {
+        background: rgba(168, 85, 247, 0.15);
+        color: #a855f7;
+      }
+
+      .fs-panel-body {
+        padding: 0.5rem 0;
+      }
+
+      /* Tree node styles */
+      .tree-node {
+        position: relative;
+      }
+      .tree-dir {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px 6px calc(var(--depth, 0) * 20px + 12px);
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .tree-dir:hover {
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .tree-dir .dir-arrow {
+        display: inline-flex;
+        width: 16px;
+        height: 16px;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        color: var(--text-dim);
+        transition: transform 0.2s;
+        flex-shrink: 0;
+      }
+      .tree-dir.open .dir-arrow {
+        transform: rotate(90deg);
+      }
+      .tree-dir .dir-icon {
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+      .tree-dir .dir-name {
+        color: var(--accent-blue);
+      }
+      .tree-dir .dir-desc {
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        font-weight: 400;
+        opacity: 0.7;
+        white-space: nowrap;
+      }
+      .tree-children {
+        display: none;
+      }
+      .tree-children.open {
+        display: block;
+      }
+
+      .tree-file {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px 5px calc(var(--depth, 0) * 20px + 12px);
+        font-size: 0.84rem;
+        transition: background 0.15s;
+      }
+      .tree-file:hover {
+        background: rgba(99, 102, 241, 0.04);
+      }
+      .tree-file .file-icon {
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        width: 16px;
+        text-align: center;
+      }
+      .tree-file .file-name {
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 0.82rem;
+      }
+      .tree-file .file-name.vue {
+        color: #22c55e;
+      }
+      .tree-file .file-name.ts {
+        color: #3b82f6;
+      }
+      .tree-file .file-name.js {
+        color: #f97316;
+      }
+      .tree-file .file-name.sql {
+        color: #a855f7;
+      }
+      .tree-file .file-name.json {
+        color: #eab308;
+      }
+      .tree-file .file-name.config {
+        color: #94a3b8;
+      }
+      .tree-file .file-name.style {
+        color: #ec4899;
+      }
+      .tree-file .file-name.doc {
+        color: #06b6d4;
+      }
+      .tree-file .file-name.html {
+        color: #ef4444;
+      }
+      .tree-file .file-name.bat {
+        color: #22c55e;
+      }
+
+      .tree-file .file-desc {
+        margin-left: auto;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        opacity: 0.6;
+        white-space: nowrap;
+        padding-left: 1rem;
+      }
+      .tree-file .file-size {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        opacity: 0.4;
+        white-space: nowrap;
+        min-width: 48px;
+        text-align: right;
+      }
+
+      .fs-stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .fs-stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.8rem 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.85rem;
+      }
+      .fs-stat-chip .chip-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+      }
+      .fs-stat-chip .chip-num {
+        font-weight: 700;
+        font-size: 1.1rem;
+      }
+      .fs-stat-chip .chip-label {
+        color: var(--text-dim);
+        font-size: 0.8rem;
+      }
+
+      /* Vertical connector lines */
+      .tree-children {
+        position: relative;
+      }
+      .tree-children::before {
+        content: "";
+        position: absolute;
+        left: calc(var(--depth, 0) * 20px + 19px);
+        top: 0;
+        bottom: 8px;
+        width: 1px;
+        background: var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Side Navigation -->
+    <nav class="side-nav">
+      <a href="#hero" title="首页"></a>
+      <a href="#overview" title="项目概述"></a>
+      <a href="#tech-stack" title="技术栈"></a>
+      <a href="#architecture" title="系统架构"></a>
+      <a href="#database" title="数据库"></a>
+      <a href="#api" title="API接口"></a>
+      <a href="#frontend" title="前端实现"></a>
+      <a href="#realtime" title="实时通信"></a>
+      <a href="#permissions" title="权限系统"></a>
+      <a href="#file-structure" title="文件结构"></a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <div class="hero-badge">
+          &#9889; Full-Stack Project Management Platform
+        </div>
+        <h1>TaskFlow</h1>
+        <p>
+          基于 Vue 3 + Express + PostgreSQL + Socket.io
+          构建的全栈项目协作管理平台，支持实时通知、权限管理、文件系统和国际化
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="num">22</div>
+            <div class="label">Vue 组件</div>
+          </div>
+          <div class="hero-stat">
+            <div class="num">13</div>
+            <div class="label">API 路由模块</div>
+          </div>
+          <div class="hero-stat">
+            <div class="num">12</div>
+            <div class="label">数据库表</div>
+          </div>
+          <div class="hero-stat">
+            <div class="num">8</div>
+            <div class="label">Pinia Store</div>
+          </div>
+          <div class="hero-stat">
+            <div class="num">50+</div>
+            <div class="label">API 端点</div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-hint">&#8595;</div>
+    </section>
+
+    <!-- Section 1: Overview -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary-light);
+          "
+        >
+          Overview
+        </div>
+        <h2>项目概述</h2>
+        <p>TaskFlow 是一个面向团队的协作管理平台，涵盖项目管理全生命周期</p>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-num">9</div>
+          <div class="stat-label">页面路由</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">11</div>
+          <div class="stat-label">可复用组件</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">6</div>
+          <div class="stat-label">SQL 迁移脚本</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">2</div>
+          <div class="stat-label">i18n 语言</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">44</div>
+          <div class="stat-label">UI 图标资源</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">8</div>
+          <div class="stat-label">文档/指南</div>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div
+            class="feature-icon"
+            style="background: rgba(34, 197, 94, 0.15); color: #22c55e"
+          >
+            &#128203;
+          </div>
+          <h3>项目管理</h3>
+          <p>完整的 CRUD 操作，创建项目时自动初始化角色、职位和成员关系</p>
+          <ul>
+            <li>项目创建/编辑/删除</li>
+            <li>自动进度追踪（基于任务平均值）</li>
+            <li>成员分配与项目归属</li>
+            <li>项目列表与详情视图</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div
+            class="feature-icon"
+            style="background: rgba(59, 130, 246, 0.15); color: #3b82f6"
+          >
+            &#9745;
+          </div>
+          <h3>任务管理</h3>
+          <p>支持多维度任务管理，包括优先级、进度、截止日期和分配</p>
+          <ul>
+            <li>任务创建/编辑/删除（含权限校验）</li>
+            <li>优先级系统（无/低/中/高）</li>
+            <li>任务进度与完成时间自动记录</li>
+            <li>项目任务统计（总量/完成/预警/逾期）</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div
+            class="feature-icon"
+            style="background: rgba(168, 85, 247, 0.15); color: #a855f7"
+          >
+            &#128276;
+          </div>
+          <h3>实时通知</h3>
+          <p>基于 Socket.io + Redis 的实时推送系统，支持浏览器原生通知</p>
+          <ul>
+            <li>WebSocket 实时推送</li>
+            <li>Redis 在线状态管理</li>
+            <li>通知已读/未读/全部已读</li>
+            <li>按天筛选、分页查询</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div
+            class="feature-icon"
+            style="background: rgba(236, 72, 153, 0.15); color: #ec4899"
+          >
+            &#128101;
+          </div>
+          <h3>团队协作</h3>
+          <p>角色权限体系、成员管理与团队视图一体化</p>
+          <ul>
+            <li>4 种默认角色（创建者/经理/参与者/观察者）</li>
+            <li>6 种默认职位（PM/前端/后端/设计/测试/运维）</li>
+            <li>成员邀请与移除</li>
+            <li>细粒度权限控制</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div
+            class="feature-icon"
+            style="background: rgba(6, 182, 212, 0.15); color: #06b6d4"
+          >
+            &#128193;
+          </div>
+          <h3>文件系统</h3>
+          <p>类文件管理器的文件夹/文档层级结构，支持上传下载和回收站</p>
+          <ul>
+            <li>文件夹树形结构（无限嵌套）</li>
+            <li>文件上传（Multer）与下载</li>
+            <li>软删除 + 回收站机制</li>
+            <li>文件类型识别与图标展示</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div
+            class="feature-icon"
+            style="background: rgba(249, 115, 22, 0.15); color: #f97316"
+          >
+            &#128274;
+          </div>
+          <h3>认证安全</h3>
+          <p>多因素认证体系，JWT + 短信验证码双重保障</p>
+          <ul>
+            <li>密码登录（bcrypt 加密）</li>
+            <li>手机验证码登录/注册/重置密码</li>
+            <li>阿里云短信服务集成</li>
+            <li>JWT Token 自动续期</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Tech Stack -->
+    <section class="section" id="tech-stack">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(34, 197, 94, 0.15); color: #22c55e"
+        >
+          Tech Stack
+        </div>
+        <h2>技术栈详解</h2>
+        <p>前后端分离架构，现代工具链驱动</p>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-card frontend">
+          <div class="icon">&#127912;</div>
+          <h3>前端框架</h3>
+          <div class="desc">
+            基于 Vue 3 Composition API + TypeScript 构建现代化 SPA
+          </div>
+          <ul class="tech-list">
+            <li>Vue 3.5</li>
+            <li>TypeScript 5.9</li>
+            <li>Vite 7.3</li>
+            <li>Pinia 3.0</li>
+            <li>Vue Router 4.6</li>
+            <li>Element Plus 2.13</li>
+            <li>ECharts 6.0</li>
+            <li>Vue I18n 11.2</li>
+            <li>Axios 1.13</li>
+            <li>Lucide Vue</li>
+            <li>Socket.io Client 4.8</li>
+          </ul>
+        </div>
+        <div class="tech-card backend">
+          <div class="icon">&#9881;</div>
+          <h3>后端服务</h3>
+          <div class="desc">Express + PostgreSQL + Redis 构建 RESTful API</div>
+          <ul class="tech-list">
+            <li>Express 4.18</li>
+            <li>PostgreSQL (pg 8.11)</li>
+            <li>Redis 5.11</li>
+            <li>Socket.io 4.8</li>
+            <li>JWT (jsonwebtoken 9.0)</li>
+            <li>bcryptjs 2.4</li>
+            <li>Multer 2.1</li>
+            <li>Swagger JSDoc</li>
+            <li>xlsx (Excel导出)</li>
+            <li>阿里云短信 SDK</li>
+          </ul>
+        </div>
+        <div class="tech-card database">
+          <div class="icon">&#128451;</div>
+          <h3>数据存储</h3>
+          <div class="desc">PostgreSQL 关系型数据库 + Redis 缓存在线状态</div>
+          <ul class="tech-list">
+            <li>PostgreSQL 主数据库</li>
+            <li>12 张业务表</li>
+            <li>14 个索引优化</li>
+            <li>Redis 在线状态</li>
+            <li>连接池管理</li>
+            <li>软删除机制</li>
+            <li>JSONB 动态字段</li>
+            <li>PostgreSQL 数组类型</li>
+          </ul>
+        </div>
+        <div class="tech-card devtools">
+          <div class="icon">&#128295;</div>
+          <h3>开发工具链</h3>
+          <div class="desc">现代化工程化配置，提升开发体验</div>
+          <ul class="tech-list">
+            <li>Vite HMR 热更新</li>
+            <li>vue-tsc 类型检查</li>
+            <li>Auto Import 插件</li>
+            <li>Components 自动注册</li>
+            <li>Swagger API 文档</li>
+            <li>nodemon 热重启</li>
+            <li>Morgan 日志</li>
+            <li>CORS 跨域</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Architecture -->
+    <section class="section" id="architecture">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(249, 115, 22, 0.15); color: #f97316"
+        >
+          Architecture
+        </div>
+        <h2>系统架构</h2>
+        <p>前后端分离 + WebSocket 实时通信的三层架构</p>
+      </div>
+
+      <div class="arch-container">
+        <!-- Frontend Layer -->
+        <div class="arch-layer">
+          <h3>&#127912; 前端展示层</h3>
+          <div class="arch-module">
+            <h4>页面组件 (8 个)</h4>
+            <p>
+              Dashboard / Projects / Tasks / Team / Calendar / Roles / Me /
+              Login
+            </p>
+          </div>
+          <div class="arch-module">
+            <h4>通用组件 (11 个)</h4>
+            <p>
+              ProjectCard / TaskCard / FileCard / NotificationCenter /
+              ActivityLog / Velocity / TourComponents 等
+            </p>
+          </div>
+          <div class="arch-module">
+            <h4>状态管理 (8 个 Store)</h4>
+            <p>
+              loginStore / userStore / tasksStore / fileStore / permissionStore
+              / roleStore / notificationStore / otherStore
+            </p>
+          </div>
+          <div class="arch-module">
+            <h4>服务层</h4>
+            <p>Axios 请求封装 (JWT拦截器) / Socket.io Client / API 接口层</p>
+          </div>
+        </div>
+
+        <!-- Arrows -->
+        <div class="arch-arrow">
+          <div class="arrow-line">&#8592;&#8594;</div>
+          <div style="font-size: 0.8rem; color: var(--text-dim)">HTTP REST</div>
+          <div class="arrow-line">&#8592;&#8594;</div>
+          <div style="font-size: 0.8rem; color: var(--text-dim)">WebSocket</div>
+          <div class="arrow-line">&#8592;&#8594;</div>
+          <div style="font-size: 0.8rem; color: var(--text-dim)">
+            Static Files
+          </div>
+        </div>
+
+        <!-- Backend Layer -->
+        <div class="arch-layer">
+          <h3>&#9881; 后端服务层</h3>
+          <div class="arch-module">
+            <h4>Express 路由 (13 个模块)</h4>
+            <p>
+              Auth / Users / Projects / Tasks / Notifications / Notes /
+              Milestones / ActivityLogs / ProjectMembers / ProjectRoles /
+              ProjectPositions / ProjectFolders / ProjectDocuments
+            </p>
+          </div>
+          <div class="arch-module">
+            <h4>中间件</h4>
+            <p>JWT 认证中间件 / 权限校验中间件 (任务创建/编辑权限)</p>
+          </div>
+          <div class="arch-module">
+            <h4>工具函数</h4>
+            <p>
+              JWT 生成与验证 / bcrypt 密码哈希 / Multer 文件上传 / 阿里云短信 /
+              验证码存储
+            </p>
+          </div>
+          <div class="arch-module">
+            <h4>数据访问</h4>
+            <p>PostgreSQL 连接池 (pg) / Redis 客户端 / Socket.io Server</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Database -->
+    <section class="section" id="database">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(59, 130, 246, 0.15); color: #3b82f6"
+        >
+          Database
+        </div>
+        <h2>数据库设计</h2>
+        <p>12 张核心业务表，14 个查询优化索引</p>
+      </div>
+
+      <div class="db-grid">
+        <!-- Users -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128100;</span>
+            <h3>users</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name">phone</span
+              ><span class="type">VARCHAR(20) UNIQUE</span>
+            </div>
+            <div class="db-field">
+              <span class="name">fullname</span
+              ><span class="type">VARCHAR(100)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">email</span
+              ><span class="type">VARCHAR(255) UNIQUE</span>
+            </div>
+            <div class="db-field">
+              <span class="name">password</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">avatar_url</span><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">skills</span
+              ><span class="type">VARCHAR(100)[]</span>
+            </div>
+            <div class="db-field">
+              <span class="name">mooto</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projects -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128188;</span>
+            <h3>projects</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name">name</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">description</span
+              ><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >owner_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">progress</span
+              ><span class="type">INTEGER DEFAULT 0</span>
+            </div>
+            <div class="db-field">
+              <span class="name">assignee_ids</span
+              ><span class="type">INTEGER[]</span>
+            </div>
+            <div class="db-field">
+              <span class="name">total_hours</span
+              ><span class="type">INTEGER DEFAULT 0</span>
+            </div>
+            <div class="db-field">
+              <span class="name">created_at</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#9745;</span>
+            <h3>tasks</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name">title</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">description</span
+              ><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >creator_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">assignee_ids</span
+              ><span class="type">INTEGER[]</span>
+            </div>
+            <div class="db-field">
+              <span class="name">due_date</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+            <div class="db-field">
+              <span class="name">start_date</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+            <div class="db-field">
+              <span class="name">progress</span
+              ><span class="type">INTEGER DEFAULT 0</span>
+            </div>
+            <div class="db-field">
+              <span class="name">priority</span
+              ><span class="type">INTEGER DEFAULT 0</span>
+            </div>
+            <div class="db-field">
+              <span class="name">completed_at</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128276;</span>
+            <h3>notifications</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name">type</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">title</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">message</span><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >sender_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >receiver_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">data</span><span class="type">JSONB</span>
+            </div>
+            <div class="db-field">
+              <span class="name">is_read</span><span class="type">BOOLEAN</span>
+            </div>
+            <div class="db-field">
+              <span class="name">read_at</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Members -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128101;</span>
+            <h3>project_members</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >user_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">role</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">position</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">is_active</span
+              ><span class="type">BOOLEAN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Roles -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128736;</span>
+            <h3>project_roles</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">rolename</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">description</span
+              ><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">settings</span><span class="type">JSONB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Positions -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#127891;</span>
+            <h3>project_positions</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">positionname</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">description</span
+              ><span class="type">TEXT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128221;</span>
+            <h3>notes</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >creator_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">description</span
+              ><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">status</span><span class="type">BOOLEAN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Folders -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128193;</span>
+            <h3>project_folders</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >parent_folder_id <span class="fk">FK&rarr;self</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">name</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">path</span><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >creator_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">deleted_at</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Documents -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128196;</span>
+            <h3>project_documents</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >parent_folder_id <span class="fk">FK&rarr;folders</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">name</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">file_url</span><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">file_type</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">file_size</span
+              ><span class="type">BIGINT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">deleted_at</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Milestones -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#127942;</span>
+            <h3>milestones</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">content</span><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">due_date</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Logs -->
+        <div class="db-card">
+          <div class="db-card-header">
+            <span class="table-icon">&#128203;</span>
+            <h3>activity_logs</h3>
+          </div>
+          <div class="db-card-body">
+            <div class="db-field">
+              <span class="name pk">id</span><span class="type">SERIAL PK</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >project_id <span class="fk">FK&rarr;projects</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name"
+                >user_id <span class="fk">FK&rarr;users</span></span
+              ><span class="type">INTEGER</span>
+            </div>
+            <div class="db-field">
+              <span class="name">category</span
+              ><span class="type">VARCHAR(50)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">title</span
+              ><span class="type">VARCHAR(255)</span>
+            </div>
+            <div class="db-field">
+              <span class="name">description</span
+              ><span class="type">TEXT</span>
+            </div>
+            <div class="db-field">
+              <span class="name">created_at</span
+              ><span class="type">TIMESTAMP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: API -->
+    <section class="section" id="api">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(168, 85, 247, 0.15); color: #a855f7"
+        >
+          API Endpoints
+        </div>
+        <h2>API 接口一览</h2>
+        <p>RESTful 风格 API，Swagger 文档自动生成，共 13 个路由模块 50+ 端点</p>
+      </div>
+
+      <!-- Auth API -->
+      <div class="api-category">
+        <h3>
+          &#128274; 认证模块
+          <code style="font-size: 0.85rem; color: var(--text-dim)"
+            >/api/auth</code
+          >
+        </h3>
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>路径</th>
+              <th>说明</th>
+              <th>认证</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/register</td>
+              <td>用户注册（邮箱+密码）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/login</td>
+              <td>密码登录（手机/邮箱）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/send-code</td>
+              <td>发送短信验证码</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/login-with-code</td>
+              <td>验证码登录</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/register-with-code</td>
+              <td>验证码注册</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/reset-password</td>
+              <td>验证码重置密码</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/auth/me</td>
+              <td>获取当前用户信息</td>
+              <td>JWT</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/auth/change-password</td>
+              <td>修改密码</td>
+              <td>JWT</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Projects API -->
+      <div class="api-category">
+        <h3>
+          &#128188; 项目模块
+          <code style="font-size: 0.85rem; color: var(--text-dim)"
+            >/api/projects</code
+          >
+        </h3>
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>路径</th>
+              <th>说明</th>
+              <th>认证</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/projects</td>
+              <td>获取所有项目（可按owner_id筛选）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/projects/:id</td>
+              <td>获取单个项目</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/projects/user/:userId/joined</td>
+              <td>获取用户加入的项目</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/projects</td>
+              <td>创建项目（自动初始化角色+职位+成员）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-put">PUT</span></td>
+              <td class="path-text">/projects/:id</td>
+              <td>更新项目信息</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-delete">DELETE</span></td>
+              <td class="path-text">/projects/:id</td>
+              <td>删除项目</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tasks API -->
+      <div class="api-category">
+        <h3>
+          &#9745; 任务模块
+          <code style="font-size: 0.85rem; color: var(--text-dim)"
+            >/api/tasks</code
+          >
+        </h3>
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>路径</th>
+              <th>说明</th>
+              <th>认证</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/tasks</td>
+              <td>获取任务列表（可按project_id筛选）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/tasks/:id</td>
+              <td>获取单个任务</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/tasks/summary/:projectId</td>
+              <td>项目任务统计（总量/完成/预警/逾期）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/tasks/user-performance</td>
+              <td>用户绩效统计</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/tasks</td>
+              <td>创建任务</td>
+              <td>JWT + 权限</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-put">PUT</span></td>
+              <td class="path-text">/tasks/:id</td>
+              <td>更新任务（自动更新项目进度）</td>
+              <td>JWT + 权限</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-delete">DELETE</span></td>
+              <td class="path-text">/tasks/:id</td>
+              <td>删除任务</td>
+              <td>JWT + 权限</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Notifications API -->
+      <div class="api-category">
+        <h3>
+          &#128276; 通知模块
+          <code style="font-size: 0.85rem; color: var(--text-dim)"
+            >/api/notifications</code
+          >
+        </h3>
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>路径</th>
+              <th>说明</th>
+              <th>认证</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/notifications</td>
+              <td>获取通知列表（分页+筛选）</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-get">GET</span></td>
+              <td class="path-text">/notifications/unread-count</td>
+              <td>获取未读数量</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-post">POST</span></td>
+              <td class="path-text">/notifications</td>
+              <td>创建通知并实时推送</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-put">PUT</span></td>
+              <td class="path-text">/notifications/:id/read</td>
+              <td>标记已读</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-put">PUT</span></td>
+              <td class="path-text">/notifications/:id/unread</td>
+              <td>标记未读</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-put">PUT</span></td>
+              <td class="path-text">/notifications/mark-all-read</td>
+              <td>全部标记已读</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge method-delete">DELETE</span></td>
+              <td class="path-text">/notifications/:id</td>
+              <td>删除通知</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Other APIs Summary -->
+      <div class="api-category">
+        <h3>&#128218; 其他模块</h3>
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>前缀</th>
+              <th>主要端点</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>用户管理</td>
+              <td class="path-text">/api/users</td>
+              <td>GET / POST / PUT / DELETE / POST avatar</td>
+              <td>用户 CRUD + 头像上传</td>
+            </tr>
+            <tr>
+              <td>项目成员</td>
+              <td class="path-text">/api/project-members</td>
+              <td>GET / POST / PUT / DELETE</td>
+              <td>成员管理与角色分配</td>
+            </tr>
+            <tr>
+              <td>项目角色</td>
+              <td class="path-text">/api/project-roles</td>
+              <td>GET / POST / PUT / DELETE</td>
+              <td>自定义角色与权限配置</td>
+            </tr>
+            <tr>
+              <td>项目职位</td>
+              <td class="path-text">/api/project-positions</td>
+              <td>GET / POST / PUT / DELETE</td>
+              <td>职位管理</td>
+            </tr>
+            <tr>
+              <td>项目文件夹</td>
+              <td class="path-text">/api/project-folders</td>
+              <td>GET / POST / PUT / DELETE / PUT bin / PUT restore</td>
+              <td>文件夹树 + 回收站</td>
+            </tr>
+            <tr>
+              <td>项目文档</td>
+              <td class="path-text">/api/project-documents</td>
+              <td>GET / POST upload / PUT / DELETE / GET download</td>
+              <td>文件上传下载 + 回收站</td>
+            </tr>
+            <tr>
+              <td>笔记</td>
+              <td class="path-text">/api/notes</td>
+              <td>GET / POST / PUT / DELETE</td>
+              <td>项目便签/待办</td>
+            </tr>
+            <tr>
+              <td>里程碑</td>
+              <td class="path-text">/api/milestones</td>
+              <td>GET / POST / PUT / DELETE</td>
+              <td>项目里程碑管理</td>
+            </tr>
+            <tr>
+              <td>活动日志</td>
+              <td class="path-text">/api/activity-logs</td>
+              <td>GET / POST / GET export</td>
+              <td>操作日志 + Excel导出</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 6: Frontend Implementation -->
+    <section class="section" id="frontend">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(34, 197, 94, 0.15); color: #22c55e"
+        >
+          Frontend
+        </div>
+        <h2>前端实现详解</h2>
+        <p>Vue 3 Composition API + Pinia 状态管理 + Element Plus 组件库</p>
+      </div>
+
+      <!-- Page Flow -->
+      <h3
+        style="margin-bottom: 1.5rem; color: var(--text-dim); font-size: 1rem"
+      >
+        页面路由与导航流
+      </h3>
+      <div class="page-flow">
+        <div class="page-node">
+          <div class="page-icon">&#128272;</div>
+          <h4>登录/注册</h4>
+          <div class="page-route">/ (login)</div>
+          <div class="page-desc">密码登录 / 验证码登录 / 注册 / 重置密码</div>
+        </div>
+        <div class="page-connector">&#8594;</div>
+        <div class="page-node">
+          <div class="page-icon">&#127968;</div>
+          <h4>主布局</h4>
+          <div class="page-route">/home</div>
+          <div class="page-desc">侧边栏导航 + 顶部栏 + 内容区</div>
+        </div>
+        <div class="page-connector">&#8595;</div>
+      </div>
+      <div class="page-flow" style="margin-top: 1rem">
+        <div class="page-node">
+          <div class="page-icon">&#128202;</div>
+          <h4>项目看板</h4>
+          <div class="page-route">/dashboard</div>
+          <div class="page-desc">ECharts 图表 + 项目统计 + 里程碑</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#128188;</div>
+          <h4>项目列表</h4>
+          <div class="page-route">/project-list</div>
+          <div class="page-desc">所有项目概览卡片</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#128193;</div>
+          <h4>项目详情</h4>
+          <div class="page-route">/projects</div>
+          <div class="page-desc">文件库 + 文件夹管理</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#9745;</div>
+          <h4>任务管理</h4>
+          <div class="page-route">/tasks</div>
+          <div class="page-desc">任务看板 + 拖拽排序</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#128101;</div>
+          <h4>团队管理</h4>
+          <div class="page-route">/team</div>
+          <div class="page-desc">成员列表 + 绩效图表</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#128197;</div>
+          <h4>日历视图</h4>
+          <div class="page-route">/calendar</div>
+          <div class="page-desc">任务日历 + 里程碑时间线</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#128736;</div>
+          <h4>角色管理</h4>
+          <div class="page-route">/roles</div>
+          <div class="page-desc">角色权限 + 职位配置</div>
+        </div>
+        <div class="page-node">
+          <div class="page-icon">&#128100;</div>
+          <h4>个人中心</h4>
+          <div class="page-route">/me</div>
+          <div class="page-desc">资料编辑 + 密码修改</div>
+        </div>
+      </div>
+
+      <!-- Store -->
+      <h3
+        style="margin: 3rem 0 1.5rem; color: var(--text-dim); font-size: 1rem"
+      >
+        Pinia 状态管理
+      </h3>
+      <div class="store-grid">
+        <div class="store-card">
+          <h4>loginStore</h4>
+          <p>登录状态管理，Token 持久化，登录/登出逻辑</p>
+          <div class="store-size">~2.5 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>userStore</h4>
+          <p>用户信息管理，列表获取，CRUD 操作</p>
+          <div class="store-size">~7 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>tasksStore</h4>
+          <p>任务列表与详情，项目任务统计，进度更新</p>
+          <div class="store-size">~5.2 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>fileStore</h4>
+          <p>文件/文件夹树形结构，上传下载，回收站管理</p>
+          <div class="store-size">~23 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>permissionStore</h4>
+          <p>当前用户权限状态，角色权限判断</p>
+          <div class="store-size">~3.7 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>roleStore</h4>
+          <p>项目角色与职位数据管理</p>
+          <div class="store-size">~6.3 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>notificationStore</h4>
+          <p>通知列表，未读计数，实时通知接收</p>
+          <div class="store-size">~9.4 KB</div>
+        </div>
+        <div class="store-card">
+          <h4>otherStore</h4>
+          <p>其他全局状态，里程碑，笔记等</p>
+          <div class="store-size">~2.7 KB</div>
+        </div>
+      </div>
+
+      <!-- Key Implementation -->
+      <h3
+        style="margin: 3rem 0 1.5rem; color: var(--text-dim); font-size: 1rem"
+      >
+        核心实现亮点
+      </h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Axios 请求封装 - 自动 Token 注入与 401 处理</h4>
+          <p>
+            请求拦截器自动从 localStorage 获取 JWT Token 并添加 Authorization
+            头；响应拦截器统一处理错误，401 状态码自动清除 Token
+            并跳转登录页；FormData 上传时自动移除 Content-Type 让浏览器设置
+            boundary。
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>Socket.io 客户端服务 - 实时通知与在线状态</h4>
+          <p>
+            封装 socketService 单例，支持 connect/disconnect/reconnect；自动监听
+            notification:new 事件并更新 notificationStore；通过
+            join:projects/leave:project 管理项目房间；浏览器 Notification API
+            桌面推送。
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>路由守卫 - 登录状态拦截</h4>
+          <p>
+            全局前置守卫检查
+            Token，未登录重定向至登录页；登录后自动重定向到原目标页面；支持路由懒加载优化首屏性能。
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>国际化 i18n - 中英文切换</h4>
+          <p>
+            基于 vue-i18n，zh.ts / en.ts 各 ~380
+            行翻译；覆盖所有页面文本与组件文案；支持动态语言切换无需刷新。
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>文件系统 - 类文件管理器实现</h4>
+          <p>
+            fileStore (~23KB)
+            实现完整的文件夹树遍历、面包屑导航、拖拽移动；支持软删除与回收站还原；Multer
+            文件上传 + 下载链接生成。
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>Dashboard 看板 - 数据可视化</h4>
+          <p>
+            集成 ECharts
+            展示项目进度环形图、任务状态柱状图、团队绩效折线图；里程碑时间线展示；活动日志实时更新。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Real-time Communication -->
+    <section class="section" id="realtime">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(168, 85, 247, 0.15); color: #a855f7"
+        >
+          Real-time
+        </div>
+        <h2>实时通信机制</h2>
+        <p>Socket.io + Redis 构建的实时推送架构</p>
+      </div>
+
+      <div class="realtime-flow" style="margin-bottom: 2rem">
+        <div class="rt-node client">
+          Vue 前端<br /><small>Socket.io Client</small>
+        </div>
+        <div class="rt-arrow">&#8594;</div>
+        <div class="rt-node server">
+          Express 服务器<br /><small>Socket.io Server</small>
+        </div>
+        <div class="rt-arrow">&#8596;</div>
+        <div class="rt-node redis">Redis<br /><small>在线状态存储</small></div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3 style="color: var(--accent-purple)">&#128268; WebSocket 连接</h3>
+          <p>
+            客户端登录后自动建立 Socket.io 连接，JWT Token
+            作为握手认证凭据。支持 websocket 和 polling 两种传输方式自动降级。
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3 style="color: var(--accent-red)">&#128308; Redis 在线管理</h3>
+          <p>
+            用户连接后以 <code>user_online:{userId}</code> 为键存储 Socket
+            ID，TTL 300秒。断开连接时自动清除。通知推送前先检查 Redis
+            判断接收者是否在线。
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3 style="color: var(--accent-green)">&#128172; 房间机制</h3>
+          <p>
+            用户登录后加入 <code>user:{userId}</code> 个人房间；进入项目时加入
+            <code>project:{projectId}</code> 项目房间，实现精准的消息推送目标。
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3 style="color: var(--accent-blue)">&#128276; 通知推送流</h3>
+          <p>
+            <strong>创建通知</strong> &rarr; 写入 PostgreSQL &rarr; 检查 Redis
+            在线状态 &rarr; 在线则 io.to() 实时推送 &rarr; 客户端更新 Store +
+            浏览器 Notification
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Permission System -->
+    <section class="section" id="permissions">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(236, 72, 153, 0.15); color: #ec4899"
+        >
+          Permissions
+        </div>
+        <h2>权限系统</h2>
+        <p>基于角色的细粒度访问控制（RBAC）</p>
+      </div>
+
+      <div style="overflow-x: auto">
+        <table class="perm-table">
+          <thead>
+            <tr>
+              <th>权限项</th>
+              <th>项目创建者</th>
+              <th>项目经理</th>
+              <th>参与者</th>
+              <th>观察者</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>创建任务</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>编辑所有任务</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>编辑时间线</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>邀请成员</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>移除成员</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>管理角色</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>管理职位</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>创建文档</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+            <tr>
+              <td>删除文档</td>
+              <td class="perm-yes">&#10003;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+              <td class="perm-no">&#10007;</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        style="
+          margin-top: 2rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 2rem;
+        "
+      >
+        <h3 style="margin-bottom: 1rem; color: var(--primary-light)">
+          权限中间件工作流程
+        </h3>
+        <div class="code-block">
+          <span class="code-comment"
+            >// 1. 请求到达 &rarr; JWT 认证中间件验证 Token</span
+          >
+          <span class="code-comment"
+            >// 2. 权限中间件查询 project_members 获取用户角色</span
+          >
+          <span class="code-comment"
+            >// 3. 查询 project_roles 获取角色的 settings (JSONB)</span
+          >
+          <span class="code-comment">// 4. 根据权限配置决定是否允许操作</span>
+
+          <span class="code-comment">// 任务编辑特殊逻辑：</span>
+          <span class="code-comment"
+            >// - 有 edit_all_tasks 权限 &rarr; 可编辑全部字段</span
+          >
+          <span class="code-comment"
+            >// - 无 edit_all_tasks 但自己是任务创建者 &rarr;
+            可编辑全部字段</span
+          >
+          <span class="code-comment"
+            >// - 仅为被分配者 &rarr; 只能更新进度</span
+          >
+
+          <span class="code-keyword">if</span> (canEditFullTask) {
+          <span class="code-comment"
+            >// 完整编辑权限：title, description, assignee_ids, dates, progress,
+            priority</span
+          >
+          } <span class="code-keyword">else</span> {
+          <span class="code-comment">// 部分权限：仅 progress</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: File Structure -->
+    <section class="section" id="file-structure">
+      <div class="section-header">
+        <div
+          class="section-tag"
+          style="background: rgba(6, 182, 212, 0.15); color: #06b6d4"
+        >
+          File Structure
+        </div>
+        <h2>项目文件结构</h2>
+        <p>可交互的源码目录树，点击文件夹展开/收起</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="fs-stats-row">
+        <div class="fs-stat-chip">
+          <div class="chip-dot" style="background: #22c55e"></div>
+          <span class="chip-num">22</span
+          ><span class="chip-label">.vue 文件</span>
+        </div>
+        <div class="fs-stat-chip">
+          <div class="chip-dot" style="background: #3b82f6"></div>
+          <span class="chip-num">23</span
+          ><span class="chip-label">.ts 文件</span>
+        </div>
+        <div class="fs-stat-chip">
+          <div class="chip-dot" style="background: #f97316"></div>
+          <span class="chip-num">28</span
+          ><span class="chip-label">.js 文件</span>
+        </div>
+        <div class="fs-stat-chip">
+          <div class="chip-dot" style="background: #a855f7"></div>
+          <span class="chip-num">6</span
+          ><span class="chip-label">.sql 文件</span>
+        </div>
+        <div class="fs-stat-chip">
+          <div class="chip-dot" style="background: #eab308"></div>
+          <span class="chip-num">7</span
+          ><span class="chip-label">.json 配置</span>
+        </div>
+        <div class="fs-stat-chip">
+          <div class="chip-dot" style="background: #06b6d4"></div>
+          <span class="chip-num">8</span
+          ><span class="chip-label">.md 文档</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="fs-legend">
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #22c55e"></div>
+          Vue (.vue)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #3b82f6"></div>
+          TypeScript (.ts)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #f97316"></div>
+          JavaScript (.js)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #a855f7"></div>
+          SQL (.sql)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #eab308"></div>
+          JSON (.json)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #ec4899"></div>
+          Style (.scss)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #06b6d4"></div>
+          Docs (.md)
+        </div>
+        <div class="fs-legend-item">
+          <div class="fs-legend-dot" style="background: #94a3b8"></div>
+          Config
+        </div>
+      </div>
+
+      <!-- Root files panel -->
+      <div class="fs-panel" style="margin-bottom: 1.5rem">
+        <div class="fs-panel-header root-header">
+          <span class="panel-icon">&#128193;</span>
+          <h3>TaskFlow/</h3>
+          <span class="panel-badge badge-root">根目录配置</span>
+        </div>
+        <div class="fs-panel-body">
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #ef4444">&#60;&#47;&#62;</span
+            ><span class="file-name html">index.html</span
+            ><span class="file-desc">Vite 入口 HTML</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #eab308">{ }</span
+            ><span class="file-name json">package.json</span
+            ><span class="file-desc">前端依赖 & 脚本</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #3b82f6">TS</span
+            ><span class="file-name ts">vite.config.ts</span
+            ><span class="file-desc">Vite 构建配置 + API 代理</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #3b82f6">TS</span
+            ><span class="file-name ts">tsconfig.json</span
+            ><span class="file-desc">TypeScript 项目引用</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #3b82f6">TS</span
+            ><span class="file-name ts">tsconfig.app.json</span
+            ><span class="file-desc">前端 TS 配置</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #3b82f6">TS</span
+            ><span class="file-name ts">tsconfig.node.json</span
+            ><span class="file-desc">Node 端 TS 配置</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #94a3b8">.d</span
+            ><span class="file-name config">auto-imports.d.ts</span
+            ><span class="file-desc">自动导入类型声明</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #94a3b8">.d</span
+            ><span class="file-name config">components.d.ts</span
+            ><span class="file-desc">组件自动注册声明</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #94a3b8">.d</span
+            ><span class="file-name config">env.d.ts</span
+            ><span class="file-desc">Vite 客户端类型</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #06b6d4">MD</span
+            ><span class="file-name doc">README.md</span
+            ><span class="file-desc">项目说明文档</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #06b6d4">MD</span
+            ><span class="file-name doc">BUGFIX_LOG.md</span
+            ><span class="file-desc">Bug 修复日志</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #06b6d4">MD</span
+            ><span class="file-name doc">COMPILATION_ERROR_FIXES.md</span
+            ><span class="file-desc">编译错误修复记录</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #06b6d4">MD</span
+            ><span class="file-name doc">FRONTEND_API_GUIDE.md</span
+            ><span class="file-desc">前后端联调指南</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #06b6d4">MD</span
+            ><span class="file-name doc">NOTIFICATION_SYSTEM_GUIDE.md</span
+            ><span class="file-desc">通知系统使用指南</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #06b6d4">MD</span
+            ><span class="file-name doc">REDIS_SETUP.md</span
+            ><span class="file-desc">Redis 安装指南</span>
+          </div>
+          <div class="tree-file" style="--depth: 0">
+            <span class="file-icon" style="color: #22c55e">BAT</span
+            ><span class="file-name bat">start-dev.bat</span
+            ><span class="file-desc">Windows 一键启动脚本</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-column layout -->
+      <div class="fs-layout">
+        <!-- Frontend Panel -->
+        <div class="fs-panel">
+          <div
+            class="fs-panel-header frontend-header"
+            onclick="this.classList.toggle('collapsed')"
+          >
+            <span class="panel-icon">&#127912;</span>
+            <h3>src/</h3>
+            <span class="panel-badge badge-frontend"
+              >前端源码 &middot; 22 Vue + 19 TS</span
+            >
+          </div>
+          <div class="fs-panel-body">
+            <!-- Root files of src/ -->
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #22c55e">V</span
+              ><span class="file-name vue">App.vue</span
+              ><span class="file-desc">根组件</span>
+            </div>
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #3b82f6">TS</span
+              ><span class="file-name ts">main.ts</span
+              ><span class="file-desc"
+                >应用入口 (Pinia/Router/i18n/Socket)</span
+              >
+            </div>
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #ec4899">SC</span
+              ><span class="file-name style">unifyStle.scss</span
+              ><span class="file-desc">全局统一样式</span>
+            </div>
+
+            <!-- api/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir open"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">api/</span>
+                <span class="dir-desc">API 接口层</span>
+              </div>
+              <div class="tree-children open" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">index.ts</span
+                  ><span class="file-desc">所有 API 接口封装</span
+                  ><span class="file-size">~16 KB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- assets/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">assets/icons/</span>
+                <span class="dir-desc">44 个 PNG 图标</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #94a3b8">44</span
+                  ><span class="file-name config">*.png</span
+                  ><span class="file-desc">UI 图标资源文件</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- components/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir open"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">components/</span>
+                <span class="dir-desc">可复用组件 &middot; 11 个</span>
+              </div>
+              <div class="tree-children open" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">ActivityLog.vue</span
+                  ><span class="file-desc">活动日志</span
+                  ><span class="file-size">13 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">cardTamp.vue</span
+                  ><span class="file-desc">通用卡片模板</span
+                  ><span class="file-size">5 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">fileCard.vue</span
+                  ><span class="file-desc">文件卡片</span
+                  ><span class="file-size">7 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">mentionsCard.vue</span
+                  ><span class="file-desc">@提及通知卡片</span
+                  ><span class="file-size">4 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">newProjectCard.vue</span
+                  ><span class="file-desc">新建项目弹窗</span
+                  ><span class="file-size">11 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">NotificationCenter.vue</span
+                  ><span class="file-desc">通知中心浮层</span
+                  ><span class="file-size">5 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">notificationsCard.vue</span
+                  ><span class="file-desc">通知卡片</span
+                  ><span class="file-size">9 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">projectCard.vue</span
+                  ><span class="file-desc">项目卡片</span
+                  ><span class="file-size">2 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">taskCard.vue</span
+                  ><span class="file-desc">任务卡片 (含编辑弹窗)</span
+                  ><span class="file-size">10 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">TourComponents.vue</span
+                  ><span class="file-desc">新手引导组件</span
+                  ><span class="file-size">2 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #22c55e">V</span
+                  ><span class="file-name vue">velocity.vue</span
+                  ><span class="file-desc">速度/绩效图表</span
+                  ><span class="file-size">3 KB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- language/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">language/</span>
+                <span class="dir-desc">国际化 i18n</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">index.ts</span
+                  ><span class="file-desc">i18n 配置</span>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">lang/</span>
+                    <span class="dir-desc">语言包</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #3b82f6">TS</span
+                      ><span class="file-name ts">zh.ts</span
+                      ><span class="file-desc">中文翻译</span
+                      ><span class="file-size">~378 行</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #3b82f6">TS</span
+                      ><span class="file-name ts">en.ts</span
+                      ><span class="file-desc">英文翻译</span
+                      ><span class="file-size">~383 行</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- pages/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir open"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">pages/</span>
+                <span class="dir-desc">页面组件 &middot; 9 个</span>
+              </div>
+              <div class="tree-children open" style="--depth: 1">
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">calendar/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">calendar.vue</span
+                      ><span class="file-desc">日历视图</span
+                      ><span class="file-size">39 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">dashboard/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">dashboard.vue</span
+                      ><span class="file-desc">项目看板</span
+                      ><span class="file-size">34 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">login/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">login.vue</span
+                      ><span class="file-desc">登录/注册页</span
+                      ><span class="file-size">17 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">main/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">main.vue</span
+                      ><span class="file-desc">主布局框架</span
+                      ><span class="file-size">26 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">me/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">me.vue</span
+                      ><span class="file-desc">个人中心</span
+                      ><span class="file-size">26 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">projects/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">project-list.vue</span
+                      ><span class="file-desc">项目列表</span
+                      ><span class="file-size">6 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">projects.vue</span
+                      ><span class="file-desc">项目详情/文件库</span
+                      ><span class="file-size">28 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">roles/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">roles.vue</span
+                      ><span class="file-desc">角色与职位管理</span
+                      ><span class="file-size">25 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">tasks/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">tasks.vue</span
+                      ><span class="file-desc">任务管理</span
+                      ><span class="file-size">38 KB</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">team/</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #22c55e">V</span
+                      ><span class="file-name vue">team.vue</span
+                      ><span class="file-desc">团队管理</span
+                      ><span class="file-size">21 KB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- router/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">router/</span>
+                <span class="dir-desc">路由配置</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">config.ts</span
+                  ><span class="file-desc">路由配置 (8 个页面)</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">index.ts</span
+                  ><span class="file-desc">路由实例 + 全局守卫</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- services/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">services/</span>
+                <span class="dir-desc">服务层</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">socketService.ts</span
+                  ><span class="file-desc">Socket.io 客户端封装</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- stores/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir open"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">stores/</span>
+                <span class="dir-desc">Pinia 状态管理 &middot; 8 个</span>
+              </div>
+              <div class="tree-children open" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">loginStore.ts</span
+                  ><span class="file-desc">登录状态</span
+                  ><span class="file-size">2.5 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">userStore.ts</span
+                  ><span class="file-desc">用户状态</span
+                  ><span class="file-size">7 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">tasksStore.ts</span
+                  ><span class="file-desc">任务状态</span
+                  ><span class="file-size">5 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">fileStore.ts</span
+                  ><span class="file-desc">文件管理状态</span
+                  ><span class="file-size">23 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">permissionStore.ts</span
+                  ><span class="file-desc">权限状态</span
+                  ><span class="file-size">3.7 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">roleStore.ts</span
+                  ><span class="file-desc">角色职位状态</span
+                  ><span class="file-size">6 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">notificationStore.ts</span
+                  ><span class="file-desc">通知状态</span
+                  ><span class="file-size">9 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">otherStore.ts</span
+                  ><span class="file-desc">其他/通用状态</span
+                  ><span class="file-size">2.7 KB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- types/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">types/</span>
+                <span class="dir-desc">类型定义</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">user.ts</span
+                  ><span class="file-desc">TypeScript 类型定义</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- utils/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">utils/</span>
+                <span class="dir-desc">工具函数</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #3b82f6">TS</span
+                  ><span class="file-name ts">request.ts</span
+                  ><span class="file-desc">Axios 请求封装 (拦截器)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backend Panel -->
+        <div class="fs-panel">
+          <div
+            class="fs-panel-header backend-header"
+            onclick="this.classList.toggle('collapsed')"
+          >
+            <span class="panel-icon">&#9881;</span>
+            <h3>server/</h3>
+            <span class="panel-badge badge-backend"
+              >后端服务 &middot; 28 JS + 6 SQL</span
+            >
+          </div>
+          <div class="fs-panel-body">
+            <!-- Root files of server/ -->
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #eab308">{ }</span
+              ><span class="file-name json">package.json</span
+              ><span class="file-desc">后端依赖</span>
+            </div>
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #94a3b8">ENV</span
+              ><span class="file-name config">.env</span
+              ><span class="file-desc">环境变量 (DB/JWT/短信)</span>
+            </div>
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #06b6d4">MD</span
+              ><span class="file-name doc">README.md</span
+              ><span class="file-desc">后端说明文档</span>
+            </div>
+            <div class="tree-file" style="--depth: 0">
+              <span class="file-icon" style="color: #06b6d4">MD</span
+              ><span class="file-name doc">FILE_UPLOAD_GUIDE.md</span
+              ><span class="file-desc">文件上传指南</span>
+            </div>
+
+            <!-- db/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir open"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">db/</span>
+                <span class="dir-desc">数据库脚本 &middot; 6 个</span>
+              </div>
+              <div class="tree-children open" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #a855f7">SQL</span
+                  ><span class="file-name sql">init.sql</span
+                  ><span class="file-desc">建表 + 索引 + 示例数据</span
+                  ><span class="file-size">6 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #a855f7">SQL</span
+                  ><span class="file-name sql">migration.sql</span
+                  ><span class="file-desc">添加文件上传字段</span
+                  ><span class="file-size">0.3 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #a855f7">SQL</span
+                  ><span class="file-name sql">add_completed_at.sql</span
+                  ><span class="file-desc">添加任务完成时间</span
+                  ><span class="file-size">0.4 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #a855f7">SQL</span
+                  ><span class="file-name sql">add_milestones_table.sql</span
+                  ><span class="file-desc">创建里程碑表</span
+                  ><span class="file-size">1 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #a855f7">SQL</span
+                  ><span class="file-name sql">recreate_tasks_table.sql</span
+                  ><span class="file-desc">重建任务表</span
+                  ><span class="file-size">3 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #a855f7">SQL</span
+                  ><span class="file-name sql">fix_sequence.sql</span
+                  ><span class="file-desc">修复自增序列</span
+                  ><span class="file-size">0.3 KB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- src/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir open"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">src/</span>
+                <span class="dir-desc">后端源码</span>
+              </div>
+              <div class="tree-children open" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #f97316">JS</span
+                  ><span class="file-name js">index.js</span
+                  ><span class="file-desc"
+                    >Express 入口 + Socket.io + Redis</span
+                  ><span class="file-size">7 KB</span>
+                </div>
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #f97316">JS</span
+                  ><span class="file-name js">swagger.js</span
+                  ><span class="file-desc">Swagger API 文档配置</span
+                  ><span class="file-size">4 KB</span>
+                </div>
+
+                <!-- config/ -->
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">config/</span>
+                    <span class="dir-desc">配置</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">database.js</span
+                      ><span class="file-desc">PostgreSQL 连接池</span
+                      ><span class="file-size">1.2 KB</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- middleware/ -->
+                <div class="tree-node">
+                  <div
+                    class="tree-dir"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">middleware/</span>
+                    <span class="dir-desc">中间件</span>
+                  </div>
+                  <div class="tree-children" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">authMiddleware.js</span
+                      ><span class="file-desc">认证中间件导出</span
+                      ><span class="file-size">0.1 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">permissionMiddleware.js</span
+                      ><span class="file-desc">权限校验中间件</span
+                      ><span class="file-size">13 KB</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- routes/ -->
+                <div class="tree-node">
+                  <div
+                    class="tree-dir open"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">routes/</span>
+                    <span class="dir-desc">API 路由 &middot; 13 个</span>
+                  </div>
+                  <div class="tree-children open" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">auth.js</span
+                      ><span class="file-desc"
+                        >认证 (注册/登录/验证码/改密)</span
+                      ><span class="file-size">22 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">users.js</span
+                      ><span class="file-desc">用户 CRUD + 头像上传</span
+                      ><span class="file-size">12 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">projects.js</span
+                      ><span class="file-desc"
+                        >项目 CRUD (含默认角色初始化)</span
+                      ><span class="file-size">13 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">tasks.js</span
+                      ><span class="file-desc">任务 CRUD + 统计 + 进度更新</span
+                      ><span class="file-size">16 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">notifications.js</span
+                      ><span class="file-desc">通知 CRUD + 实时推送</span
+                      ><span class="file-size">13 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">notes.js</span
+                      ><span class="file-desc">笔记 CRUD</span
+                      ><span class="file-size">5 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">milestones.js</span
+                      ><span class="file-desc">里程碑 CRUD</span
+                      ><span class="file-size">7 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">activityLogs.js</span
+                      ><span class="file-desc">活动日志 + Excel 导出</span
+                      ><span class="file-size">6 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">projectMembers.js</span
+                      ><span class="file-desc">项目成员管理</span
+                      ><span class="file-size">19 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">projectRoles.js</span
+                      ><span class="file-desc">项目角色管理</span
+                      ><span class="file-size">8 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">projectPositions.js</span
+                      ><span class="file-desc">项目职位管理</span
+                      ><span class="file-size">7 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">projectFolders.js</span
+                      ><span class="file-desc">文件夹 (含回收站/还原)</span
+                      ><span class="file-size">16 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">projectDocuments.js</span
+                      ><span class="file-desc">文档 (上传/下载/回收站)</span
+                      ><span class="file-size">15 KB</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- utils/ -->
+                <div class="tree-node">
+                  <div
+                    class="tree-dir open"
+                    style="--depth: 1"
+                    onclick="toggleDir(this)"
+                  >
+                    <span class="dir-arrow">&#9654;</span>
+                    <span class="dir-icon">&#128193;</span>
+                    <span class="dir-name">utils/</span>
+                    <span class="dir-desc">工具函数 &middot; 7 个</span>
+                  </div>
+                  <div class="tree-children open" style="--depth: 2">
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">jwtUtils.js</span
+                      ><span class="file-desc">JWT 生成/验证/中间件</span
+                      ><span class="file-size">3 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">passwordUtils.js</span
+                      ><span class="file-desc">bcrypt 密码哈希</span
+                      ><span class="file-size">1 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">permissionUtils.js</span
+                      ><span class="file-desc">权限判断工具</span
+                      ><span class="file-size">3 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">upload.js</span
+                      ><span class="file-desc">Multer 文件上传配置</span
+                      ><span class="file-size">2 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">smsService.js</span
+                      ><span class="file-desc">阿里云短信服务</span
+                      ><span class="file-size">2 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">verifyCodeStore.js</span
+                      ><span class="file-desc">验证码存储与校验</span
+                      ><span class="file-size">2 KB</span>
+                    </div>
+                    <div class="tree-file" style="--depth: 2">
+                      <span class="file-icon" style="color: #f97316">JS</span
+                      ><span class="file-name js">createUploadsDir.js</span
+                      ><span class="file-desc">自动创建 uploads 目录</span
+                      ><span class="file-size">0.5 KB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- uploads/ -->
+            <div class="tree-node">
+              <div
+                class="tree-dir"
+                style="--depth: 0"
+                onclick="toggleDir(this)"
+              >
+                <span class="dir-arrow">&#9654;</span>
+                <span class="dir-icon">&#128193;</span>
+                <span class="dir-name">uploads/</span>
+                <span class="dir-desc">上传文件存储目录</span>
+              </div>
+              <div class="tree-children" style="--depth: 1">
+                <div class="tree-file" style="--depth: 1">
+                  <span class="file-icon" style="color: #94a3b8">&#128196;</span
+                  ><span class="file-name config">*.docx / *.pdf / *.png</span
+                  ><span class="file-desc">已上传的文件</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- dist/ simple note -->
+      <div class="fs-panel" style="margin-top: 1.5rem">
+        <div
+          class="fs-panel-header"
+          style="
+            background: rgba(148, 163, 184, 0.05);
+            border-bottom: none;
+            cursor: default;
+          "
+        >
+          <span class="panel-icon" style="opacity: 0.5">&#128230;</span>
+          <h3 style="opacity: 0.6; font-weight: 400">dist/</h3>
+          <span
+            style="
+              margin-left: auto;
+              font-size: 0.8rem;
+              color: var(--text-dim);
+              opacity: 0.5;
+            "
+            >Vite 构建产物，无需手动编辑</span
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      style="
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-dim);
+        border-top: 1px solid var(--border);
+      "
+    >
+      <p style="font-size: 1.1rem; margin-bottom: 0.5rem">
+        TaskFlow Project Management Platform
+      </p>
+      <p style="font-size: 0.85rem">
+        Vue 3 + Express + PostgreSQL + Redis + Socket.io
+      </p>
+    </footer>
+
+    <script>
+      // File tree toggle
+      function toggleDir(el) {
+        const isOpen = el.classList.contains("open");
+        const children = el.nextElementSibling;
+        if (isOpen) {
+          el.classList.remove("open");
+          children.classList.remove("open");
+        } else {
+          el.classList.add("open");
+          children.classList.add("open");
+        }
+      }
+
+      // Side nav active state on scroll
+      const sections = document.querySelectorAll(".section, .hero");
+      const navLinks = document.querySelectorAll(".side-nav a");
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const id = entry.target.id;
+              navLinks.forEach((link) => {
+                link.classList.toggle(
+                  "active",
+                  link.getAttribute("href") === "#" + id,
+                );
+              });
+            }
+          });
+        },
+        { threshold: 0.3 },
+      );
+
+      sections.forEach((s) => observer.observe(s));
+
+      // Smooth reveal on scroll
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = "1";
+              entry.target.style.transform = "translateY(0)";
+            }
+          });
+        },
+        { threshold: 0.1 },
+      );
+
+      document
+        .querySelectorAll(
+          ".tech-card, .feature-card, .db-card, .page-node, .store-card, .timeline-item, .stat-item",
+        )
+        .forEach((el) => {
+          el.style.opacity = "0";
+          el.style.transform = "translateY(20px)";
+          el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+          revealObserver.observe(el);
+        });
+    </script>
+  </body>
+</html>
