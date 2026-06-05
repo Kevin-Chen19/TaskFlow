@@ -1,73 +1,72 @@
 /*
  * 完整的 API 接口
-*认证接口（注册、登录、获取用户、修改密码）
-*用户接口（CRUD）
-*项目接口（CRUD）
-*任务接口（CRUD）
-*通知、笔记、项目成员、角色、职位、文件夹、文档等接口
+ *认证接口（注册、登录、获取用户、修改密码）
+ *用户接口（CRUD）
+ *项目接口（CRUD）
+ *任务接口（CRUD）
+ *通知、笔记、项目成员、角色、职位、文件夹、文档等接口
  */
-
 
 // ==================== 认证相关接口 ====================
 
-import request, { type ApiResponse } from '@/utils/request'
+import request, { type ApiResponse } from "@/utils/request";
 /**
  * 用户注册
  */
 export const register = (data: {
-  phone: string
-  fullname: string
-  email: string
-  password: string
-  avatar_url?: string
-  skills?: string[]
-  mooto?: string
+  phone: string;
+  fullname: string;
+  email: string;
+  password: string;
+  avatar_url?: string;
+  skills?: string[];
+  mooto?: string;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/auth/register',
-    method: 'post',
-    data
-  })
-}
+    url: "/auth/register",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 用户登录
  */
 export const login = (data: {
-  phone?: string
-  email?: string
-  password: string
+  phone?: string;
+  email?: string;
+  password: string;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/auth/login',
-    method: 'post',
-    data
-  })
-}
+    url: "/auth/login",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 获取当前用户信息
  */
 export const getCurrentUser = (): Promise<ApiResponse> => {
   return request({
-    url: '/auth/me',
-    method: 'get'
-  })
-}
+    url: "/auth/me",
+    method: "get",
+  });
+};
 
 /**
  * 修改密码
  */
 export const changePassword = (data: {
-  current_password: string
-  new_password: string
+  current_password: string;
+  new_password: string;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/auth/change-password',
-    method: 'post',
-    data
-  })
-}
+    url: "/auth/change-password",
+    method: "post",
+    data,
+  });
+};
 
 // ==================== 用户相关接口 ====================
 
@@ -76,10 +75,10 @@ export const changePassword = (data: {
  */
 export const getUsers = (): Promise<ApiResponse> => {
   return request({
-    url: '/users',
-    method: 'get'
-  })
-}
+    url: "/users",
+    method: "get",
+  });
+};
 
 /**
  * 获取单个用户
@@ -87,63 +86,66 @@ export const getUsers = (): Promise<ApiResponse> => {
 export const getUserById = (id: number): Promise<ApiResponse> => {
   return request({
     url: `/users/${id}`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 /**
  * 创建用户
  */
 export const createUser = (data: {
-  phone: string
-  fullname: string
-  email: string
-  password: string
-  avatar_url?: string
-  skills?: string[]
-  mooto?: string
+  phone: string;
+  fullname: string;
+  email: string;
+  password: string;
+  avatar_url?: string;
+  skills?: string[];
+  mooto?: string;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/users',
-    method: 'post',
-    data
-  })
-}
+    url: "/users",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新用户
  */
-export const updateUser = (id: number, data: {
-  phone?: string
-  fullname?: string
-  email?: string
-  avatar_url?: string
-  skills?: string[]
-  mooto?: string
-}): Promise<ApiResponse> => {
+export const updateUser = (
+  id: number,
+  data: {
+    phone?: string;
+    fullname?: string;
+    email?: string;
+    avatar_url?: string;
+    skills?: string[];
+    mooto?: string;
+  },
+): Promise<ApiResponse> => {
   return request({
     url: `/users/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 上传用户头像
  */
 export const uploadAvatar = (id: number, file: File): Promise<ApiResponse> => {
-  const formData = new FormData()
-  formData.append('avatar', file)
+  const formData = new FormData();
+  formData.append("avatar", file);
 
   return request({
     url: `/users/${id}/avatar`,
-    method: 'post',
+    method: "post",
     data: formData,
     headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 
 /**
  * 删除用户
@@ -151,9 +153,9 @@ export const uploadAvatar = (id: number, file: File): Promise<ApiResponse> => {
 export const deleteUser = (id: number): Promise<ApiResponse> => {
   return request({
     url: `/users/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 项目相关接口 ====================
 
@@ -162,21 +164,21 @@ export const deleteUser = (id: number): Promise<ApiResponse> => {
  */
 export const getProjects = () => {
   return request({
-    url: '/projects',
-    method: 'get'
-  })
-}
+    url: "/projects",
+    method: "get",
+  });
+};
 
 /**
  * 获取用户创建的项目
  */
 export const getProjectsByOwner = (ownerId: number) => {
   return request({
-    url: '/projects',
-    method: 'get',
-    params: { owner_id: ownerId }
-  })
-}
+    url: "/projects",
+    method: "get",
+    params: { owner_id: ownerId },
+  });
+};
 
 /**
  * 获取用户加入的项目
@@ -184,9 +186,9 @@ export const getProjectsByOwner = (ownerId: number) => {
 export const getProjectsByMember = (userId: number) => {
   return request({
     url: `/projects/user/${userId}/joined`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 /**
  * 获取单个项目
@@ -194,44 +196,47 @@ export const getProjectsByMember = (userId: number) => {
 export const getProjectById = (id: number) => {
   return request({
     url: `/projects/${id}`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 /**
  * 创建项目
  */
 export const createProject = (data: {
-  name: string
-  description?: string
-  owner_id: number
-  assignee_ids?: number[]
-  progress?: number
-  total_hours?: number
+  name: string;
+  description?: string;
+  owner_id: number;
+  assignee_ids?: number[];
+  progress?: number;
+  total_hours?: number;
 }) => {
   return request({
-    url: '/projects',
-    method: 'post',
-    data
-  })
-}
+    url: "/projects",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新项目
  */
-export const updateProject = (id: number, data: {
-  name?: string
-  description?: string
-  assignee_ids?: number[]
-  progress?: number
-  total_hours?: number
-}) => {
+export const updateProject = (
+  id: number,
+  data: {
+    name?: string;
+    description?: string;
+    assignee_ids?: number[];
+    progress?: number;
+    total_hours?: number;
+  },
+) => {
   return request({
     url: `/projects/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除项目
@@ -239,24 +244,22 @@ export const updateProject = (id: number, data: {
 export const deleteProject = (id: number) => {
   return request({
     url: `/projects/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 任务相关接口 ====================
 
 /**
  * 获取任务列表
  */
-export const getTasks = (params?: {
-  project_id?: number
-}) => {
+export const getTasks = (params?: { project_id?: number }) => {
   return request({
-    url: '/tasks',
-    method: 'get',
-    params
-  })
-}
+    url: "/tasks",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 获取单个任务
@@ -264,49 +267,52 @@ export const getTasks = (params?: {
 export const getTaskById = (id: number) => {
   return request({
     url: `/tasks/${id}`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 /**
  * 创建任务
  */
 export const createTask = (data: {
-  title: string
-  description?: string
-  project_id: number
-  creator_id: number
-  assignee_ids?: number[]
-  due_date?: string
-  start_date?: string
-  progress?: number
-  priority?: number
+  title: string;
+  description?: string;
+  project_id: number;
+  creator_id: number;
+  assignee_ids?: number[];
+  due_date?: string;
+  start_date?: string;
+  progress?: number;
+  priority?: number;
 }) => {
   return request({
-    url: '/tasks',
-    method: 'post',
-    data
-  })
-}
+    url: "/tasks",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新任务
  */
-export const updateTask = (id: number, data: {
-  title?: string
-  description?: string
-  assignee_ids?: number[]
-  due_date?: string
-  start_date?: string
-  progress?: number
-  priority?: number
-}) => {
+export const updateTask = (
+  id: number,
+  data: {
+    title?: string;
+    description?: string;
+    assignee_ids?: number[];
+    due_date?: string;
+    start_date?: string;
+    progress?: number;
+    priority?: number;
+  },
+) => {
   return request({
     url: `/tasks/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除任务
@@ -314,9 +320,9 @@ export const updateTask = (id: number, data: {
 export const deleteTask = (id: number) => {
   return request({
     url: `/tasks/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 /**
  * 获取项目任务统计信息
@@ -324,9 +330,9 @@ export const deleteTask = (id: number) => {
 export const getProjectStats = (projectId: number): Promise<ApiResponse> => {
   return request({
     url: `/tasks/summary/${projectId}`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 // ==================== 活动日志相关接口 ====================
 
@@ -334,64 +340,64 @@ export const getProjectStats = (projectId: number): Promise<ApiResponse> => {
  * 获取项目活动日志
  */
 export const getActivityLogs = (params: {
-  project_id: number
-  category?: string
-  search?: string
-  page?: number
-  limit?: number
+  project_id: number;
+  category?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/activity-logs',
-    method: 'get',
-    params
-  })
-}
+    url: "/activity-logs",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 创建活动日志
  */
 export const createActivityLog = (data: {
-  project_id: number
-  user_id?: number
-  category: string
-  title: string
-  description?: string
+  project_id: number;
+  user_id?: number;
+  category: string;
+  title: string;
+  description?: string;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/activity-logs',
-    method: 'post',
-    data
-  })
-}
+    url: "/activity-logs",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 导出活动日志为Excel
  */
 export const exportActivityLogs = async (params: {
-  project_id: number
-  search?: string
+  project_id: number;
+  search?: string;
 }): Promise<Blob> => {
-  const token = localStorage.getItem('token')
-  const queryParams = new URLSearchParams()
-  queryParams.append('project_id', params.project_id.toString())
+  const token = localStorage.getItem("token");
+  const queryParams = new URLSearchParams();
+  queryParams.append("project_id", params.project_id.toString());
   if (params.search) {
-    queryParams.append('search', params.search)
+    queryParams.append("search", params.search);
   }
-  
-  const response = await fetch(`http://localhost:3000/api/activity-logs/export?${queryParams}`, {
-    method: 'GET',
+
+  const response = await fetch(`/api/activity-logs/export?${queryParams}`, {
+    method: "GET",
     headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-  
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.message || '导出失败')
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "导出失败");
   }
-  
-  return response.blob()
-}
+
+  return response.blob();
+};
 
 // ==================== 通知相关接口 ====================
 
@@ -399,49 +405,52 @@ export const exportActivityLogs = async (params: {
  * 获取通知列表
  */
 export const getNotifications = (params?: {
-  project_id?: number
-  creator_id?: number
+  project_id?: number;
+  creator_id?: number;
 }) => {
   return request({
-    url: '/notifications',
-    method: 'get',
-    params
-  })
-}
+    url: "/notifications",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 创建通知
  */
 export const createNotification = (data: {
-  project_id: number
-  creator_id: number
-  description: string
-  type?: string
-  assignee_ids?: number[]
-  status?: number[]
+  project_id: number;
+  creator_id: number;
+  description: string;
+  type?: string;
+  assignee_ids?: number[];
+  status?: number[];
 }) => {
   return request({
-    url: '/notifications',
-    method: 'post',
-    data
-  })
-}
+    url: "/notifications",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新通知
  */
-export const updateNotification = (id: number, data: {
-  description?: string
-  type?: string
-  assignee_ids?: number[]
-  status?: number[]
-}) => {
+export const updateNotification = (
+  id: number,
+  data: {
+    description?: string;
+    type?: string;
+    assignee_ids?: number[];
+    status?: number[];
+  },
+) => {
   return request({
     url: `/notifications/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除通知
@@ -449,9 +458,9 @@ export const updateNotification = (id: number, data: {
 export const deleteNotification = (id: number) => {
   return request({
     url: `/notifications/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 笔记相关接口 ====================
 
@@ -459,44 +468,47 @@ export const deleteNotification = (id: number) => {
  * 获取笔记列表
  */
 export const getNotes = (params?: {
-  project_id?: number
-  creator_id?: number
+  project_id?: number;
+  creator_id?: number;
 }) => {
   return request({
-    url: '/notes',
-    method: 'get',
-    params
-  })
-}
+    url: "/notes",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 创建笔记
  */
 export const createNote = (data: {
-  project_id: number
-  creator_id: number
-  description: string
-  status: boolean
+  project_id: number;
+  creator_id: number;
+  description: string;
+  status: boolean;
 }) => {
   return request({
-    url: '/notes',
-    method: 'post',
-    data
-  })
-}
+    url: "/notes",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新笔记
  */
-export const updateNote = (id: number, data: {
-  status?: boolean
-}) => {
+export const updateNote = (
+  id: number,
+  data: {
+    status?: boolean;
+  },
+) => {
   return request({
     url: `/notes/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除笔记
@@ -504,53 +516,54 @@ export const updateNote = (id: number, data: {
 export const deleteNote = (id: number) => {
   return request({
     url: `/notes/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 里程碑相关接口 ====================
 
 /**
  * 获取项目里程碑列表
  */
-export const getMilestones = (params?: {
-  project_id?: number
-}) => {
+export const getMilestones = (params?: { project_id?: number }) => {
   return request({
-    url: '/milestones',
-    method: 'get',
-    params
-  })
-}
+    url: "/milestones",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 创建里程碑
  */
 export const createMilestone = (data: {
-  project_id: number
-  content: string
-  due_date: string
+  project_id: number;
+  content: string;
+  due_date: string;
 }) => {
   return request({
-    url: '/milestones',
-    method: 'post',
-    data
-  })
-}
+    url: "/milestones",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新里程碑
  */
-export const updateMilestone = (id: number, data: {
-  content?: string
-  due_date?: string
-}) => {
+export const updateMilestone = (
+  id: number,
+  data: {
+    content?: string;
+    due_date?: string;
+  },
+) => {
   return request({
     url: `/milestones/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除里程碑
@@ -558,9 +571,9 @@ export const updateMilestone = (id: number, data: {
 export const deleteMilestone = (id: number) => {
   return request({
     url: `/milestones/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 项目成员相关接口 ====================
 
@@ -570,41 +583,44 @@ export const deleteMilestone = (id: number) => {
 export const getProjectMembers = (projectId: number) => {
   return request({
     url: `/project-members/project/${projectId}`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 /**
  * 添加项目成员
  */
 export const addProjectMember = (data: {
-  project_id: number
-  user_id: number
-  role?: string
-  position?: string
-  is_active?: boolean
+  project_id: number;
+  user_id: number;
+  role?: string;
+  position?: string;
+  is_active?: boolean;
 }) => {
   return request({
-    url: '/project-members',
-    method: 'post',
-    data
-  })
-}
+    url: "/project-members",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新项目成员
  */
-export const updateProjectMember = (id: number, data: {
-  role?: string
-  position?: string
-  is_active?: boolean
-}) => {
+export const updateProjectMember = (
+  id: number,
+  data: {
+    role?: string;
+    position?: string;
+    is_active?: boolean;
+  },
+) => {
   return request({
     url: `/project-members/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除项目成员
@@ -612,24 +628,22 @@ export const updateProjectMember = (id: number, data: {
 export const deleteProjectMember = (id: number) => {
   return request({
     url: `/project-members/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 项目角色相关接口 ====================
 
 /**
  * 获取项目角色列表
  */
-export const getProjectRoles = (params?: {
-  project_id?: number
-}) => {
+export const getProjectRoles = (params?: { project_id?: number }) => {
   return request({
-    url: '/project-roles',
-    method: 'get',
-    params
-  })
-}
+    url: "/project-roles",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 获取单个项目角色
@@ -637,40 +651,43 @@ export const getProjectRoles = (params?: {
 export const getProjectRoleById = (id: number) => {
   return request({
     url: `/project-roles/${id}`,
-    method: 'get'
-  })
-}
+    method: "get",
+  });
+};
 
 /**
  * 创建项目角色
  */
 export const createProjectRole = (data: {
-  project_id: number
-  rolename: string
-  description?: string
-  settings?: any
+  project_id: number;
+  rolename: string;
+  description?: string;
+  settings?: any;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/project-roles',
-    method: 'post',
-    data
-  })
-}
+    url: "/project-roles",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新项目角色
  */
-export const updateProjectRole = (id: number, data: {
-  rolename?: string
-  description?: string
-  settings?: any
-}): Promise<ApiResponse> => {
+export const updateProjectRole = (
+  id: number,
+  data: {
+    rolename?: string;
+    description?: string;
+    settings?: any;
+  },
+): Promise<ApiResponse> => {
   return request({
     url: `/project-roles/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除项目角色
@@ -678,53 +695,54 @@ export const updateProjectRole = (id: number, data: {
 export const deleteProjectRole = (id: number): Promise<ApiResponse> => {
   return request({
     url: `/project-roles/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 项目职位相关接口 ====================
 
 /**
  * 获取项目职位列表
  */
-export const getProjectPositions = (params?: {
-  project_id?: number
-}) => {
+export const getProjectPositions = (params?: { project_id?: number }) => {
   return request({
-    url: '/project-positions',
-    method: 'get',
-    params
-  })
-}
+    url: "/project-positions",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 创建项目职位
  */
 export const createProjectPosition = (data: {
-  project_id: number
-  positionname: string
-  description?: string
+  project_id: number;
+  positionname: string;
+  description?: string;
 }) => {
   return request({
-    url: '/project-positions',
-    method: 'post',
-    data
-  })
-}
+    url: "/project-positions",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新项目职位
  */
-export const updateProjectPosition = (id: number, data: {
-  positionname?: string
-  description?: string
-}) => {
+export const updateProjectPosition = (
+  id: number,
+  data: {
+    positionname?: string;
+    description?: string;
+  },
+) => {
   return request({
     url: `/project-positions/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除项目职位
@@ -732,9 +750,9 @@ export const updateProjectPosition = (id: number, data: {
 export const deleteProjectPosition = (id: number) => {
   return request({
     url: `/project-positions/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 项目文件夹相关接口 ====================
 
@@ -742,44 +760,47 @@ export const deleteProjectPosition = (id: number) => {
  * 获取项目文件夹列表
  */
 export const getProjectFolders = (params?: {
-  project_id?: number
-  parent_folder_id?: number
+  project_id?: number;
+  parent_folder_id?: number;
 }) => {
   return request({
-    url: '/project-folders',
-    method: 'get',
-    params
-  })
-}
+    url: "/project-folders",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 创建文件夹
  */
 export const createProjectFolder = (data: {
-  project_id: number
-  parent_folder_id?: number
-  name: string
-  creator_id?: number
+  project_id: number;
+  parent_folder_id?: number;
+  name: string;
+  creator_id?: number;
 }) => {
   return request({
-    url: '/project-folders',
-    method: 'post',
-    data
-  })
-}
+    url: "/project-folders",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新文件夹
  */
-export const updateProjectFolder = (id: number, data: {
-  name?: string
-}) => {
+export const updateProjectFolder = (
+  id: number,
+  data: {
+    name?: string;
+  },
+) => {
   return request({
     url: `/project-folders/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除文件夹（软删除，移至回收站）
@@ -787,9 +808,9 @@ export const updateProjectFolder = (id: number, data: {
 export const deleteProjectFolder = (id: number) => {
   return request({
     url: `/project-folders/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 /**
  * 彻底删除文件夹（从数据库和文件系统删除）
@@ -797,9 +818,9 @@ export const deleteProjectFolder = (id: number) => {
 export const deleteProjectFolderPermanent = (id: number) => {
   return request({
     url: `/project-folders/${id}/permanent`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 /**
  * 移动文件夹到回收站（递归移动所有子文件和子文件夹）
@@ -807,9 +828,9 @@ export const deleteProjectFolderPermanent = (id: number) => {
 export const moveFolderToBin = (id: number) => {
   return request({
     url: `/project-folders/${id}/bin`,
-    method: 'put'
-  })
-}
+    method: "put",
+  });
+};
 
 /**
  * 移动文档到回收站
@@ -817,9 +838,9 @@ export const moveFolderToBin = (id: number) => {
 export const moveDocumentToBin = (id: number) => {
   return request({
     url: `/project-documents/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 /**
  * 恢复文档从回收站
@@ -827,9 +848,9 @@ export const moveDocumentToBin = (id: number) => {
 export const restoreProjectDocument = (id: number) => {
   return request({
     url: `/project-documents/${id}/restore`,
-    method: 'put'
-  })
-}
+    method: "put",
+  });
+};
 
 /**
  * 恢复文件夹从回收站
@@ -837,9 +858,9 @@ export const restoreProjectDocument = (id: number) => {
 export const restoreProjectFolder = (id: number) => {
   return request({
     url: `/project-folders/${id}/restore`,
-    method: 'put'
-  })
-}
+    method: "put",
+  });
+};
 
 /**
  * 彻底删除文档（从数据库和文件系统删除）
@@ -847,9 +868,9 @@ export const restoreProjectFolder = (id: number) => {
 export const deleteProjectDocumentPermanent = (id: number) => {
   return request({
     url: `/project-documents/${id}/permanent`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 // ==================== 项目文档相关接口 ====================
 
@@ -857,55 +878,58 @@ export const deleteProjectDocumentPermanent = (id: number) => {
  * 获取项目文档列表
  */
 export const getProjectDocuments = (params?: {
-  project_id?: number
-  parent_folder_id?: number
+  project_id?: number;
+  parent_folder_id?: number;
 }) => {
   return request({
-    url: '/project-documents',
-    method: 'get',
-    params
-  })
-}
+    url: "/project-documents",
+    method: "get",
+    params,
+  });
+};
 
 /**
  * 上传文档文件
  */
 export const uploadProjectDocument = (formData: FormData) => {
   return request({
-    url: '/project-documents/upload',
-    method: 'post',
-    data: formData
-  })
-}
+    url: "/project-documents/upload",
+    method: "post",
+    data: formData,
+  });
+};
 
 /**
  * 创建文档
  */
 export const createProjectDocument = (data: {
-  project_id: number
-  parent_folder_id?: number
-  name: string
-  creator_id?: number
+  project_id: number;
+  parent_folder_id?: number;
+  name: string;
+  creator_id?: number;
 }) => {
   return request({
-    url: '/project-documents',
-    method: 'post',
-    data
-  })
-}
+    url: "/project-documents",
+    method: "post",
+    data,
+  });
+};
 
 /**
  * 更新文档
  */
-export const updateProjectDocument = (id: number, data: {
-  name?: string
-}) => {
+export const updateProjectDocument = (
+  id: number,
+  data: {
+    name?: string;
+  },
+) => {
   return request({
     url: `/project-documents/${id}`,
-    method: 'put',
-    data
-  })
-}
+    method: "put",
+    data,
+  });
+};
 
 /**
  * 删除文档
@@ -913,16 +937,16 @@ export const updateProjectDocument = (id: number, data: {
 export const deleteProjectDocument = (id: number) => {
   return request({
     url: `/project-documents/${id}`,
-    method: 'delete'
-  })
-}
+    method: "delete",
+  });
+};
 
 /**
  * 获取文档下载链接
  */
 export const getDocumentDownloadUrl = (id: number) => {
-  return `http://localhost:3000/api/project-documents/download/${id}`
-}
+  return `/api/project-documents/download/${id}`;
+};
 
 // ==================== 用户绩效相关接口 ====================
 
@@ -930,13 +954,13 @@ export const getDocumentDownloadUrl = (id: number) => {
  * 获取用户在项目中的绩效统计
  */
 export const getUserPerformance = (params: {
-  user_id: number
-  project_id: number
-  days?: number
+  user_id: number;
+  project_id: number;
+  days?: number;
 }): Promise<ApiResponse> => {
   return request({
-    url: '/tasks/user-performance',
-    method: 'get',
-    params
-  })
-}
+    url: "/tasks/user-performance",
+    method: "get",
+    params,
+  });
+};

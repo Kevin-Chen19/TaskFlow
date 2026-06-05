@@ -119,6 +119,7 @@ http://localhost:3000/api-docs
 ```
 
 Swagger 文档提供：
+
 - 所有 API 端点的详细说明
 - 请求参数和响应格式
 - 在线测试接口功能
@@ -140,6 +141,7 @@ Swagger 文档提供：
   - Request Body: `{ current_password, new_password }`
 
 **示例：**
+
 ```bash
 # 注册用户
 curl -X POST http://localhost:3000/api/auth/register \
@@ -177,17 +179,19 @@ curl -X POST http://localhost:3000/api/auth/change-password \
 ### 受保护的接口
 
 所有需要认证的接口都需要在请求头中添加：
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
 认证中间件已集成到路由中，自动验证 Token 并在 `req.user` 中附加用户信息：
+
 ```javascript
 req.user = {
   userId: 123,
   email: "user@example.com",
-  phone: "13800138001"
-}
+  phone: "13800138001",
+};
 ```
 
 ### 用户接口
@@ -275,6 +279,7 @@ req.user = {
 ## 数据库表结构
 
 ### users - 用户表
+
 - id: 用户ID
 - phone: 手机号（唯一）
 - fullname: 姓名
@@ -285,6 +290,7 @@ req.user = {
 - mooto: 个人简介
 
 ### projects - 项目表
+
 - id: 项目ID
 - name: 项目名称
 - description: 项目描述
@@ -295,6 +301,7 @@ req.user = {
 - total_hours: 总工时
 
 ### tasks - 任务表
+
 - id: 任务ID
 - title: 任务标题
 - description: 任务描述
@@ -308,6 +315,7 @@ req.user = {
 - priority: 优先级（0:low, 1:medium, 2:high, 3:urgent）
 
 ### project_members - 项目成员表
+
 - id: 成员ID
 - project_id: 项目ID
 - user_id: 用户ID
@@ -316,6 +324,7 @@ req.user = {
 - is_active: 是否激活
 
 ### notifications - 通知表
+
 - id: 通知ID
 - project_id: 项目ID
 - creator_id: 创建者ID
@@ -326,6 +335,7 @@ req.user = {
 - created_at: 创建时间
 
 ### notes - 笔记表
+
 - id: 笔记ID
 - project_id: 项目ID
 - creator_id: 创建者ID
@@ -333,6 +343,7 @@ req.user = {
 - status: 状态（完成/未完成）
 
 ### project_roles - 项目角色表
+
 - id: 角色ID
 - project_id: 项目ID
 - rolename: 角色名称
@@ -340,12 +351,14 @@ req.user = {
 - settings: 权限设置（JSONB）
 
 ### project_positions - 项目职位表
+
 - id: 职位ID
 - project_id: 项目ID
 - positionname: 职位名称
 - description: 职位描述
 
 ### project_folders - 项目文件夹表
+
 - id: 文件夹ID
 - project_id: 项目ID
 - parent_folder_id: 父文件夹ID（支持树形结构）
@@ -356,6 +369,7 @@ req.user = {
 - deleted_at: 删除时间（软删除）
 
 ### project_documents - 项目文档表
+
 - id: 文档ID
 - project_id: 项目ID
 - parent_folder_id: 所属文件夹ID
@@ -372,10 +386,10 @@ req.user = {
 在需要认证的路由中使用 `authenticateToken` 中间件：
 
 ```javascript
-import { authenticateToken } from '../utils/jwtUtils.js';
+import { authenticateToken } from "../utils/jwtUtils.js";
 
 // 保护单个路由
-router.get('/protected', authenticateToken, async (req, res, next) => {
+router.get("/protected", authenticateToken, async (req, res, next) => {
   // req.user 包含: { userId, email, phone }
   const userId = req.user.userId;
   // ... 业务逻辑
@@ -404,31 +418,14 @@ router.use(authenticateToken); // 此路由下所有接口都需要认证
 ### 数据库连接
 
 数据库连接池配置在 `src/config/database.js` 中，已处理：
+
 - 连接池管理
 - 连接错误处理
 - 查询性能日志
 
 ## 后续扩展建议
 
-- [✅] 密码加密（bcrypt）
--   ✅ 密码使用 bcrypt 哈希存储
-    ✅ Salt rounds: 10
-    ✅ 响应中不返回密码
-    ✅ 邮箱格式验证
-    ✅ 密码长度验证（最少6位）
-    ✅ 手机号/邮箱唯一性检查
-- [✅] 用户认证与授权（JWT）
--   注意事项
-    ✅ 生产环境必须修改 JWT_SECRET
-    ✅ Token 默认有效期为 7 天
-    ✅ 登录接口返回用户信息和 token
-    ✅ 受保护接口返回 401 当 token 无效/过期
-    ✅ req.user 包含 { userId, email, phone } 信息
-- [ ] 文件上传（multer）
-- [✅] API 文档（Swagger）
 - [ ] 单元测试（Jest）
-- [ ] 日志系统（Winston）
 - [ ] 缓存机制（Redis）
 - [ ] 邮件通知（Nodemailer）
-- [ ] WebSocket 实时通信（Socket.io）
 - [ ] 数据库备份策略
