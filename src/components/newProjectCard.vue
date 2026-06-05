@@ -72,7 +72,7 @@ interface UserItem {
   postion: string;
   percentage: number;
   pic: string;
-  userId: string;
+  userId: number;
 }
 
 interface projectData {
@@ -80,7 +80,7 @@ interface projectData {
   description: string;
   createLine: string;
   createUser: string;
-  assignee: string[];
+  assignee: number[];
 }
 
 const userStore = useUserStore();
@@ -181,13 +181,13 @@ const sendProjectInvites = async (projectId: string, projectName: string) => {
           title: `项目邀请：${projectName}`,
           message: `您被邀请加入新项目"${projectName}"`,
           sender_id: currentUser?.userId,
-          receiver_id: parseInt(userId),
+          receiver_id: userId,
           project_id: parseInt(projectId),
           data: JSON.stringify({ 
             role: 'member', 
             position: '',
-            sender_name: currentUser?.fullname || currentUser?.name || '系统',
-            sender_avatar: currentUser?.avatar_url || ''
+            sender_name: currentUser?.name || '系统',
+            sender_avatar: currentUser?.pic || ''
           })
         })
       });
@@ -209,7 +209,7 @@ defineExpose({
   projectData,
   sendProjectInvites
 });
-const changeGot = (userId: string) => {
+const changeGot = (userId: number) => {
   const index = projectData.assignee.indexOf(userId);
   if (index === -1) {
     projectData.assignee.push(userId);
@@ -227,8 +227,8 @@ const toFind = () => {
     console.log('清空搜索，过滤后用户:', filteredUsers);
     showTable.splice(0, showTable.length, ...filteredUsers);
   } else {
-    let newTable = [];
-    for (let item of userStore.usersTable) {
+    const newTable: UserItem[] = [];
+    for (const item of userStore.usersTable) {
       // 过滤掉当前用户，并按名称或职位搜索
       const isCurrentUser = Number(item.userId) === currentUserId;
       const matchesSearch = item.name.toLowerCase().includes(searchValue.value.toLowerCase()) ||

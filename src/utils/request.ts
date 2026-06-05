@@ -82,6 +82,19 @@ request.interceptors.response.use(
   }
 )
 
-export default request
+// 由于响应拦截器返回的是 ApiResponse (response.data) 而非 AxiosResponse，
+// 需要提供一个类型安全的包装器
+const typedRequest: {
+  <T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>>
+  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+  head<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+  options<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>>
+} = request as any
+
+export default typedRequest
 
 export type { AxiosRequestConfig, AxiosResponse }

@@ -274,7 +274,7 @@
     width="800"
     align-center
   >
-    <task-card v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></task-card>
+    <task-card v-if="centerDialogVisible" ref="taskCardRef" :task="(MessageTask as any)"></task-card>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
@@ -294,7 +294,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useTasksStore, type Task } from "@/stores/tasksStore";
+import { useTasksStore } from "@/stores/tasksStore";
 import { AlertCircle, CheckCircle } from "lucide-vue-next";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/userStore";
@@ -311,7 +311,7 @@ const weekDays = [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t(
 const MessageDialogVisible = ref(false);
 const centerDialogVisible = ref(false);
 const taskCardRef = ref<InstanceType<typeof TaskCard> | null>(null);
-interface Task {
+interface CalendarTask {
   id: number;
   title: string;
   description: string;
@@ -319,9 +319,10 @@ interface Task {
   created_at: string;
   start_date: string;
   due_date: string;
-  creator_id: string;
+  creator_id: number;
   assignee_ids: number[];
   progress: number;
+  percentage?: number;
 }
 const MessageTask = reactive({
   id: 1,
@@ -329,9 +330,11 @@ const MessageTask = reactive({
   description: "",
   priority: 0,
   created_at: "",
+  start_date: "",
   due_date: "",
   creator_id: 1,
   assignee_ids: [] as number[],
+  progress: 0,
   percentage: 0
 });
 const getData = (dataLine: string) => {
@@ -351,7 +354,7 @@ const showPriority = (priority: number) => {
       return '';
   }
 }
-const allTasks = reactive<Task[]>([]);
+const allTasks = reactive<CalendarTask[]>([]);
 //获取项目的全部任务
 const getAllTasks = async() => {
   const projectId = otherStore.currentProjectId;
@@ -502,9 +505,9 @@ const handleDelete = () => {
       if (index !== -1) {
         allTasks.splice(index, 1);
       }
-      const taskIndex = tasks.findIndex((task) => task.id === MessageTask.id);
+      const taskIndex = allTasks.findIndex((task) => task.id === MessageTask.id);
       if (taskIndex !== -1) {
-        tasks.splice(taskIndex, 1);
+        allTasks.splice(taskIndex, 1);
       }
       MessageDialogVisible.value = false;
       ElMessage({
@@ -540,10 +543,10 @@ const tagStyles = (tag: number) => {
     return "LowStyle";
   }
 };
-const findUserPic = (userId: string) => {
+const findUserPic = (userId: number) => {
     return userStore.usersTable.find((user) => user.userId === userId)?.pic;
 }
-const findUser = (userId: string) => {
+const findUser = (userId: number) => {
   return userStore.usersTable.find((user) => user.userId === userId)?.name;
 };
 const formatDate = (date: Date): string => {
@@ -681,14 +684,14 @@ const getFilteredTasks = computed(() => {
   }
 
   if (filters.value.priority.length > 0) {
-    tasks = tasks.filter((task) => filters.value.priority.includes(String(task.priority)));
+    tasks = tasks.filter((task) => filters.value.priority.includes(task.priority));
   }
   console.log(filters.value.priority);
   return tasks;
 });
 
 // 根据百分比和截止日期确定任务状态
-const getTaskStatus = (task: Task): string => {
+const getTaskStatus = (task: CalendarTask): string => {
   if (task.progress === 100) return "Completed";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -699,7 +702,7 @@ const getTaskStatus = (task: Task): string => {
 };
 
 // 获取用户名首字母
-const getUserInitials = (userId: string): string => {
+const getUserInitials = (userId: number): string => {
   const userName = userStore.getUserNameById(userId);
   return userName ? userName.slice(0, 2) : '';
 };

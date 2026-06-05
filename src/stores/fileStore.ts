@@ -182,9 +182,9 @@ export const useFileStore = defineStore('useFileStore', () => {
     loading.value = true
     try {
       // 加载所有文件夹（包括正常和已删除）
-      const allFolderRes: any = await getProjectFolders({ project_id: projectId, include_deleted: true })
+      const allFolderRes: any = await getProjectFolders({ project_id: projectId, include_deleted: true } as any)
       // 加载所有文档（包括正常和已删除）
-      const allDocRes: any = await getProjectDocuments({ project_id: projectId, include_deleted: true })
+      const allDocRes: any = await getProjectDocuments({ project_id: projectId, include_deleted: true } as any)
 
       // 构建完整的文件树
       const allFolderMap = new Map<string, FileItem>()
@@ -432,7 +432,7 @@ export const useFileStore = defineStore('useFileStore', () => {
           }
         }
 
-        return { success: true }
+        return { success: true, data: res.data }
       }
       return { success: false, message: '上传文件失败' }
     } catch (error) {

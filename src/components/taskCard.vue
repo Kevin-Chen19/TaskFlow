@@ -89,7 +89,7 @@
               <div class="postion">{{ item.postion }}</div>
               <div class="progress">
                 <el-progress
-                  :percentage="item.progress"
+                  :percentage="item.percentage"
                   :color="customColorMethod"
                   stroke-width="13"
                 />
@@ -127,7 +127,7 @@ interface UserItem {
   postion: string;
   percentage: number;
   pic: string;
-  userId: string;
+  userId: number;
 }
 
 interface FormData {
@@ -154,7 +154,7 @@ const formData = reactive<FormData>({
   priority: 1,
   created_at: "",
   due_date: "",
-  creator_id: "",
+  creator_id: 0,
   assignee_ids: [],
   progress: 0,
 });
@@ -167,7 +167,7 @@ watch(() => props.task, (newTask) => {
 
 //初始组价时将userStore.usersTable赋值给showTable
 onMounted(() => {
-  showTable.push(...userStore.usersTable);
+  showTable.push(...(userStore.usersTable as any));
 });
 onUnmounted(() => {
   //退出时清空表单全部数据
@@ -217,7 +217,7 @@ const customColorMethod = (percentage: number) => {
   }
   return "#67c23a";
 };
-const changeGot = (userId: string) => {
+const changeGot = (userId: number) => {
   const index = formData.assignee_ids.indexOf(userId);
   if (index === -1) {
     formData.assignee_ids.push(userId);

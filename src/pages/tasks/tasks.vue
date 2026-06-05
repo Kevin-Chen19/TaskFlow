@@ -100,7 +100,7 @@
       >
         <el-table-column :label="$t('taskPage.TASKNAME')" width="310">
           <template #default="scope">
-            <div class="rowName">{{ scope.row.title }}</div>
+            <div class="rowName">{{ scope.row.taskName }}</div>
           </template>
         </el-table-column>
         <el-table-column
@@ -117,15 +117,15 @@
         </el-table-column>
         <el-table-column :label="$t('taskPage.CREATOR')" width="220">
           <template #default="scope">
-            <div>{{ findUser(scope.row.creator_id) }}</div>
+          <div>{{ findUser(Number(scope.row.createUser)) }}</div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('taskPage.ASSIGNEE')" width="220">
           <template #default="scope">
-            <div v-for="item in scope.row.assignee_ids.slice(0, 2)">
+            <div v-for="item in scope.row.assignee.slice(0, 2)">
               {{ findUser(item) }}
             </div>
-            <div v-if="scope.row.assignee_ids.length > 2">...</div>
+          <div v-if="scope.row.assignee.length > 2">...</div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('taskPage.TIMELINE')" width="250">
@@ -173,7 +173,7 @@
     width="800"
     align-center
   >
-    <TaskCard v-if="centerDialogVisible" ref="taskCardRef" :task="MessageTask"></TaskCard>
+    <TaskCard v-if="centerDialogVisible" ref="taskCardRef" :task="(MessageTask as any)"></TaskCard>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="centerDialogVisible = false" class="cancelBtn"
@@ -209,7 +209,7 @@
         <div style="color:black;">{{ $t('taskPage.taskProgress') }}</div>
         <div v-if="canUpdateProgress">{{ $t('taskPage.dragToUpdate') }}</div>
       </div>
-      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.percentage) }">{{MessageTask.progress}}%</div>
+      <div class="NumberStyle" :style="{ color:customColorMethod(MessageTask.progress) }">{{MessageTask.progress}}%</div>
     </div>
     <el-progress
       v-if="!canUpdateProgress"
@@ -582,16 +582,24 @@ const allTasks = reactive<Task[]>([
 const showTasks = reactive<Task[]>([]);
 const tasks = reactive<Task[]>([]);
 interface Task {
-  id: number;
-  title: string;
+  id: string;
+  taskName: string;
+  title?: string;
   description: string;
-  priority: number;
-  created_at: string;
-  start_date: string;
-  due_date: string;
-  creator_id: string;
-  assignee_ids: number[];
-  progress: number;
+  priority: string;
+  createLine: string;
+  startLine?: string;
+  dueLine: string;
+  createUser: string;
+  assignee: string[];
+  percentage: number;
+  // API 兼容字段
+  created_at?: string;
+  start_date?: string;
+  due_date?: string;
+  creator_id?: number;
+  assignee_ids?: number[];
+  progress?: number;
 }
 const findUser = (userId: number) => {
   return userStore.usersTable.find((user) => user.userId === userId)?.name;
@@ -663,7 +671,7 @@ const submitEdit = async() => {
       assignee_ids: componentData.assignee_ids,
       progress: componentData.progress,
     })
-    if(res.success){
+    if((res as any).success){
       const index = allTasks.findIndex((task) => task.id === MessageTask.id);
       if (index !== -1) {
         allTasks[index] = { ...componentData };
@@ -832,7 +840,7 @@ const handlePageChange = (page: number) => {
   showTasks.push(...tasks.slice((page - 1) * 9, page * 9));
 };
 //筛选函数
-const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
+const filterTasks = (label: string, labelValue: string | number, ifSort: boolean) => {
   if (!ifSort) {
     ifAll.value = !ifAll.value;
   }
@@ -845,7 +853,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
     } else {
       tasks.splice(0, tasks.length);
       tasks.push(
-        ...allTasks.filter((task) => task.assignee_ids.includes(labelValue)),
+        ...allTasks.filter((task) => task.assignee.includes(String(labelValue))),
       );
       showTasks.splice(0, showTasks.length);
       showTasks.push(...tasks.slice(0, 9));
@@ -857,7 +865,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
         resetTableData();
       }else{
         tasks.splice(0, tasks.length);
-        tasks.push(...allTasks.filter((task) => MembersValue.value.includes(task.creator_id)));
+        tasks.push(...allTasks.filter((task) => MembersValue.value.includes(task.createUser)));
         reshowTableData();
       }
     }else if (filterLabel.value === "Assignee"){  //按指派人筛选
@@ -866,7 +874,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
       }else{
         tasks.splice(0, tasks.length);
         tasks.push(...allTasks.filter((task) => 
-          task.assignee_ids.some(assignee => MembersValue.value.includes(assignee))
+          task.assignee.some(assignee => MembersValue.value.includes(assignee))
         ));
         reshowTableData();
       }
@@ -875,7 +883,7 @@ const filterTasks = (label: string, labelValue: string, ifSort: boolean) => {
         resetTableData();
       }else{
         tasks.splice(0, tasks.length);
-        tasks.push(...allTasks.filter((task) => task.title.includes(TaskNameValue.value)));
+        tasks.push(...allTasks.filter((task) => task.taskName.includes(TaskNameValue.value)));
         reshowTableData();
       }
     } else if (filterLabel.value === "Priority"){ //按任务优先级筛选
@@ -935,8 +943,8 @@ const handleDelete = () => {
     }
   )
     .then(async() => {
-      const res = await deleteTask(MessageTask.id);
-      if(res.success){
+      const res = await deleteTask(Number(MessageTask.id));
+      if((res as any).success){
         const index = allTasks.findIndex((task) => task.id === MessageTask.id);
       if (index !== -1) {
         allTasks.splice(index, 1);
@@ -1016,7 +1024,7 @@ const EditMessage = () => {
 }
 const SaveMessage = async() => {
   //修改AllTasks中的数据
-  const res = await updateTask(MessageTask.id, {
+  const res = await updateTask(Number(MessageTask.id), {
       title: MessageTask.title,
       description: MessageTask.description,
       priority: MessageTask.priority,
@@ -1024,10 +1032,10 @@ const SaveMessage = async() => {
       assignee_ids: MessageTask.assignee_ids,
       progress: MessageTask.progress,
     });
-    if(res.success){
+    if((res as any).success){
       const index = allTasks.findIndex((task) => task.id === MessageTask.id);
       //使用深拷贝的方式修改
-      allTasks[index] = { ...MessageTask };
+      allTasks[index] = { ...MessageTask } as any;
       //刷新数据
       resetTableData();
     }

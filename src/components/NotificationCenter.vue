@@ -77,11 +77,11 @@ const filteredNotifications = computed(() => {
 });
 
 const fetchNotifications = async () => {
-  if (!userStore.user?.id) return;
+  if (!(userStore.user as any)?.id) return;
   
   loading.value = true;
   try {
-    await notificationStore.fetchNotifications(userStore.user.id);
+    await notificationStore.fetchNotifications((userStore.user as any).id);
   } catch (error) {
     ElMessage.error('获取通知失败');
   } finally {
@@ -90,10 +90,10 @@ const fetchNotifications = async () => {
 };
 
 const markAllAsRead = async () => {
-  if (!userStore.user?.id) return;
+  if (!userStore.user?.userId) return;
   
   try {
-    await notificationStore.markAllAsRead(userStore.user.id);
+    await notificationStore.markAllAsRead((userStore.user as any).id);
     ElMessage.success('已标记所有通知为已读');
   } catch (error) {
     ElMessage.error('操作失败');

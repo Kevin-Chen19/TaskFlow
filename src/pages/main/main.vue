@@ -213,6 +213,7 @@
     :title="$t('Dashboard.createProject')"
     width="800"
     align-center
+    :show-close="false"
   >
     <NewProjectCard
       v-if="centerDialogVisible"
@@ -599,8 +600,8 @@ const handleCreateProject = async () => {
     const projectDataToSubmit = {
       name: newProjectName,
       description: projectData.description || "",
-      owner_id: parseInt(currentUser.userId),
-      assignee_ids: projectData.assignee?.map((id: string) => parseInt(id)) || []
+      owner_id: currentUser.userId,
+      assignee_ids: projectData.assignee || []
     };
     
     console.log('创建项目数据:', projectDataToSubmit);

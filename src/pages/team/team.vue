@@ -389,9 +389,9 @@ const submitInvite = async () => {
         email: inviteData.emailContent,
         role: inviteData.roleContent || 'viewer',
         position: inviteData.positionContent,
-        sender_id: userStore.userInfo?.id,
-        sender_name: userStore.userInfo?.fullname,
-        sender_avatar: userStore.userInfo?.avatar_url
+        sender_id: (userStore.user as any)?.id,
+        sender_name: (userStore.user as any)?.fullname,
+        sender_avatar: (userStore.user as any)?.avatar_url
       })
     });
 

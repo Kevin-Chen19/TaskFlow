@@ -44,7 +44,7 @@ const props = defineProps<{
   project?: Project;
 }>();
 const findPicUrl = (userId: string) => {
-  return userStore.getUserById(userId)?.pic || avatarImg;
+  return userStore.getUserById(Number(userId))?.pic || avatarImg;
 }
 </script>
 <style scoped lang="scss">

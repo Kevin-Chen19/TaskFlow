@@ -156,6 +156,7 @@
     :title="$t('Dashboard.createProject')"
     width="800"
     align-center
+    :show-close="false"
   >
     <NewProjectCard
       v-if="centerDialogVisible"
@@ -398,7 +399,7 @@ const handleSubmit = async () => {
       name: componentData.projectName.trim(),
       description: componentData.description?.trim() || '',
       owner_id: Number(ownerId),
-      assignee_ids: (componentData.assignee || []).map((id: string) => Number(id)).filter((id: number) => !isNaN(id)),
+      assignee_ids: (componentData.assignee || []).map((id: number) => id).filter((id: number) => !isNaN(id)),
       progress: 0,
       total_hours: 0,
     };

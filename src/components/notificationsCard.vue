@@ -124,7 +124,7 @@ const handleAcceptInvite = async () => {
   try {
     const token = localStorage.getItem('token');
     // 处理 data 字段：可能是对象或 JSON 字符串
-    let inviteData = {};
+    let inviteData: any = {};
     if (props.notification.data) {
       if (typeof props.notification.data === 'string') {
         try {

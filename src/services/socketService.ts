@@ -96,7 +96,7 @@ class SocketService {
     
     // 更新未读数量
     if (!notification.is_read) {
-      notificationStore.unreadCount++;
+      // unreadCount is computed, notification already added to list above
     }
 
     // 显示消息提醒

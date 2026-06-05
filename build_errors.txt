@@ -1,0 +1,114 @@
+﻿
+> taskflow@0.0.0 build
+> run-p type-check "build-only {@}" --
+
+
+> taskflow@0.0.0 type-check
+> vue-tsc --build
+
+
+> taskflow@0.0.0 build-only
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+src/components/newProjectCard.vue(108,22): error TS2345: Argument of type '{ name: string; email: string; phone: string; status: string; postion: string; percentage: number; pic: string; userId: number; tags: string[]; signature: string; role: string; }' is not assignable to parameter of type '{ name: string; postion: string; percentage: number; pic: string; userId: string; }'.
+  Types of property 'userId' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/newProjectCard.vue(122,43): error TS2345: Argument of type '{ name: string; email: string; phone: string; status: string; postion: string; percentage: number; pic: string; userId: number; tags: string[]; signature: string; role: string; }' is not assignable to parameter of type '{ name: string; postion: string; percentage: number; pic: string; userId: string; }'.
+  Types of property 'userId' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/newProjectCard.vue(189,39): error TS2339: Property 'fullname' does not exist on type '{ name: string; email: string; phone: string; status: string; postion: string; percentage: number; pic: string; userId: number; tags: string[]; signature: string; role: string; }'.
+src/components/newProjectCard.vue(190,41): error TS2339: Property 'avatar_url' does not exist on type '{ name: string; email: string; phone: string; status: string; postion: string; percentage: number; pic: string; userId: number; tags: string[]; signature: string; role: string; }'.
+src/components/newProjectCard.vue(228,43): error TS2345: Argument of type '{ name: string; email: string; phone: string; status: string; postion: string; percentage: number; pic: string; userId: number; tags: string[]; signature: string; role: string; }' is not assignable to parameter of type '{ name: string; postion: string; percentage: number; pic: string; userId: string; }'.
+  Types of property 'userId' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/NotificationCenter.vue(93,24): error TS2339: Property 'id' does not exist on type '{ name: string; email: string; phone: string; status: string; postion: string; percentage: number; pic: string; userId: number; tags: string[]; signature: string; role: string; }'.
+src/pages/calendar/calendar.vue(215,107): error TS2339: Property 'progress' does not exist on type '{ id: number; title: string; description: string; priority: number; created_at: string; due_date: string; creator_id: number; assignee_ids: number[]; percentage: number; }'.
+src/pages/calendar/calendar.vue(220,32): error TS2339: Property 'progress' does not exist on type '{ id: number; title: string; description: string; priority: number; created_at: string; due_date: string; creator_id: number; assignee_ids: number[]; percentage: number; }'.
+src/pages/calendar/calendar.vue(223,68): error TS2339: Property 'progress' does not exist on type '{ id: number; title: string; description: string; priority: number; created_at: string; due_date: string; creator_id: number; assignee_ids: number[]; percentage: number; }'.
+src/pages/calendar/calendar.vue(234,34): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/calendar/calendar.vue(236,44): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/calendar/calendar.vue(242,36): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/calendar/calendar.vue(244,46): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/calendar/calendar.vue(277,62): error TS2739: Type '{ id: number; title: string; description: string; priority: number; created_at: string; due_date: string; creator_id: number; assignee_ids: number[]; percentage: number; }' is missing the following properties from type 'Task': taskName, progress
+src/pages/calendar/calendar.vue(297,25): error TS2440: Import declaration conflicts with local declaration of 'Task'.
+src/pages/calendar/calendar.vue(368,12): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/calendar/calendar.vue(414,29): error TS2339: Property 'progress' does not exist on type '{ id: number; title: string; description: string; priority: number; created_at: string; due_date: string; creator_id: number; assignee_ids: number[]; percentage: number; }'.
+src/pages/calendar/calendar.vue(416,12): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/calendar/calendar.vue(419,7): error TS2739: Type '{ id: number; title: string; description: string; priority: number; created_at: string; due_date: string; creator_id: number; assignee_ids: number[]; percentage: number; }' is missing the following properties from type '{ id: number; title: string; description: string; priority: number; created_at: string; start_date: string; due_date: string; creator_id: number; assignee_ids: number[]; progress: number; percentage?: number; }': start_date, progress
+src/pages/calendar/calendar.vue(471,12): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/calendar/calendar.vue(501,14): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/calendar/calendar.vue(506,25): error TS2304: Cannot find name 'tasks'.
+src/pages/calendar/calendar.vue(508,9): error TS2304: Cannot find name 'tasks'.
+src/pages/calendar/calendar.vue(685,68): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+src/pages/calendar/calendar.vue(704,46): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+src/pages/dashboard/dashboard.vue(340,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(412,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(442,22): error TS2339: Property 'message' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(557,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(657,17): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(688,15): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(751,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(775,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(856,21): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/dashboard/dashboard.vue(862,28): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/main/main.vue(384,15): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/main/main.vue(394,21): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/main/main.vue(559,15): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/main/main.vue(603,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/main/main.vue(612,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/main/main.vue(641,22): error TS2339: Property 'message' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/me/me.vue(66,25): error TS2322: Type '{ id: number; creator: string; projectName: string; description: string; percentage: number; joinUser: string[]; }' is not assignable to type 'Project'.
+  Types of property 'id' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/pages/me/me.vue(116,25): error TS2322: Type '{ id: number; creator: string; projectName: string; description: string; percentage: number; joinUser: string[]; }' is not assignable to type 'Project'.
+  Types of property 'id' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/pages/me/me.vue(300,29): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/me/me.vue(308,15): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/me/me.vue(321,17): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/me/me.vue(385,29): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/me/me.vue(394,14): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/projects/project-list.vue(100,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/projects/projects.vue(451,30): error TS2339: Property 'data' does not exist on type '{ success: boolean; message?: undefined; } | { success: boolean; message: string; }'.
+  Property 'data' does not exist on type '{ success: boolean; message?: undefined; }'.
+src/pages/roles/roles.vue(501,20): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/roles/roles.vue(508,21): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/roles/roles.vue(545,21): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/roles/roles.vue(566,18): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/roles/roles.vue(600,13): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/tasks/tasks.vue(10,47): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/tasks/tasks.vue(176,61): error TS2741: Property 'taskName' is missing in type '{ id: string; title: string; description: string; priority: number; created_at: string; start_date: string; due_date: string; creator_id: number; assignee_ids: number[]; progress: number; }' but required in type 'Task'.
+src/pages/tasks/tasks.vue(212,78): error TS2339: Property 'percentage' does not exist on type '{ id: string; title: string; description: string; priority: number; created_at: string; start_date: string; due_date: string; creator_id: number; assignee_ids: number[]; progress: number; }'.
+src/pages/tasks/tasks.vue(419,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(431,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(442,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(453,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(464,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(475,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(486,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(497,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(508,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(519,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(530,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(541,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(552,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(563,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(574,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/tasks/tasks.vue(627,12): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/tasks/tasks.vue(702,12): error TS2339: Property 'success' does not exist on type 'AxiosResponse<any, any, {}>'.
+src/pages/tasks/tasks.vue(849,65): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+src/pages/tasks/tasks.vue(861,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/tasks/tasks.vue(870,74): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/tasks/tasks.vue(888,40): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/tasks/tasks.vue(975,35): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/tasks/tasks.vue(985,46): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/pages/tasks/tasks.vue(986,46): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+node.exe : ERROR: "type-check" exited with 2.
+所在位置 C:\Users\lenovo\AppData\Roaming\npm\npm.ps1:24 字符: 5
++     & "node$exe"  "$basedir/node_modules/npm/bin/npm-cli.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: "type-check" exited with 2.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

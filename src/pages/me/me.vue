@@ -267,7 +267,7 @@ const initUserForm = () => {
 import defaultAvatarImg from "@/assets/pics/用户头像.jpg";
 
 interface Project {
-  id: number;
+  id: string;
   creator: string;
   projectName: string;
   description: string;
@@ -297,7 +297,7 @@ const performanceData = reactive({
 // 加载用户项目数据
 const loadUserProjects = async () => {
   try {
-    const userId = parseInt(userStore.user.userId);
+    const userId = userStore.user.userId;
 
     // 清空现有数据
     MyProjects.length = 0;
@@ -382,7 +382,7 @@ const getRateGrade = (rate: number) => {
 const loadPerformanceData = async () => {
   try {
     const projectId = otherStore.currentProjectId;
-    const userId = parseInt(userStore.user.userId);
+    const userId = userStore.user.userId;
     
     if (!projectId || !userId) {
       console.warn('缺少项目ID或用户ID，无法加载绩效数据');
